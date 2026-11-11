@@ -188,10 +188,8 @@ jobs:
             # Hook into drivers/Makefile and drivers/Kconfig
             echo "obj-\$(CONFIG_KSU) += kernelsu/" >> common/drivers/Makefile
             echo 'source "drivers/kernelsu/Kconfig"' >> common/drivers/Kconfig
-            cat << 'EOF' > common/drivers/kernelsu/Makefile
-obj-$(CONFIG_KSU) += kernelsu.o
-include $(src)/Kbuild
-EOF
+            echo 'obj-$(CONFIG_KSU) += kernelsu.o' > common/drivers/kernelsu/Makefile
+            echo 'include $(src)/Kbuild' >> common/drivers/kernelsu/Makefile
             
             # Configure KSU as LKM with Kasumi & YukiZygisk
             echo "CONFIG_KSU=m" >> common/arch/arm64/configs/gki_defconfig
