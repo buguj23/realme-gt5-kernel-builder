@@ -1,6 +1,9 @@
 name: OrangeFox Recovery (OFRP) CI/CD
 
 on:
+  push:
+    paths:
+      - '.github/workflows/build-orangefox.yml'
   workflow_dispatch:
     inputs:
       TARGET_DEVICE:
@@ -16,10 +19,11 @@ on:
         type: choice
         description: "OrangeFox Manifest Branch"
         required: true
-        default: fox_12.1
+        default: "12.1"
         options:
-          - fox_12.1
-          - fox_11.0
+          - "12.1"
+          - "14.1"
+          - "16.0"
       BUILD_KERNELSU:
         type: boolean
         description: "Integrate KernelSU / Next Addon in OrangeFox"
@@ -32,7 +36,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       DEVICE: ${{ github.event.inputs.TARGET_DEVICE || 'oneplus_ace2_pro' }}
-      OF_BRANCH: ${{ github.event.inputs.OF_BRANCH || 'fox_12.1' }}
+      OF_BRANCH: ${{ github.event.inputs.OF_BRANCH || '12.1' }}
       BUILD_KERNELSU: ${{ github.event.inputs.BUILD_KERNELSU || 'true' }}
       CCACHE_COMPILERCHECK: "none"
       CCACHE_NOHASHDIR: "true"
@@ -89,16 +93,16 @@ jobs:
 
       - name: Sync OrangeFox Recovery Tree
         run: |
-          mkdir -p ofox_workspace && cd ofox_workspace
           git config --global user.name "buguj23"
           git config --global user.email "buguj23@gmail.com"
 
-          echo "Initializing repo with OrangeFox (${{ env.OF_BRANCH }})..."
-          repo init -u https://gitlab.com/OrangeFox/Manifest.git \
-            -b "${{ env.OF_BRANCH }}" \
-            --depth=1 --no-clone-bundle --no-tags
+          echo "Cloning OrangeFox official sync tool..."
+          git clone --depth=1 https://gitlab.com/OrangeFox/sync.git sync-tools
+          chmod a+x sync-tools/orangefox_sync.sh
 
-          repo sync -c -j$(nproc) --no-clone-bundle --no-tags --force-sync
+          BRANCH_NUM=$(echo "${{ env.OF_BRANCH }}" | sed 's/^fox_//')
+          echo "Initializing and syncing OrangeFox recovery tree (branch $BRANCH_NUM)..."
+          ./sync-tools/orangefox_sync.sh --branch "$BRANCH_NUM" --path "${{ github.workspace }}/ofox_workspace"
 
       - name: Setup SM8550 Device Trees
         run: |
@@ -133,6 +137,7 @@ jobs:
       - name: Compile OrangeFox Recovery Image
         run: |
           cd ofox_workspace
+          set +e
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           export FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER=1
@@ -141,9 +146,10 @@ jobs:
 
           # Lunch SM8550 OrangeFox profile
           lunch ofox_salami-eng || lunch twrp_salami-eng
+          set -e
 
           # Compile recovery image
-          mka recoveryimage -j$(nproc)
+          mka recoveryimage -j$(nproc) || mka adbd recoveryimage -j$(nproc)
 
       - name: Package & Organize Artifacts
         run: |
