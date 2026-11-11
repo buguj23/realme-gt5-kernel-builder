@@ -173,9 +173,19 @@ jobs:
             git clone --depth=1 https://github.com/Rouyashiki/YukiSU.git SukiSU_src
             mkdir -p common/drivers/kernelsu
             cp -r SukiSU_src/kernel/* common/drivers/kernelsu/
+
+            # Hook into drivers/Makefile and drivers/Kconfig
+            echo "obj-\$(CONFIG_KSU) += kernelsu/" >> common/drivers/Makefile
+            echo 'source "drivers/kernelsu/Kconfig"' >> common/drivers/Kconfig
+            cat << 'EOF' > common/drivers/kernelsu/Makefile
+obj-$(CONFIG_KSU) += kernelsu.o
+include $(src)/Kbuild
+EOF
             
-            # Configure KSU as LKM
+            # Configure KSU as LKM with Kasumi & YukiZygisk
             echo "CONFIG_KSU=m" >> common/arch/arm64/configs/gki_defconfig
+            echo "CONFIG_KSU_YUKIZYGISK=y" >> common/arch/arm64/configs/gki_defconfig
+            echo "CONFIG_KSU_SUPERKEY=y" >> common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_MODULES=y" >> common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_MODVERSIONS=y" >> common/arch/arm64/configs/gki_defconfig
 
@@ -214,6 +224,16 @@ jobs:
           # Package modules
           mkdir -p AnyKernel3/modules/vendor_dlkm
           find kernel_workspace/ -name "*.ko" -exec cp {} AnyKernel3/modules/vendor_dlkm/ \; 2>/dev/null || true
+
+          # Explicitly copy kernelsu.ko if generated
+          KSU_KO=$(find kernel_workspace/ -name "kernelsu.ko" | head -n 1)
+          if [ -n "$KSU_KO" ]; then
+            echo "Found YukiSU module: $KSU_KO"
+            cp "$KSU_KO" AnyKernel3/
+          fi
+
+          # Enable modules flashing in AnyKernel3
+          sed -i 's/do.modules=0/do.modules=1/' AnyKernel3/anykernel.sh
 
           # Create flashable zip
           cd AnyKernel3
