@@ -1,0 +1,1 @@
+require board=kalama|RMX3820|RE5C33|ossi

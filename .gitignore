@@ -1,0 +1,23 @@
+# Artifacts & Build outputs
+out/
+build/
+*.log
+*.tmp
+*.swp
+*~
+
+# Exclude large raw binaries generated during local runs
+out/artifacts/*
+*.img
+*.zip
+!ZRAM.zip
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
