@@ -57,9 +57,17 @@ on:
 
 jobs:
   build:
-    name: "Build SM8550 Kernel [${{ github.event.inputs.ROOT_STACK }}] for ${{ github.event.inputs.DEVICE }}"
+    name: "Build SM8550 Kernel"
     runs-on: ubuntu-latest
     env:
+      DEVICE: ${{ github.event.inputs.DEVICE || 'oneplus_ace2_pro_b' }}
+      ROOT_STACK: ${{ github.event.inputs.ROOT_STACK || 'YukiSU' }}
+      ENABLE_KASUMI: ${{ github.event.inputs.ENABLE_KASUMI || 'true' }}
+      DROID_SPACES: ${{ github.event.inputs.DROID_SPACES || 'true' }}
+      RE_KERNEL: ${{ github.event.inputs.RE_KERNEL || 'true' }}
+      ZRAM_LZ4KD: ${{ github.event.inputs.ZRAM_LZ4KD || 'true' }}
+      UTS_UNAME_SPOOF: ${{ github.event.inputs.UTS_UNAME_SPOOF || 'true' }}
+      FAST_BUILD: ${{ github.event.inputs.FAST_BUILD || 'true' }}
       CCACHE_COMPILERCHECK: "none"
       CCACHE_NOHASHDIR: "true"
       CCACHE_NOHARDLINK: "true"
@@ -104,18 +112,18 @@ jobs:
 
       - name: Setup Ccache Environment
         uses: actions/cache@v4
-        if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
+        if: ${{ env.FAST_BUILD == 'true' }}
         with:
           path: ~/.ccache
-          key: ccache-${{ runner.os }}-${{ github.event.inputs.DEVICE }}-${{ github.event.inputs.ROOT_STACK }}
+          key: ccache-${{ runner.os }}-${{ env.DEVICE }}-${{ env.ROOT_STACK }}
           restore-keys: |
-            ccache-${{ runner.os }}-${{ github.event.inputs.DEVICE }}-
+            ccache-${{ runner.os }}-${{ env.DEVICE }}-
             ccache-${{ runner.os }}-
 
       - name: Sync Kernel Source Tree
         run: |
           mkdir -p kernel_workspace && cd kernel_workspace
-          TARGET_FILE="${{ github.event.inputs.DEVICE }}"
+          TARGET_FILE="${{ env.DEVICE }}"
           if [ "$TARGET_FILE" = "realme_gt5_b" ]; then
             TARGET_FILE="oneplus_ace2_pro_b"
           fi
@@ -150,7 +158,7 @@ jobs:
           PATCH_DIR="${{ github.workspace }}/patches"
 
           # 1. DroidSpaces MidAS patch to prevent Oplus scheduler panics
-          if [ "${{ github.event.inputs.DROID_SPACES }}" = "true" ] && [ -f "$PATCH_DIR/ghost-task-for-midas.patch" ]; then
+          if [ "${{ env.DROID_SPACES }}" = "true" ] && [ -f "$PATCH_DIR/ghost-task-for-midas.patch" ]; then
             echo "Applying DroidSpaces MidAS scheduler patch..."
             patch -p1 --forward < "$PATCH_DIR/ghost-task-for-midas.patch" || true
           fi
@@ -160,16 +168,16 @@ jobs:
           echo "CONFIG_LSM_BBG=n" >> common/arch/arm64/configs/gki_defconfig || true
 
           # 3. ZRAM LZ4KD
-          if [ "${{ github.event.inputs.ZRAM_LZ4KD }}" = "true" ]; then
+          if [ "${{ env.ZRAM_LZ4KD }}" = "true" ]; then
             echo "Enabling 12GB ZRAM LZ4KD..."
             echo "CONFIG_ZRAM=y" >> common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_ZRAM_DEF_COMP_LZ4KD=y" >> common/arch/arm64/configs/gki_defconfig
           fi
 
-      - name: Integrate Root Engine (${{ github.event.inputs.ROOT_STACK }})
+      - name: Integrate Root Engine (${{ env.ROOT_STACK }})
         run: |
           cd kernel_workspace/kernel_platform
-          STACK="${{ github.event.inputs.ROOT_STACK }}"
+          STACK="${{ env.ROOT_STACK }}"
 
           if [ "$STACK" = "YukiSU" ]; then
             echo "Integrating YukiSU LKM & Kasumi VFS stealth..."
@@ -240,7 +248,7 @@ EOF
 
           # Create flashable zip
           cd AnyKernel3
-          ZIP_NAME="RealmeGT5_SM8550_${{ github.event.inputs.ROOT_STACK }}_$(date +%Y%m%d_%H%M%S).zip"
+          ZIP_NAME="RealmeGT5_SM8550_${{ env.ROOT_STACK }}_$(date +%Y%m%d_%H%M%S).zip"
           zip -r9 "../$ZIP_NAME" *
           cd ..
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
