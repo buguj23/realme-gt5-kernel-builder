@@ -186,7 +186,13 @@ jobs:
             git clone --depth=1 https://github.com/Rouyashiki/YukiSU.git SukiSU_src
             mkdir -p common/drivers/kernelsu
             cp -r SukiSU_src/kernel/* common/drivers/kernelsu/
-            cp -r SukiSU_src/uapi common/drivers/kernelsu/
+            
+            # Comprehensively populate UAPI headers for all include path patterns
+            rm -rf common/drivers/kernelsu/include/uapi
+            cp -r SukiSU_src/uapi common/drivers/kernelsu/include/uapi
+            cp -r SukiSU_src/uapi common/drivers/kernelsu/uapi
+            mkdir -p common/drivers/uapi
+            cp -r SukiSU_src/uapi/* common/drivers/uapi/
 
             # Hook into drivers/Makefile and drivers/Kconfig
             echo "obj-\$(CONFIG_KSU) += kernelsu/" >> common/drivers/Makefile

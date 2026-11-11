@@ -48,20 +48,28 @@ jobs:
 
       - name: Free Disk Space on Runner
         run: |
-          echo "Maximizing root disk space cleanly for OrangeFox build..."
+          echo "Maximizing root and mount disk space aggressively for OrangeFox build..."
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache
-          sudo docker image prune --all --force || true
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo docker system prune -a -f --volumes || true
           
-          # Setup 10GB swap on /mnt
+          # Setup 12GB swap on /mnt SSD
           sudo swapoff -a || true
           sudo rm -f /mnt/swapfile || true
-          sudo fallocate -l 10G /mnt/swapfile || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=10240
+          sudo fallocate -l 12G /mnt/swapfile || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=12288
           sudo chmod 600 /mnt/swapfile
           sudo mkswap /mnt/swapfile
           sudo swapon /mnt/swapfile
+
+          # Prepare /mnt workspace for huge tree sync
+          sudo mkdir -p /mnt/ofox_workspace
+          sudo chown -R runner:runner /mnt/ofox_workspace
+          ln -sf /mnt/ofox_workspace ${{ github.workspace }}/ofox_workspace
           
           echo "Disk space after cleanup:"
           df -h
@@ -104,7 +112,21 @@ jobs:
           BRANCH_NUM=$(echo "${{ env.OF_BRANCH }}" | sed 's/^fox_//')
           echo "Initializing and syncing OrangeFox recovery tree (branch $BRANCH_NUM)..."
           cd sync-tools
-          ./orangefox_sync.sh --branch "$BRANCH_NUM" --path "${{ github.workspace }}/ofox_workspace"
+          ./orangefox_sync.sh --branch "$BRANCH_NUM" --path "/mnt/ofox_workspace"
+
+          cd /mnt/ofox_workspace
+          if [ ! -d bootable/recovery/gui/theme ]; then
+            echo "Fetching OrangeFox recovery GUI theme..."
+            git clone https://gitlab.com/OrangeFox/misc/theme.git bootable/recovery/gui/theme || true
+          fi
+          if [ ! -d external/nano ]; then
+            echo "Fetching external nano dependency..."
+            git clone --depth=1 https://github.com/LineageOS/android_external_nano -b lineage-19.1 external/nano || true
+          fi
+          if [ ! -d external/bash ]; then
+            echo "Fetching external bash dependency..."
+            git clone --depth=1 https://github.com/LineageOS/android_external_bash -b lineage-19.1 external/bash || true
+          fi
 
       - name: Setup SM8550 Device Trees
         run: |
