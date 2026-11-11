@@ -76,13 +76,23 @@ jobs:
 
       - name: Install Build Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential bc bison flex libssl-dev libelf-dev \
-            git ccache zip unzip curl wget python3 python-is-python3 \
-            libarchive-tools zstd jq openjdk-11-jdk rsync lzop \
-            libncurses5 libncurses5-dev libxml2 libxml2-utils \
-            squashfs-tools xsltproc patch
+          # Configure resilient DNS fallbacks to prevent intermittent cloud resolution issues
+          echo "nameserver 1.1.1.1" | sudo tee -a /etc/resolv.conf
+          echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
+
+          sudo apt-get clean
+          for i in 1 2 3 4 5; do
+            sudo apt-get update && break || { echo "Retrying apt-get update ($i)..."; sleep 5; }
+          done
+
+          for i in 1 2 3 4 5; do
+            sudo apt-get install -y --fix-missing --no-install-recommends \
+              build-essential bc bison flex libssl-dev libelf-dev \
+              git ccache zip unzip curl wget python3 python-is-python3 \
+              libarchive-tools zstd jq openjdk-11-jdk rsync lzop \
+              libncurses5 libncurses5-dev libxml2 libxml2-utils \
+              squashfs-tools xsltproc patch && break || { echo "Retrying apt-get install ($i)..."; sleep 10; }
+          done
 
           # Setup Android Repo tool
           mkdir -p ~/.bin
