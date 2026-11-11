@@ -74,7 +74,7 @@ jobs:
             git ccache zip unzip curl wget python3 python-is-python3 \
             libarchive-tools zstd jq openjdk-11-jdk rsync lzop \
             libncurses5 libncurses5-dev libxml2 libxml2-utils \
-            squashfs-tools xsltproc
+            squashfs-tools xsltproc patch
 
           # Setup Android Repo tool
           mkdir -p ~/.bin
@@ -95,6 +95,7 @@ jobs:
         run: |
           git config --global user.name "buguj23"
           git config --global user.email "buguj23@gmail.com"
+          git config --global --add safe.directory "*"
 
           echo "Cloning OrangeFox official sync tool..."
           git clone --depth=1 https://gitlab.com/OrangeFox/sync.git sync-tools
@@ -102,7 +103,8 @@ jobs:
 
           BRANCH_NUM=$(echo "${{ env.OF_BRANCH }}" | sed 's/^fox_//')
           echo "Initializing and syncing OrangeFox recovery tree (branch $BRANCH_NUM)..."
-          ./sync-tools/orangefox_sync.sh --branch "$BRANCH_NUM" --path "${{ github.workspace }}/ofox_workspace"
+          cd sync-tools
+          ./orangefox_sync.sh --branch "$BRANCH_NUM" --path "${{ github.workspace }}/ofox_workspace"
 
       - name: Setup SM8550 Device Trees
         run: |
