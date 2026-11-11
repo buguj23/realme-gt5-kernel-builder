@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '.github/workflows/build-orangefox.yml'
   workflow_dispatch:
     inputs:
       DEVICE:
