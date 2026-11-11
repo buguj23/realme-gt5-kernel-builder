@@ -1,0 +1,177 @@
+name: OrangeFox Recovery (OFRP) CI/CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      TARGET_DEVICE:
+        type: choice
+        description: "Target SM8550 Device"
+        required: true
+        default: oneplus_ace2_pro
+        options:
+          - oneplus_ace2_pro
+          - realme_gt5
+          - oneplus_11
+      OF_BRANCH:
+        type: choice
+        description: "OrangeFox Manifest Branch"
+        required: true
+        default: fox_12.1
+        options:
+          - fox_12.1
+          - fox_11.0
+      BUILD_KERNELSU:
+        type: boolean
+        description: "Integrate KernelSU / Next Addon in OrangeFox"
+        required: true
+        default: true
+
+jobs:
+  build:
+    name: "Build OrangeFox for ${{ github.event.inputs.TARGET_DEVICE || 'oneplus_ace2_pro' }}"
+    runs-on: ubuntu-22.04
+    env:
+      DEVICE: ${{ github.event.inputs.TARGET_DEVICE || 'oneplus_ace2_pro' }}
+      OF_BRANCH: ${{ github.event.inputs.OF_BRANCH || 'fox_12.1' }}
+      BUILD_KERNELSU: ${{ github.event.inputs.BUILD_KERNELSU || 'true' }}
+      CCACHE_COMPILERCHECK: "none"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_NOHARDLINK: "true"
+      CCACHE_MAXSIZE: 15G
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Free Disk Space on Runner
+        run: |
+          echo "Maximizing root disk space cleanly for OrangeFox build..."
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
+          sudo docker image prune --all --force || true
+          
+          # Setup 10GB swap on /mnt
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile || true
+          sudo fallocate -l 10G /mnt/swapfile || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=10240
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          
+          echo "Disk space after cleanup:"
+          df -h
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential bc bison flex libssl-dev libelf-dev \
+            git ccache zip unzip curl wget python3 python-is-python3 \
+            libarchive-tools zstd jq openjdk-11-jdk rsync lzop \
+            libncurses5 libncurses5-dev libxml2 libxml2-utils \
+            squashfs-tools xsltproc
+
+          # Setup Android Repo tool
+          mkdir -p ~/.bin
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
+          chmod a+x ~/.bin/repo
+          sudo ln -sf ~/.bin/repo /usr/local/bin/repo
+
+      - name: Setup Ccache Environment
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-ofox-${{ runner.os }}-${{ env.DEVICE }}-${{ env.OF_BRANCH }}
+          restore-keys: |
+            ccache-ofox-${{ runner.os }}-${{ env.DEVICE }}-
+            ccache-ofox-${{ runner.os }}-
+
+      - name: Sync OrangeFox Recovery Tree
+        run: |
+          mkdir -p ofox_workspace && cd ofox_workspace
+          git config --global user.name "buguj23"
+          git config --global user.email "buguj23@gmail.com"
+
+          echo "Initializing repo with OrangeFox (${{ env.OF_BRANCH }})..."
+          repo init -u https://gitlab.com/OrangeFox/Manifest.git \
+            -b "${{ env.OF_BRANCH }}" \
+            --depth=1 --no-clone-bundle --no-tags
+
+          repo sync -c -j$(nproc) --no-clone-bundle --no-tags --force-sync
+
+      - name: Setup SM8550 Device Trees
+        run: |
+          cd ofox_workspace
+          echo "Cloning OnePlus SM8550 recovery device trees..."
+          git clone --depth=1 https://github.com/Wishmasterflo/ofox_salami.git device/oneplus/salami
+          git clone --depth=1 https://github.com/sunmughan/android_device_oneplus_sm85xx-common.git device/oneplus/sm85xx-common
+
+          # Adapt vendorsetup.sh for target device compatibility
+          VSETUP="device/oneplus/salami/vendorsetup.sh"
+          if [ -f "$VSETUP" ]; then
+            if [ "${{ env.DEVICE }}" = "oneplus_ace2_pro" ]; then
+              echo "Customizing OrangeFox for OnePlus Ace 2 Pro (corot / PJA110)..."
+              sed -i 's/export FOX_BUILD_DEVICE=.*/export FOX_BUILD_DEVICE="OnePlus Ace 2 Pro"/' "$VSETUP"
+              sed -i 's/export FOX_TARGET_DEVICES=.*/export FOX_TARGET_DEVICES="corot, Corot, PJA110, Ace2Pro, OnePlusAce2Pro, xigua, Xigua, salami, Salami, OnePlus11"/' "$VSETUP"
+              sed -i 's/export TARGET_DEVICE_ALT=.*/export TARGET_DEVICE_ALT="corot, Corot, PJA110, Ace2Pro, OnePlusAce2Pro, xigua, Xigua, salami, Salami, OnePlus11"/' "$VSETUP"
+              sed -i 's/export OF_SCREEN_H=.*/export OF_SCREEN_H=2772/' "$VSETUP"
+            elif [ "${{ env.DEVICE }}" = "realme_gt5" ]; then
+              echo "Customizing OrangeFox for Realme GT5 (ossi / RMX3820)..."
+              sed -i 's/export FOX_BUILD_DEVICE=.*/export FOX_BUILD_DEVICE="Realme GT5"/' "$VSETUP"
+              sed -i 's/export FOX_TARGET_DEVICES=.*/export FOX_TARGET_DEVICES="ossi, Ossi, RealmeGT5, RMX3820, RE5C33, salami, Salami, OnePlus11"/' "$VSETUP"
+              sed -i 's/export TARGET_DEVICE_ALT=.*/export TARGET_DEVICE_ALT="ossi, Ossi, RealmeGT5, RMX3820, RE5C33, salami, Salami, OnePlus11"/' "$VSETUP"
+              sed -i 's/export OF_SCREEN_H=.*/export OF_SCREEN_H=2772/' "$VSETUP"
+            fi
+
+            if [ "${{ env.BUILD_KERNELSU }}" = "true" ]; then
+              echo "Enabling KernelSU Addon support in OrangeFox..."
+              sed -i 's/FOX_ENABLE_KERNELSU_SUPPORT=.*/export FOX_ENABLE_KERNELSU_SUPPORT=1/' "$VSETUP" || echo "export FOX_ENABLE_KERNELSU_SUPPORT=1" >> "$VSETUP"
+            fi
+          fi
+
+      - name: Compile OrangeFox Recovery Image
+        run: |
+          cd ofox_workspace
+          source build/envsetup.sh
+          export ALLOW_MISSING_DEPENDENCIES=true
+          export FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER=1
+          export LC_ALL="C"
+          export FOX_BUILD_TYPE="Unofficial"
+
+          # Lunch SM8550 OrangeFox profile
+          lunch ofox_salami-eng || lunch twrp_salami-eng
+
+          # Compile recovery image
+          mka recoveryimage -j$(nproc)
+
+      - name: Package & Organize Artifacts
+        run: |
+          cd ofox_workspace
+          OUT_DIR="out/target/product/salami"
+          OUTPUT_ZIP=$(find "$OUT_DIR" -maxdepth 1 -name "OrangeFox-*.zip" | head -n 1)
+          RECOVERY_IMG="$OUT_DIR/recovery.img"
+
+          mkdir -p "${{ github.workspace }}/artifacts"
+
+          if [ -f "$RECOVERY_IMG" ]; then
+            echo "Found recovery.img: $RECOVERY_IMG"
+            cp "$RECOVERY_IMG" "${{ github.workspace }}/artifacts/OrangeFox-${{ env.DEVICE }}-recovery.img"
+          fi
+
+          if [ -f "$OUTPUT_ZIP" ]; then
+            echo "Found OrangeFox flashable zip: $OUTPUT_ZIP"
+            cp "$OUTPUT_ZIP" "${{ github.workspace }}/artifacts/"
+          fi
+
+          cd "${{ github.workspace }}/artifacts"
+          sha256sum * > SHA256SUMS.txt
+          ls -la
+
+          echo "DELIVERY_NAME=OrangeFox_${{ env.DEVICE }}_$(date +%Y%m%d_%H%M%S)" >> $GITHUB_ENV
+
+      - name: Upload OrangeFox Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DELIVERY_NAME }}
+          path: artifacts/
