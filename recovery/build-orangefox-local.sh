@@ -88,6 +88,18 @@ if [ -f "${EVIDENCE_OFOX}" ]; then
         --os_patch_level 2099-12 \
         -o "${OUTPUT_IMG}"
 
+    # Sign and pad with AVB hash footer for Qualcomm SM8550 ABL
+    AVB_KEY="/home/buguj/gt5_infinity_workspace/source/external/avb/test/data/testkey_rsa4096.pem"
+    if [ -f "${AVB_KEY}" ]; then
+        avbtool add_hash_footer \
+            --image "${OUTPUT_IMG}" \
+            --partition_size 104857600 \
+            --partition_name recovery \
+            --algorithm SHA256_RSA4096 \
+            --key "${AVB_KEY}"
+        echo "[+] Applied AVB hash footer (104857600 bytes) with testkey_rsa4096"
+    fi
+
     rm -rf "${PATCH_TMP}"
     echo "================================================================================"
     echo " [SUCCESS] OrangeFox Recovery Image with GT5 Touch Fix Ready!"
