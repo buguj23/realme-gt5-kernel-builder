@@ -96,8 +96,9 @@ if [ -f "${EVIDENCE_OFOX}" ]; then
             --partition_size 104857600 \
             --partition_name recovery \
             --algorithm SHA256_RSA4096 \
-            --key "${AVB_KEY}"
-        echo "[+] Applied AVB hash footer (104857600 bytes) with testkey_rsa4096"
+            --key "${AVB_KEY}" \
+            --rollback_index 1788220800
+        echo "[+] Applied AVB hash footer (104857600 bytes) with testkey_rsa4096 and rollback_index 1788220800"
     fi
 
     rm -rf "${PATCH_TMP}"
