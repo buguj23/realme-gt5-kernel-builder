@@ -1,0 +1,68 @@
+{
+  "74": {
+    "branch": "5.15.74",
+    "coloros": "13.1.1.148",
+    "linux": "5.15.74-android13-8-o-00602-g112553b34a64",
+    "file": "oneplus_11_t",
+    "android": "13",
+    "api": 33,
+    "os_patch_level": "2023-10",
+    "kmi": "android13-5.15",
+    "vermagic": "5.15.74-android13-8-o-00602-g112553b34a64 SMP preempt mod_unload modversions aarch64"
+  },
+  "94": {
+    "branch": "5.15.94",
+    "coloros": "14.0.0.211",
+    "linux": "5.15.94-android13-8-o-00718-gdd3c2549102f",
+    "file": "oneplus_11_u",
+    "android": "14",
+    "api": 34,
+    "os_patch_level": "2024-02",
+    "kmi": "android13-5.15",
+    "vermagic": "5.15.94-android13-8-o-00718-gdd3c2549102f SMP preempt mod_unload modversions aarch64"
+  },
+  "123": {
+    "branch": "5.15.123",
+    "coloros": "14.0.0.1120",
+    "linux": "5.15.123-android13-8-00760-ga4e8787d5799",
+    "file": "oneplus_11_u",
+    "android": "14",
+    "api": 34,
+    "os_patch_level": "2024-10",
+    "kmi": "android13-5.15",
+    "vermagic": "5.15.123-android13-8-00760-ga4e8787d5799 SMP preempt mod_unload modversions aarch64"
+  },
+  "149": {
+    "branch": "5.15.149",
+    "coloros": "15.0.0.320",
+    "linux": "5.15.149-android13-8-o-01120-g3337bebe8205",
+    "file": "oneplus_ace2_pro_v",
+    "android": "15",
+    "api": 35,
+    "os_patch_level": "2024-11",
+    "kmi": "android13-5.15",
+    "vermagic": "5.15.149-android13-8-o-01120-g3337bebe8205 SMP preempt mod_unload modversions aarch64"
+  },
+  "167": {
+    "branch": "5.15.167",
+    "coloros": "15.0.0.1400",
+    "linux": "5.15.167-android13-8-o-01142-g18bd462653c5",
+    "file": "oneplus_ace2_pro_v",
+    "android": "15",
+    "api": 35,
+    "os_patch_level": "2025-09",
+    "kmi": "android13-5.15",
+    "vermagic": "5.15.167-android13-8-o-01142-g18bd462653c5 SMP preempt mod_unload modversions aarch64"
+  },
+  "180": {
+    "branch": "5.15.180",
+    "coloros": "16.0.2.402",
+    "linux": "5.15.180-android13-8-o-01173-g24db146997d1",
+    "file": "oneplus_ace2_pro_b",
+    "android": "16",
+    "api": 36,
+    "os_patch_level": "2025-12",
+    "kmi": "android13-5.15",
+    "vermagic": "5.15.180-android13-8-o-01173-g24db146997d1 SMP preempt mod_unload modversions aarch64"
+  }
+}

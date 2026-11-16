@@ -11,6 +11,7 @@ out/artifacts/*
 *.img
 *.zip
 !ZRAM.zip
+official/stock/
 
 # Python caches
 __pycache__/

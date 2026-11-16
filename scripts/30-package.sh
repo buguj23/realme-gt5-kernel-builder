@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # 30-package.sh — AnyKernel3 from OEM OGKI Image + YukiSU kernelsu.ko.
+# Official GT5 boot is v4 kernel-only, os_version 13.0.0 (see official/catalog.json).
 set -euo pipefail
 
 REPO_DIR=$(cd "$(dirname "$0")/.." && pwd)
