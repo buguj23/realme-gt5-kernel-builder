@@ -5,7 +5,7 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string=Realme GT5 (SM8550) YukiSU + Kasumi Stealth Kernel [Local Master Edition]
+kernel.string=Realme GT5 (SM8550) Action-Build OGKI 5.15 + YukiSU LKM
 do.devicecheck=0
 do.modules=0
 do.systemless=0
@@ -33,9 +33,9 @@ sync
 chmod -R 755 $AKHOME/tools
 
 ui_print "=========================================="
-ui_print " Realme GT5 (SM8550) Master Kernel"
-ui_print " Linux 5.15.200 GKI + YukiSU LKM + Kasumi"
-ui_print " Target: Slot A / Active Slot Safe Mode"
+ui_print " Realme GT5 (SM8550) Action-Build OGKI 5.15"
+ui_print " YukiSU LKM + Kasumi (CONFIG_KSU=m, no Google GKI)"
+ui_print " Analogue: OnePlus Ace2 Pro / OnePlus 11 kalama"
 ui_print "=========================================="
 
 split_boot

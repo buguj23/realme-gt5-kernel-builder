@@ -1,3 +1,8 @@
+# SUPERSEDED
+# 构建上游已切到 Action-Build OEM OGKI（一加/OPPO SM8550 5.15 analogue）+ YukiSU LKM。
+# 禁止 Google 通用 GKI 与 `himanshusaini010` common。见 `docs/UPSTREAM.md`。
+# 下文保留为 ROM 混刷/CRC 事故档案。
+
 # 兼容性结论与缺失清单
 
 ## 1. 为什么 ROM 现有模块不能直接复用
