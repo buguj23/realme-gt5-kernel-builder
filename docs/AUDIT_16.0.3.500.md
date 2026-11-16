@@ -73,8 +73,10 @@ Build #8 死在 modpost，6 个符号 `undefined`。在官方内核符号表里�
 
 因此：**只刷 boot Image 而不提供同源 `zram.ko`/`zsmalloc.ko`**，stock 模块会因 vermagic/CRC 不符返回 EINVAL（不是 EEXIST），第一阶段判失败。两条可行路线：
 
-- ROM 构建：`system_dlkm` 与内核同树同编，天然一致（推荐；本仓库 `device.mk` 已把 `kernelsu.ko` 放进 `vendor_dlkm/lib/modules/`）。
+- ROM 构建：`system_dlkm` 与内核同树同编，天然一致（推荐）。
 - 仅刷内核（AnyKernel3）：必须同时处理 `vendor_boot` 的 `modules.load`，或改用与 ROM 同源的 `system_dlkm`；否则有 boot loop 风险。
+
+`kernelsu.ko` 不走这条路：`ksud` late-load 依次取内嵌资源、`/data/adb/ksu/kernelsu.ko`、`/data/adb/ksu/bin/kernelsu.ko`、`/data/local/tmp/kernelsu.ko`（`userspace/ksud/src/late_load.cpp`），boot patch 场景才会把它塞进 ramdisk。此前 `device.mk` 里 `vendor_dlkm/lib/modules/kernelsu.ko` 的拷贝、对应 sepolicy 标签、以及 `write /sys/module/kernelsu/parameters/enable 1`（YukiSU 无该参数）都不在任何加载路径上，已删除。
 
 ## 5. ROM ELF 清点（odm + vendor）
 
