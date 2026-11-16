@@ -10,12 +10,14 @@ TARGET_SCREEN_WIDTH := 1240
 
 PRODUCT_SHIPPING_API_LEVEL := 36
 
-# fstab: ext4 metadata (stock). Copied into vendor_ramdisk AND vendor.
+# Official first-stage init (IDA ReadDefaultFstab): hardware=qcom → fstab.qcom.
 PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_VENDOR_RAMDISK)/first_stage_ramdisk/fstab.qcom \
+    $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.qcom \
+    $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/fstab.qcom \
+    $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_VENDOR_RAMDISK)/fstab.qcom \
     $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_VENDOR_RAMDISK)/first_stage_ramdisk/fstab.default \
-    $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.default \
-    $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/fstab.default \
-    $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_VENDOR_RAMDISK)/fstab.default
+    $(DEVICE_PATH)/fstab.default:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.default
 
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init.ossi.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.ossi.rc
