@@ -15,3 +15,12 @@ ROM：LineageOS **salami + sm8550-common**（Ace2 Pro 同 kalama / 2772×1240）
 ```bash
 git clone -b 5.15.180 https://github.com/buguj23/realme-gt5-kernel-builder.git
 ```
+
+## OrangeFox（OGKI 对齐）
+
+| 分支 | 内核 | ColorOS | fox_ |
+|---|---|---|---|
+| `OrangeFox-5.15.123` | 5.15.123 | 14.0.0.1120 | 14.1 |
+| `OrangeFox-5.15.149` | 5.15.149 | 15.0.0.320 | 14.1 |
+| `OrangeFox-5.15.167` | 5.15.167 | 15.0.0.1400 | 14.1 |
+| `OrangeFox-5.15.180` | 5.15.180 | 16.0.2.402 | 16.0 |
