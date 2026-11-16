@@ -4,8 +4,8 @@ on early-init
 on post-fs-data
     mkdir /data/adb 0700 system system
     mkdir /data/adb/ksu 0700 system system
-    # YukiSU LKM is packaged in vendor_dlkm as kernelsu.ko (CONFIG_KSU=m).
-    # Loading is performed by ksud / first-stage, not by a Google GKI overlay.
-
-on property:sys.boot_completed=1
-    write /sys/module/kernelsu/parameters/enable 1
+    # YukiSU LKM (CONFIG_KSU=m) is loaded by ksud late-load, which looks for
+    # <kmi>_kernelsu.ko in its embedded assets, then /data/adb/ksu/kernelsu.ko,
+    # /data/adb/ksu/bin/kernelsu.ko, /data/local/tmp/kernelsu.ko (late_load.cpp).
+    # AnyKernel3 drops it at /data/adb/ksu/. init does not load it: modules.load
+    # lives in the vendor_boot ramdisk and lists only system_dlkm zram/zsmalloc.

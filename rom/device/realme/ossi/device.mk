@@ -22,12 +22,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init.ossi.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.ossi.rc
 
-# YukiSU LKM next to first-stage modules when present
-ifneq ($(wildcard $(DEVICE_PATH)/prebuilt/kernelsu.ko),)
-PRODUCT_COPY_FILES += \
-    $(DEVICE_PATH)/prebuilt/kernelsu.ko:$(TARGET_COPY_OUT_VENDOR_DLKM)/lib/modules/kernelsu.ko
-endif
-
 DEVICE_PACKAGE_OVERLAYS += $(DEVICE_PATH)/overlay
 
 PRODUCT_PACKAGES += \
