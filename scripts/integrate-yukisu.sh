@@ -103,51 +103,31 @@ exp() {
     grep -q "EXPORT_SYMBOL_GPL($s)" "$COMMON/$f" || printf 'EXPORT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
   done
 }
-# Tracepoints are not EXPORT_SYMBOL'ed by name: the kernel idiom is
-# EXPORT_TRACEPOINT_SYMBOL_GPL(<event>), which expands to
-# EXPORT_SYMBOL_GPL(__tracepoint_<event>). The macro only compiles in the single
-# translation unit that defines CREATE_TRACE_POINTS and includes the event header,
-# and that unit differs between OEM trees (5.15.123 keeps it in
-# kernel/entry/common.c, other trees elsewhere). So locate it by header instead of
-# hardcoding a path, and treat either export spelling as already done.
-tp_site() {
-  local hdr=$1 f c
-  # Canonical instantiation sites first. Searching the whole tree by "includes the
-  # header + CREATE_TRACE_POINTS" is not enough: alphabetical order picks
-  # drivers/net/ethernet/freescale/dpaa/dpaa_eth.c for trace/events/sched.h and
-  # arch/arm/kernel/ptrace.c for trace/events/syscalls.h, neither of which is
-  # compiled for arm64, so the export lands nowhere.
-  case "$hdr" in
-    *sched.h)    set -- kernel/sched/core.c ;;
-    *syscalls.h) set -- kernel/entry/common.c kernel/trace/trace_syscalls.c ;;
-    *)           set -- ;;
-  esac
-  for c in "$@"; do
-    [ -f "$COMMON/$c" ] || continue
-    grep -q "$hdr" "$COMMON/$c" || continue
-    echo "$c"
-    return 0
-  done
-  # Fallback stays inside the core kernel tree, which is what arm64 builds.
-  for f in $(grep -rl 'CREATE_TRACE_POINTS' --include='*.c' "$COMMON/kernel" 2>/dev/null | sort); do
-    grep -q "$hdr" "$f" || continue
-    echo "${f#"$COMMON"/}"
-    return 0
-  done
-  return 0
-}
+# Tracepoints are exported as __tracepoint_<event>. EXPORT_TRACEPOINT_SYMBOL_GPL()
+# is the same thing but, being a macro over an undeclared identifier, only compiles
+# where the event is instantiated. Using the plain EXPORT_SYMBOL_GPL form with an
+# explicit extern removes that constraint; either spelling counts as already done.
 exptp() {
-  local f=$1; shift
-  [ -n "$f" ] && [ -f "$COMMON/$f" ] || { echo "exptp: no instantiation site for $*" >&2; return 0; }
+  local s f
+  # EXPORT_SYMBOL_GPL only needs the symbol's address, not a same-TU definition, so
+  # the export does not have to live where the tracepoint is instantiated. That
+  # matters here: kernel/entry/common.c holds CREATE_TRACE_POINTS for
+  # trace/events/syscalls.h yet arm64 does not compile it, so appending there
+  # produced a line that compiled and exported nothing (modpost still reported
+  # __tracepoint_sys_enter undefined). Emit an extern plus the export into a file
+  # that is always part of the arm64 kernel and already exports tracepoints.
+  f=${EXPORT_TP_FILE:-kernel/sched/core.c}
+  [ -f "$COMMON/$f" ] || { echo "exptp: $f missing" >&2; return 0; }
   for s in "$@"; do
     if grep -rqE "EXPORT_(TRACEPOINT_)?SYMBOL(_GPL)?\(\s*(__tracepoint_)?$s\s*\)" --include='*.c' "$COMMON" 2>/dev/null; then
       echo "exptp: $s already exported"
       continue
     fi
-    if ! grep -qE "EXPORT_(TRACEPOINT_)?SYMBOL_GPL\(\s*(__tracepoint_)?$s\s*\)" "$COMMON/$f"; then
-      printf 'EXPORT_TRACEPOINT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
-      echo "exptp: $s -> $f"
-    fi
+    {
+      printf 'extern struct tracepoint __tracepoint_%s;\n' "$s"
+      printf 'EXPORT_SYMBOL_GPL(__tracepoint_%s);\n' "$s"
+    } >> "$COMMON/$f"
+    echo "exptp: $s -> $f (extern + export)"
   done
 }
 exp security/selinux/avc.c avc_ss_reset avc_has_perm
@@ -188,11 +168,11 @@ exp kernel/task_work.c task_work_cancel_match
 exp kernel/audit.c audit_log_n_untrustedstring
 exp security/commoncap.c cap_capable
 exp security/selinux/ss/services.c security_validate_transition
-exptp "$(tp_site trace/events/sched.h)" sched_process_free sched_process_fork
+exptp sched_process_free sched_process_fork
 # 5.15.123 in the OnePlusOSS tree exports sys_exit but not sys_enter, and modpost
 # rejects kernelsu.ko on exactly that symbol. Locating the site by header keeps
 # this correct for trees that instantiate syscall tracepoints elsewhere.
-exptp "$(tp_site trace/events/syscalls.h)" sys_enter
+exptp sys_enter
 for pair in "fs/open.c __arm64_sys_close" "kernel/nsproxy.c __arm64_sys_setns" "kernel/fork.c __arm64_sys_unshare"; do
   set -- $pair
   [ -f "$COMMON/$1" ] || continue
