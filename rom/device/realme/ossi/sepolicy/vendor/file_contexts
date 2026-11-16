@@ -1,0 +1,3 @@
+/data/adb(/.*)?    u:object_r:adb_data_file:s0
+/data/adb/ksu(/.*)?    u:object_r:adb_data_file:s0
+/vendor_dlkm/lib/modules/kernelsu\.ko    u:object_r:vendor_file:s0

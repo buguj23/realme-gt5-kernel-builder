@@ -1,0 +1,3 @@
+# Populate from a Realme GT5 (RMX3820) dump whose Android version matches kernel.json.
+# vendor/lib64/hw/*
+# odm/etc/*

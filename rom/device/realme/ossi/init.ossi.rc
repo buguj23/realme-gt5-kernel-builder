@@ -1,0 +1,11 @@
+on early-init
+    write /proc/sys/kernel/sched_tunable_scaling 0
+
+on post-fs-data
+    mkdir /data/adb 0700 system system
+    mkdir /data/adb/ksu 0700 system system
+    # YukiSU LKM is packaged in vendor_dlkm as kernelsu.ko (CONFIG_KSU=m).
+    # Loading is performed by ksud / first-stage, not by a Google GKI overlay.
+
+on property:sys.boot_completed=1
+    write /sys/module/kernelsu/parameters/enable 1

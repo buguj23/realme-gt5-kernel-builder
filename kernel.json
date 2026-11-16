@@ -1,0 +1,15 @@
+{
+  "codename": "ossi",
+  "model": "RMX3820",
+  "board": "RE5C33",
+  "soc": "sm8550",
+  "cpud": "kalama",
+  "file": "oneplus_ace2_pro_b",
+  "android": "16",
+  "api": 36,
+  "kmi": "android13-5.15",
+  "build_method": "gki",
+  "build_method_meaning": "OEM OGKI flavor of oplus_build_kernel.sh, NOT Google generic GKI",
+  "root": "YukiSU LKM CONFIG_KSU=m + Kasumi + YukiZygisk",
+  "metadata_fs": "ext4"
+}

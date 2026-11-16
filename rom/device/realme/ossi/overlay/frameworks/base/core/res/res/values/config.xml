@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_supportDoubleTapWake">true</bool>
+    <integer name="config_udfps_vendor">1</integer>
+</resources>
