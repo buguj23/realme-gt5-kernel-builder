@@ -111,15 +111,21 @@ exp() {
 # kernel/entry/common.c, other trees elsewhere). So locate it by header instead of
 # hardcoding a path, and treat either export spelling as already done.
 tp_site() {
-  local hdr=$1 f
+  local hdr=$1 f first=""
   for f in $(grep -rl 'CREATE_TRACE_POINTS' --include='*.c' \
         --exclude-dir=tools --exclude-dir=samples --exclude-dir=Documentation \
         --exclude-dir=scripts --exclude-dir=selftests \
         "$COMMON" 2>/dev/null | sort); do
     grep -q "$hdr" "$f" || continue
-    echo "${f#"$COMMON"/}"
-    return 0
+    # A file that already carries EXPORT_TRACEPOINT_SYMBOL is proven to be linked
+    # into vmlinux and to own instantiations; prefer it over a plain header match.
+    if grep -q 'EXPORT_TRACEPOINT_SYMBOL' "$f"; then
+      echo "${f#"$COMMON"/}"
+      return 0
+    fi
+    [ -n "$first" ] || first="${f#"$COMMON"/}"
   done
+  [ -n "$first" ] && echo "$first"
   return 0
 }
 exptp() {
