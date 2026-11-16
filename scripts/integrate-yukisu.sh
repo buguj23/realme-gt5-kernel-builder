@@ -28,6 +28,18 @@ DST=$COMMON/drivers/kernelsu
 rm -rf "$DST"
 mkdir -p "$DST"
 cp -a "$WORK/YukiSU/kernel/." "$DST/"
+
+# Upstream YukiSU kasumi calls cancel_work(), which exists in no Linux kernel.
+# 5.15 has cancel_work_sync() (same bool return) and the neighbouring code in
+# the same files already uses it. Rewrite, then prove it before a 40-min build.
+while IFS= read -r -d '' f; do
+  sed -i -E 's/\bcancel_work\(/cancel_work_sync(/g' "$f"
+done < <(grep -rlZ --include='*.c' 'cancel_work(' "$DST" || true)
+if grep -rqE '\bcancel_work\(' --include='*.c' "$DST"; then
+  echo "YukiSU sources still call non-existent cancel_work()" >&2
+  exit 1
+fi
+
 rm -rf "$DST/include/uapi"
 mkdir -p "$DST/include"
 cp -a "$WORK/YukiSU/uapi" "$DST/include/uapi"

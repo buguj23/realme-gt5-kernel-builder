@@ -629,6 +629,11 @@ jobs:
         run: |
           bash "$GITHUB_WORKSPACE/scripts/integrate-yukisu.sh" \
             "$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common"
+          # Gate on APIs 5.15 lacks instead of discovering it 40 minutes later.
+          if grep -rqE '\bcancel_work\(' --include='*.c' \
+              "$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common/drivers/kernelsu"; then
+            echo "::error::kasumi still calls cancel_work()"; exit 1
+          fi
           echo "KSU_MANAGER_BRANCH=main" >> $GITHUB_ENV
           echo "KSUVER=YukiSU-$(date +%Y%m%d)" >> $GITHUB_ENV
 

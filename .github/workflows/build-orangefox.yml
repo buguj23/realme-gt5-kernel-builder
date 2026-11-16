@@ -45,17 +45,21 @@ jobs:
           ref: OrangeFox-${{ github.event.inputs.KERNEL }}
           path: ofox-branch
 
-      - name: Free Disk Space
+      - name: Maximize Build Space
+        env:
+          ROOT_RESERVE_MB: '8192'
+          TEMP_RESERVE_MB: '2048'
+          BUILD_MOUNT_PATH: '/mnt/ofox_workspace'
+          MOUNT_OWNERSHIP: 'runner:runner'
+          REMOVE_DOTNET: 'true'
+          REMOVE_ANDROID: 'true'
+          REMOVE_HASKELL: 'true'
+          REMOVE_CODEQL: 'true'
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache || true
-          sudo docker system prune -a -f --volumes || true
-          sudo swapoff -a || true
-          sudo rm -f /mnt/swapfile || true
-          sudo fallocate -l 12G /mnt/swapfile || true
-          sudo chmod 600 /mnt/swapfile && sudo mkswap /mnt/swapfile && sudo swapon /mnt/swapfile || true
-          sudo mkdir -p /mnt/ofox_workspace
-          sudo chown -R runner:runner /mnt/ofox_workspace
+          # A full fox_14.1/16.0 sync needs far more than the runner's ~14G /mnt.
+          bash scripts/maximize-build-space.sh
           ln -sfn /mnt/ofox_workspace "${{ github.workspace }}/ofox_workspace"
+          df -h /mnt/ofox_workspace
 
       - name: Install Dependencies
         run: |
