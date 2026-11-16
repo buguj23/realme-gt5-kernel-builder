@@ -34,13 +34,13 @@
   },
   "180": {
     "branch": "5.15.180",
-    "coloros": "16.0.2.402",
-    "linux": "5.15.180-android13-8-o-01173-g24db146997d1",
+    "coloros": "16.0.3.500",
+    "linux": "5.15.180-android13-8-o-01176-g6333b0dbc8ed",
     "file": "oneplus_ace2_pro_b",
     "android": "16",
     "api": 36,
-    "os_patch_level": "2025-12",
+    "os_patch_level": "2026-02",
     "kmi": "android13-5.15",
-    "vermagic": "5.15.180-android13-8-o-01173-g24db146997d1 SMP preempt mod_unload modversions aarch64"
+    "vermagic": "5.15.180-android13-8-o-01176-g6333b0dbc8ed SMP preempt mod_unload modversions aarch64"
   }
 }
