@@ -1,217 +1,111 @@
 name: OrangeFox Recovery (OFRP) CI/CD
 
 on:
-  push:
-    paths:
-      - '.github/workflows/build-orangefox.yml'
   workflow_dispatch:
     inputs:
-      TARGET_DEVICE:
+      KERNEL:
         type: choice
-        description: "Target SM8550 Device"
+        description: "真我 GT5 (RMX3820 / ossi) OGKI 内核 → fox 版本"
         required: true
-        default: oneplus_ace2_pro
+        default: "5.15.180"
         options:
-          - oneplus_ace2_pro
-          - realme_gt5
-          - oneplus_11
-      OF_BRANCH:
-        type: choice
-        description: "OrangeFox Manifest Branch"
-        required: true
-        default: "12.1"
-        options:
-          - "12.1"
-          - "14.1"
-          - "16.0"
-      BUILD_KERNELSU:
-        type: boolean
-        description: "Integrate KernelSU / Next Addon in OrangeFox"
-        required: true
-        default: true
+          - "5.15.180"
+          - "5.15.167"
+          - "5.15.149"
+          - "5.15.123"
 
 jobs:
   build:
-    name: "Build OrangeFox for ${{ github.event.inputs.TARGET_DEVICE || 'oneplus_ace2_pro' }}"
+    name: OrangeFox GT5 ossi ${{ github.event.inputs.KERNEL }}
     runs-on: ubuntu-22.04
     env:
-      DEVICE: ${{ github.event.inputs.TARGET_DEVICE || 'oneplus_ace2_pro' }}
-      OF_BRANCH: ${{ github.event.inputs.OF_BRANCH || '12.1' }}
-      BUILD_KERNELSU: ${{ github.event.inputs.BUILD_KERNELSU || 'true' }}
+      KERNEL: ${{ github.event.inputs.KERNEL }}
       CCACHE_COMPILERCHECK: "none"
       CCACHE_NOHASHDIR: "true"
       CCACHE_NOHARDLINK: "true"
       CCACHE_MAXSIZE: 15G
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Free Disk Space on Runner
+      - name: Map kernel → fox / ColorOS
         run: |
-          echo "Maximizing root and mount disk space aggressively for OrangeFox build..."
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/share/swift
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          case "$KERNEL" in
+            5.15.180) echo "OF_BRANCH=16.0" >> $GITHUB_ENV; echo "ANDROID=16" >> $GITHUB_ENV; echo "COLOROS=16.0.3.500" >> $GITHUB_ENV ;;
+            5.15.167) echo "OF_BRANCH=14.1" >> $GITHUB_ENV; echo "ANDROID=15" >> $GITHUB_ENV; echo "COLOROS=15.0.0.1400" >> $GITHUB_ENV ;;
+            5.15.149) echo "OF_BRANCH=14.1" >> $GITHUB_ENV; echo "ANDROID=15" >> $GITHUB_ENV; echo "COLOROS=15.0.0.320" >> $GITHUB_ENV ;;
+            5.15.123) echo "OF_BRANCH=14.1" >> $GITHUB_ENV; echo "ANDROID=14" >> $GITHUB_ENV; echo "COLOROS=14.0.0.1120" >> $GITHUB_ENV ;;
+          esac
+          echo "DEVICE=ossi"
+          echo "MODEL=RMX3820"
+
+      - name: Checkout matching OrangeFox device tree
+        uses: actions/checkout@v4
+        with:
+          ref: OrangeFox-${{ github.event.inputs.KERNEL }}
+          path: ofox-branch
+
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache || true
           sudo docker system prune -a -f --volumes || true
-          
-          # Setup 12GB swap on /mnt SSD
           sudo swapoff -a || true
           sudo rm -f /mnt/swapfile || true
-          sudo fallocate -l 12G /mnt/swapfile || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=12288
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
-
-          # Prepare /mnt workspace for huge tree sync
+          sudo fallocate -l 12G /mnt/swapfile || true
+          sudo chmod 600 /mnt/swapfile && sudo mkswap /mnt/swapfile && sudo swapon /mnt/swapfile || true
           sudo mkdir -p /mnt/ofox_workspace
           sudo chown -R runner:runner /mnt/ofox_workspace
-          ln -sf /mnt/ofox_workspace ${{ github.workspace }}/ofox_workspace
-          
-          echo "Disk space after cleanup:"
-          df -h
+          ln -sfn /mnt/ofox_workspace "${{ github.workspace }}/ofox_workspace"
 
-      - name: Install Build Dependencies
+      - name: Install Dependencies
         run: |
-          # Configure resilient DNS fallbacks to prevent intermittent cloud resolution issues
-          echo "nameserver 1.1.1.1" | sudo tee -a /etc/resolv.conf
-          echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential bc bison flex libssl-dev libelf-dev \
+            git ccache zip unzip curl wget python3 python-is-python3 \
+            libarchive-tools zstd jq openjdk-11-jdk rsync lzop \
+            libncurses5 libncurses5-dev libxml2 libxml2-utils \
+            squashfs-tools xsltproc patch
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo > /tmp/repo
+          sudo install -m 0755 /tmp/repo /usr/local/bin/repo
 
-          sudo apt-get clean
-          for i in 1 2 3 4 5; do
-            sudo apt-get update && break || { echo "Retrying apt-get update ($i)..."; sleep 5; }
-          done
-
-          for i in 1 2 3 4 5; do
-            sudo apt-get install -y --fix-missing --no-install-recommends \
-              build-essential bc bison flex libssl-dev libelf-dev \
-              git ccache zip unzip curl wget python3 python-is-python3 \
-              libarchive-tools zstd jq openjdk-11-jdk rsync lzop \
-              libncurses5 libncurses5-dev libxml2 libxml2-utils \
-              squashfs-tools xsltproc patch && break || { echo "Retrying apt-get install ($i)..."; sleep 10; }
-          done
-
-          # Setup Android Repo tool
-          mkdir -p ~/.bin
-          curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/.bin/repo
-          chmod a+x ~/.bin/repo
-          sudo ln -sf ~/.bin/repo /usr/local/bin/repo
-
-      - name: Setup Ccache Environment
-        uses: actions/cache@v4
-        with:
-          path: ~/.ccache
-          key: ccache-ofox-${{ runner.os }}-${{ env.DEVICE }}-${{ env.OF_BRANCH }}
-          restore-keys: |
-            ccache-ofox-${{ runner.os }}-${{ env.DEVICE }}-
-            ccache-ofox-${{ runner.os }}-
-
-      - name: Sync OrangeFox Recovery Tree
+      - name: Sync OrangeFox fox_${{ env.OF_BRANCH }}
         run: |
           git config --global user.name "buguj23"
-          git config --global user.email "buguj23@gmail.com"
-          git config --global --add safe.directory "*"
-
-          echo "Cloning OrangeFox official sync tool..."
+          git config --global user.email "buguj23@users.noreply.github.com"
           git clone --depth=1 https://gitlab.com/OrangeFox/sync.git sync-tools
           chmod a+x sync-tools/orangefox_sync.sh
-
-          BRANCH_NUM=$(echo "${{ env.OF_BRANCH }}" | sed 's/^fox_//')
-          echo "Initializing and syncing OrangeFox recovery tree (branch $BRANCH_NUM)..."
-          cd sync-tools
-          ./orangefox_sync.sh --branch "$BRANCH_NUM" --path "/mnt/ofox_workspace"
-
+          ./sync-tools/orangefox_sync.sh --branch "$OF_BRANCH" --path /mnt/ofox_workspace
           cd /mnt/ofox_workspace
-          if [ ! -d bootable/recovery/gui/theme ]; then
-            echo "Fetching OrangeFox recovery GUI theme..."
-            git clone https://gitlab.com/OrangeFox/misc/theme.git bootable/recovery/gui/theme || true
-          fi
-          if [ ! -d external/nano ]; then
-            echo "Fetching external nano dependency..."
-            git clone --depth=1 https://github.com/LineageOS/android_external_nano -b lineage-19.1 external/nano || true
-          fi
-          if [ ! -d external/bash ]; then
-            echo "Fetching external bash dependency..."
-            git clone --depth=1 https://github.com/LineageOS/android_external_bash -b lineage-19.1 external/bash || true
-          fi
+          test -d bootable/recovery/gui/theme || git clone https://gitlab.com/OrangeFox/misc/theme.git bootable/recovery/gui/theme || true
 
-      - name: Setup SM8550 Device Trees
+      - name: Install GT5 ossi device tree
         run: |
-          cd ofox_workspace
-          echo "Cloning OnePlus SM8550 recovery device trees..."
-          git clone --depth=1 https://github.com/Wishmasterflo/ofox_salami.git device/oneplus/salami
-          git clone --depth=1 https://github.com/sunmughan/android_device_oneplus_sm85xx-common.git device/oneplus/sm85xx-common
+          mkdir -p ofox_workspace/device/realme ofox_workspace/device/oneplus
+          TREE=ofox-branch/recovery/device/realme/ossi
+          test -d "$TREE"
+          cp -a "$TREE" ofox_workspace/device/realme/ossi
+          git clone --depth=1 https://github.com/sunmughan/android_device_oneplus_sm85xx-common.git \
+            ofox_workspace/device/oneplus/sm85xx-common
+          echo "ossi tree ready kernel=$KERNEL fox=$OF_BRANCH android=$ANDROID coloros=$COLOROS"
 
-          # Adapt vendorsetup.sh for target device compatibility
-          VSETUP="device/oneplus/salami/vendorsetup.sh"
-          if [ -f "$VSETUP" ]; then
-            if [ "${{ env.DEVICE }}" = "oneplus_ace2_pro" ]; then
-              echo "Customizing OrangeFox for OnePlus Ace 2 Pro (corot / PJA110)..."
-              sed -i 's/export FOX_BUILD_DEVICE=.*/export FOX_BUILD_DEVICE="OnePlus Ace 2 Pro"/' "$VSETUP"
-              sed -i 's/export FOX_TARGET_DEVICES=.*/export FOX_TARGET_DEVICES="corot, Corot, PJA110, Ace2Pro, OnePlusAce2Pro, xigua, Xigua, salami, Salami, OnePlus11"/' "$VSETUP"
-              sed -i 's/export TARGET_DEVICE_ALT=.*/export TARGET_DEVICE_ALT="corot, Corot, PJA110, Ace2Pro, OnePlusAce2Pro, xigua, Xigua, salami, Salami, OnePlus11"/' "$VSETUP"
-              sed -i 's/export OF_SCREEN_H=.*/export OF_SCREEN_H=2772/' "$VSETUP"
-            elif [ "${{ env.DEVICE }}" = "realme_gt5" ]; then
-              echo "Customizing OrangeFox for Realme GT5 (ossi / RMX3820)..."
-              sed -i 's/export FOX_BUILD_DEVICE=.*/export FOX_BUILD_DEVICE="Realme GT5"/' "$VSETUP"
-              sed -i 's/export FOX_TARGET_DEVICES=.*/export FOX_TARGET_DEVICES="ossi, Ossi, RealmeGT5, RMX3820, RE5C33, salami, Salami, OnePlus11"/' "$VSETUP"
-              sed -i 's/export TARGET_DEVICE_ALT=.*/export TARGET_DEVICE_ALT="ossi, Ossi, RealmeGT5, RMX3820, RE5C33, salami, Salami, OnePlus11"/' "$VSETUP"
-              sed -i 's/export OF_SCREEN_H=.*/export OF_SCREEN_H=2772/' "$VSETUP"
-            fi
-
-            if [ "${{ env.BUILD_KERNELSU }}" = "true" ]; then
-              echo "Enabling KernelSU Addon support in OrangeFox..."
-              sed -i 's/FOX_ENABLE_KERNELSU_SUPPORT=.*/export FOX_ENABLE_KERNELSU_SUPPORT=1/' "$VSETUP" || echo "export FOX_ENABLE_KERNELSU_SUPPORT=1" >> "$VSETUP"
-            fi
-          fi
-
-      - name: Compile OrangeFox Recovery Image
+      - name: Build recoveryimage
         run: |
           cd ofox_workspace
           set +e
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           export FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER=1
-          export LC_ALL="C"
-          export FOX_BUILD_TYPE="Unofficial"
-
-          # Lunch SM8550 OrangeFox profile
-          lunch ofox_salami-eng || lunch twrp_salami-eng
+          export LC_ALL=C
+          export FOX_BUILD_TYPE=Unofficial
+          lunch ofox_ossi-eng || lunch twrp_ossi-eng
           set -e
+          mka recoveryimage -j"$(nproc)" || mka adbd recoveryimage -j"$(nproc)"
 
-          # Compile recovery image
-          mka recoveryimage -j$(nproc) || mka adbd recoveryimage -j$(nproc)
-
-      - name: Package & Organize Artifacts
-        run: |
-          cd ofox_workspace
-          OUT_DIR="out/target/product/salami"
-          OUTPUT_ZIP=$(find "$OUT_DIR" -maxdepth 1 -name "OrangeFox-*.zip" | head -n 1)
-          RECOVERY_IMG="$OUT_DIR/recovery.img"
-
-          mkdir -p "${{ github.workspace }}/artifacts"
-
-          if [ -f "$RECOVERY_IMG" ]; then
-            echo "Found recovery.img: $RECOVERY_IMG"
-            cp "$RECOVERY_IMG" "${{ github.workspace }}/artifacts/OrangeFox-${{ env.DEVICE }}-recovery.img"
-          fi
-
-          if [ -f "$OUTPUT_ZIP" ]; then
-            echo "Found OrangeFox flashable zip: $OUTPUT_ZIP"
-            cp "$OUTPUT_ZIP" "${{ github.workspace }}/artifacts/"
-          fi
-
-          cd "${{ github.workspace }}/artifacts"
-          sha256sum * > SHA256SUMS.txt
-          ls -la
-
-          echo "DELIVERY_NAME=OrangeFox_${{ env.DEVICE }}_$(date +%Y%m%d_%H%M%S)" >> $GITHUB_ENV
-
-      - name: Upload OrangeFox Artifacts
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.DELIVERY_NAME }}
-          path: artifacts/
+          name: OrangeFox-GT5-ossi-${{ github.event.inputs.KERNEL }}
+          path: |
+            ofox_workspace/out/target/product/ossi/*.img
+            ofox_workspace/out/target/product/ossi/OrangeFox-*.zip

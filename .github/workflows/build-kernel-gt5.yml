@@ -137,7 +137,7 @@ jobs:
       CCACHE_MAXSIZE: 5G
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Maximize Build Space
         if: ${{ github.event.inputs.SPACE_NOCLEAN == 'false' }}
@@ -150,13 +150,17 @@ jobs:
           REMOVE_CODEQL: 'true'
         run: bash scripts/maximize-build-space.sh
 
+      - name: Re-checkout after LVM remount
+        uses: actions/checkout@v4
+
       - name: Configure Git
         run: |
           git config --global user.name "buguj23"
           git config --global user.email "buguj23@users.noreply.github.com"
-          mkdir kernel_workspace && cd kernel_workspace
-          echo "Action-Build OGKI 5.15 + YukiSU (no Google GKI, SUSFS off)"
+          mkdir -p "$GITHUB_WORKSPACE/kernel_workspace"
           ln -sfn "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/kernel_workspace/Action-Build"
+          test -f "$GITHUB_WORKSPACE/scripts/check_unicode_format.py"
+          echo "Action-Build OGKI 5.15 + YukiSU (no Google GKI, SUSFS off)"
 
       - name: Extract Manifest Info
         id: extract_info
@@ -167,7 +171,7 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           # Official GT5 150W kernel → Action-Build SM8550 analogue
           case "$FILE" in
-            5.15.180) FILE=oneplus_ace2_pro_b; echo "RESUBLEVEL=180" >> $GITHUB_ENV; echo "COLOROS=16.0.2.402" >> $GITHUB_ENV ;;
+            5.15.180) FILE=oneplus_ace2_pro_b; echo "RESUBLEVEL=180" >> $GITHUB_ENV; echo "COLOROS=16.0.3.500" >> $GITHUB_ENV ;;
             5.15.167) FILE=oneplus_ace2_pro_v; echo "RESUBLEVEL=167" >> $GITHUB_ENV; echo "COLOROS=15.0.0.1400" >> $GITHUB_ENV ;;
             5.15.149) FILE=oneplus_ace2_pro_v; echo "RESUBLEVEL=149" >> $GITHUB_ENV; echo "COLOROS=15.0.0.320" >> $GITHUB_ENV ;;
             5.15.123) FILE=oneplus_11_u; echo "RESUBLEVEL=123" >> $GITHUB_ENV; echo "COLOROS=14.0.0.1120" >> $GITHUB_ENV ;;
