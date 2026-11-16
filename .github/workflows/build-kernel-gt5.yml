@@ -4,26 +4,14 @@ on:
     inputs:
       FILE:
         type: choice
-        description: "SM8550 5.15 OGKI analogue (Action-Build has no Realme SKU)"
+        description: "配置文件//Configuration file"
         required: true
-        default: oneplus_ace2_pro_b
+        default: 5.15.180
         options:
-          - oneplus_ace2_pro_b
-          - oneplus_ace2_pro_v
-          - oneplus_11_b
-          - oneplus_11_v
-          - oneplus_11_u
-          - oneplus_11_t
-          - oneplus_ace3_b
-          - oneplus_ace3_v
-          - oneplus_open_b
-          - oneplus_open_v
-          - oneplus_12r_b
-          - oneplus_12r_v
-          - oppo_find_x6_pro_b
-          - oppo_find_x6_pro_v
-          - oppo_find_n3_b
-          - oppo_find_n3_v
+          - 5.15.180
+          - 5.15.167
+          - 5.15.149
+          - 5.15.123
       SUSFS_CI:
         type: choice
         description: "SUSFS模块下载调用方向//SUSFS module branch"
@@ -44,7 +32,7 @@ on:
           - N/A
       SUSFS_META:
         type: string
-        description: "回退SUSFS(输入哈希或次数或-1关闭)//Rollback SUSFS (Enter commit hash, count, or -1 to disable)"
+        description: "SUSFS已关闭(固定-1)//SUSFS disabled (fixed -1)"
         required: false
         default: "-1"
       DYNAMIC_REPO:
@@ -167,8 +155,7 @@ jobs:
           git config --global user.name "buguj23"
           git config --global user.email "buguj23@users.noreply.github.com"
           mkdir kernel_workspace && cd kernel_workspace
-
-          echo "This repo is the Action-Build OGKI 5.15 + YukiSU overlay (not Google GKI)."
+          echo "Action-Build OGKI 5.15 + YukiSU (no Google GKI, SUSFS off)"
           ln -sfn "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/kernel_workspace/Action-Build"
 
       - name: Extract Manifest Info
@@ -178,6 +165,14 @@ jobs:
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
+          # Official GT5 150W kernel → Action-Build SM8550 analogue
+          case "$FILE" in
+            5.15.180) FILE=oneplus_ace2_pro_b; echo "RESUBLEVEL=180" >> $GITHUB_ENV; echo "COLOROS=16.0.2.402" >> $GITHUB_ENV ;;
+            5.15.167) FILE=oneplus_ace2_pro_v; echo "RESUBLEVEL=167" >> $GITHUB_ENV; echo "COLOROS=15.0.0.1400" >> $GITHUB_ENV ;;
+            5.15.149) FILE=oneplus_ace2_pro_v; echo "RESUBLEVEL=149" >> $GITHUB_ENV; echo "COLOROS=15.0.0.320" >> $GITHUB_ENV ;;
+            5.15.123) FILE=oneplus_11_u; echo "RESUBLEVEL=123" >> $GITHUB_ENV; echo "COLOROS=14.0.0.1120" >> $GITHUB_ENV ;;
+          esac
+          echo "FILE=$FILE" >> $GITHUB_ENV
           if [[ "$FILE" =~ ^(.+)_([a-zA-Z])$ ]]; then
             FILE_CONF="${BASH_REMATCH[1]}"
           else
@@ -190,12 +185,9 @@ jobs:
           if [ -f "$GITHUB_WORKSPACE/manifests/oneplus-sm8550/${FILE}.xml" ]; then
             cp "$GITHUB_WORKSPACE/manifests/oneplus-sm8550/${FILE}.xml" "$XML_PATH"
             cp "$GITHUB_WORKSPACE/manifests/oneplus-sm8550/README.md" "$README_PATH"
-            echo "using vendored oneplus-sm8550/${FILE}.xml"
           elif [ -f "$GITHUB_WORKSPACE/manifests/oppo-sm8550/${FILE}.xml" ]; then
             cp "$GITHUB_WORKSPACE/manifests/oppo-sm8550/${FILE}.xml" "$XML_PATH"
-            cp "$GITHUB_WORKSPACE/manifests/oppo-sm8550/README.md" "$README_PATH" 2>/dev/null || true
             printf '%s\n' './kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki' > "$README_PATH"
-            echo "using vendored oppo-sm8550/${FILE}.xml"
           fi
           echo "处理 FILE=$FILE, CONF=$FILE_CONF, BASE=$FILE_BASE"
           echo "FILE_CONF=$FILE_CONF" >> $GITHUB_ENV
@@ -251,15 +243,9 @@ jobs:
             exit 8
           fi
           if [[ -z "$FOUND_REPO" ]]; then
-            if [[ "$FILE" == oppo_* ]]; then
-              FOUND_REPO="Numbersf"
-              FOUND_REPO_NAME="Kernel_Manifest_Appendix"
-              FOUND_BRANCH="oppo/sm8550"
-            else
-              FOUND_REPO="Numbersf"
-              FOUND_REPO_NAME="kernel_manifest"
-              FOUND_BRANCH="oneplus/sm8550"
-            fi
+            FOUND_REPO="Numbersf"
+            FOUND_REPO_NAME="kernel_manifest"
+            FOUND_BRANCH="oneplus/sm8550"
           fi
           echo "MANIFEST_REPO=$FOUND_REPO" >> "$GITHUB_ENV"
           echo "MANIFEST_REPO_NAME=$FOUND_REPO_NAME" >> "$GITHUB_ENV"
@@ -279,24 +265,9 @@ jobs:
             # 获取短位 Android 版本号
             echo "ANDROID_SHORT_VERSION=${ANDROID_VERSION%%.*}" >> $GITHUB_ENV
           else
-            echo "vendored SM8550 analogue: forcing CPU=sm8550"
-            echo "CPU=sm8550" >> $GITHUB_ENV
-            if [[ "$FILE" == *_b ]]; then
-              echo "ANDROID_VERSION=16.0.0" >> $GITHUB_ENV
-              echo "ANDROID_SHORT_VERSION=16" >> $GITHUB_ENV
-            elif [[ "$FILE" == *_v ]]; then
-              echo "ANDROID_VERSION=15.0.0" >> $GITHUB_ENV
-              echo "ANDROID_SHORT_VERSION=15" >> $GITHUB_ENV
-            elif [[ "$FILE" == *_u ]]; then
-              echo "ANDROID_VERSION=14.0.0" >> $GITHUB_ENV
-              echo "ANDROID_SHORT_VERSION=14" >> $GITHUB_ENV
-            else
-              echo "ANDROID_VERSION=13.0.0" >> $GITHUB_ENV
-              echo "ANDROID_SHORT_VERSION=13" >> $GITHUB_ENV
-            fi
+            echo "❌ 无法从 revision 中提取 CPU 或 ANDROID_VERSION"
+            exit 1
           fi
-          echo "CPUD=kalama" >> $GITHUB_ENV
-          echo "BUILD_METHOD=gki" >> $GITHUB_ENV
 
           echo "解析 README.md 获取 CPUD 和 BUILD_METHOD..."
           if [[ -s "$README_PATH" ]]; then
@@ -663,7 +634,7 @@ jobs:
           FILE: ${{ github.event.inputs.FILE }}
         run: |
           cd kernel_workspace
-          if [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
+          if false && [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
             SUSFS_META="${{ github.event.inputs.SUSFS_META }}"
             git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
             cd susfs4ksu
@@ -686,7 +657,7 @@ jobs:
           fi
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
           cd kernel_platform
-          if [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
+          if false && [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
             echo "正在拉取susfs补丁"
             cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch ./common/
             cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
@@ -703,7 +674,7 @@ jobs:
 
           cd ./common
 
-          if [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
+          if false && [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
             kotlin "$GITHUB_WORKSPACE/kernel_workspace/Action-Build/scripts/SusfsCompat.kts" apply "$PWD"
           fi
 
@@ -714,7 +685,7 @@ jobs:
             echo "fix_5.15_patch完成"
           fi
 
-          if [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
+          if false && [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
             echo "正在打susfs补丁"
             kotlin "$GITHUB_WORKSPACE/kernel_workspace/Action-Build/scripts/SusfsContext.kts" "$PWD" "$PWD/50_add_susfs_in_gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch"
             patch -p1 < 50_add_susfs_in_gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch || true
@@ -723,7 +694,7 @@ jobs:
           source $REJ_CHECKER
           check_rejects .
 
-          if [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
+          if false && [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
             kotlin "$GITHUB_WORKSPACE/kernel_workspace/Action-Build/scripts/SusfsCompat.kts" postfix "$PWD"
             kotlin "$GITHUB_WORKSPACE/kernel_workspace/Action-Build/scripts/SusfsCompat.kts" revert "$PWD"
           fi
@@ -963,7 +934,7 @@ jobs:
           }
           trap 'inject_fake_config' EXIT
 
-          # YukiSU LKM (depends on m; builtin =y is invalid)
+          # YukiSU LKM (CONFIG_KSU=y invalid: depends on m)
           set_config "CONFIG_KSU=m"
           set_config "CONFIG_KSU_SUPERKEY=y"
           set_config "CONFIG_KSU_YUKIZYGISK=y"
@@ -975,6 +946,7 @@ jobs:
           set_config "CONFIG_MODULE_UNLOAD=y"
           set_config "CONFIG_MODULE_SIG_ALL=n"
           set_config "CONFIG_MODULE_SIG_FORCE=n"
+          set_config "CONFIG_KSU_SUSFS=n"
 
           # KPM配置
           if [ "${{ github.event.inputs.KPM }}" = "KPM" ] || [ "${{ github.event.inputs.KPM }}" = "N/A" ]; then
@@ -985,8 +957,8 @@ jobs:
           fi
 
           # SUSFS配置
-          if [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
-            set_config "CONFIG_KSU_SUSFS=y"
+          if false && [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
+            set_config "CONFIG_KSU_SUSFS=n"
             set_config "CONFIG_KSU_SUSFS_SUS_PATH=y"
             set_config "CONFIG_KSU_SUSFS_SUS_MAP=y"
             set_config "CONFIG_KSU_SUSFS_SUS_MOUNT=y"
@@ -1396,11 +1368,8 @@ jobs:
           ko_path=$(find ./kernel_workspace -name kernelsu.ko -type f | head -n 1 || true)
           if [ -n "$ko_path" ]; then
             cp "$ko_path" ./AnyKernel3/kernelsu.ko
-            echo "✅ kernelsu.ko -> AnyKernel3"
-          else
-            echo "::warning::kernelsu.ko not found (YukiSU LKM missing)"
           fi
-          if [ -d "$GITHUB_WORKSPACE/kernel/AnyKernel3" ]; then
+          if [ -f "$GITHUB_WORKSPACE/kernel/AnyKernel3/anykernel.sh" ]; then
             cp "$GITHUB_WORKSPACE/kernel/AnyKernel3/anykernel.sh" ./AnyKernel3/anykernel.sh
           fi
 
@@ -1457,14 +1426,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release download -R Rouyashiki/YukiSU --pattern '*.apk' -D ./AnyKernel3/ || true
-          run_id=$(gh api "repos/Rouyashiki/YukiSU/actions/workflows/build-manager.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].id' || echo "")
-          if [[ -n "$run_id" ]]; then
-            artifact_url=$(gh api "repos/Rouyashiki/YukiSU/actions/runs/$run_id/artifacts" --jq '.artifacts[0].archive_download_url' || echo "")
-            if [[ -n "$artifact_url" && "$artifact_url" != "null" ]]; then
-              curl -fL -H "Authorization: token $GITHUB_TOKEN" -o manager.zip "$artifact_url" || true
-              unzip -j manager.zip "*.apk" -d ./AnyKernel3/ || true
-            fi
-          fi
 
       - name: Set zip Suffix
         id: suffix
@@ -1474,7 +1435,7 @@ jobs:
       - name: Upload AnyKernel3
         uses: actions/upload-artifact@v7
         with:
-          name: AnyKernel3_YukiSU_OGKI_${{ env.KSUVER }}_GT5_${{ github.event.inputs.FILE }}(${{ env.CKERNEL_VERSION }})${{ steps.suffix.outputs.value }}
+          name: AnyKernel3_YukiSU_OGKI_${{ github.event.inputs.FILE }}_${{ env.KSUVER }}(${{ env.CKERNEL_VERSION }})${{ steps.suffix.outputs.value }}
           path: ./AnyKernel3/*
 
       - name: Extract and Process ZRAM Module
