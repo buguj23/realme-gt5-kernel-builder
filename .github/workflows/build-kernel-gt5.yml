@@ -500,7 +500,10 @@ jobs:
           ORIG_VERSION=$(awk '/^VERSION =/ {v=$3} /^PATCHLEVEL =/ {p=$3} /^SUBLEVEL =/ {s=$3} END {print v"."p"."s}' ./common/Makefile)
 
           # 强制修改 SUBLEVEL (内核等级)
-          RESUBLEVEL="${{ github.event.inputs.RESUBLEVEL }}"
+          # 输入为空时沿用 FILE→版本映射写进 $GITHUB_ENV 的值（如 FILE=5.15.149 → 149）；
+          # 显式输入仍然优先。此前直接取 input，映射值被空串覆盖，149 实际建成 167。
+          KSUBLEVEL_INPUT="${{ github.event.inputs.RESUBLEVEL }}"
+          RESUBLEVEL="${KSUBLEVEL_INPUT:-${RESUBLEVEL:-}}"
           if [ -n "$RESUBLEVEL" ]; then
             echo "修改 SUBLEVEL 为 $RESUBLEVEL"
             sed -i "s/^SUBLEVEL[[:space:]]*=[[:space:]]*.*/SUBLEVEL = $RESUBLEVEL/" ./common/Makefile
