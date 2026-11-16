@@ -1,35 +1,18 @@
-# Realme GT5 kernel + ROM builder
+# Realme GT5 — 官方内核分支
 
-**一个内核一个分支。** 下拉分支列表里每一条都是一套完整的 **OEM OGKI 5.15 内核 + ossi ROM 适配**。
+**一个内核一个分支，按具体版本命名。** 只保留官方 150W 包里能对上真我 GT5 的 5.15 内核。
 
-Action-Build 没有真我 SKU，全部用同 SoC SM8550 一加/OPPO analogue。
-`oplus_build_kernel.sh kalama gki` 的 `gki` 是 OEM OGKI flavor，**不是** Google 通用 GKI。
-
-设备：ossi / RMX3820 / RE5C33。Root：YukiSU LKM `CONFIG_KSU=m`。ROM fstab `/metadata` = **ext4**。
-
-## 分支
-
-| 分支 | Android | Analogue | 说明 |
+| 分支 | 官方 uname | ColorOS | ROM |
 |---|---|---|---|
-| `5.15-oneplus_ace2_pro_b` | 16 | `oneplus_ace2_pro_b` | Ace2 Pro A16 — default GT5 analogue |
-| `5.15-oneplus_ace2_pro_v` | 15 | `oneplus_ace2_pro_v` | Ace2 Pro A15 |
-| `5.15-oneplus_11_b` | 16 | `oneplus_11_b` | OnePlus 11 A16 salami |
-| `5.15-oneplus_11_v` | 15 | `oneplus_11_v` | OnePlus 11 A15 |
-| `5.15-oneplus_11_u` | 14 | `oneplus_11_u` | OnePlus 11 A14 |
-| `5.15-oneplus_11_t` | 13 | `oneplus_11_t` | OnePlus 11 A13 |
-| `5.15-oneplus_ace3_b` | 16 | `oneplus_ace3_b` | Ace 3 A16 |
-| `5.15-oneplus_ace3_v` | 15 | `oneplus_ace3_v` | Ace 3 A15 |
-| `5.15-oneplus_open_b` | 16 | `oneplus_open_b` | Open A16 |
-| `5.15-oneplus_open_v` | 15 | `oneplus_open_v` | Open A15 |
-| `5.15-oneplus_12r_b` | 16 | `oneplus_12r_b` | 12R A16 |
-| `5.15-oneplus_12r_v` | 15 | `oneplus_12r_v` | 12R A15 |
-| `5.15-oppo_find_x6_pro_b` | 16 | `oppo_find_x6_pro_b` | Find X6 Pro A16 ColorOS |
-| `5.15-oppo_find_x6_pro_v` | 15 | `oppo_find_x6_pro_v` | Find X6 Pro A15 |
-| `5.15-oppo_find_n3_b` | 16 | `oppo_find_n3_b` | Find N3 A16 |
-| `5.15-oppo_find_n3_v` | 15 | `oppo_find_n3_v` | Find N3 A15 |
+| `5.15.74` | `5.15.74-android13-8-o-00602-g112553b34a64` | 13.1.1.148 | Android 13 |
+| `5.15.94` | `5.15.94-android13-8-o-00718-gdd3c2549102f` | 14.0.0.211 | Android 14 |
+| `5.15.123` | `5.15.123-android13-8-00760-ga4e8787d5799` | 14.0.0.1120 | Android 14 |
+| `5.15.149` | `5.15.149-android13-8-o-01120-g3337bebe8205` | 15.0.0.320 | Android 15 |
+| `5.15.167` | `5.15.167-android13-8-o-01142-g18bd462653c5` | 15.0.0.1400 | Android 15 |
+| `5.15.180` | `5.15.180-android13-8-o-01173-g24db146997d1` | 16.0.2.402 | Android 16 |
 
-点进对应分支：内核脚本、`kernel.json`、`rom/device/realme/ossi` 都已钉死在那一颗内核上。
+每条分支含：该版本 `kernel.json`、Action-Build OGKI 构建钉死、`rom/device/realme/ossi`（`lunch infinity_ossi-userdebug`）、官方 boot 头（v4 / os_version 13.0.0）。
 
 ```bash
-git clone -b 5.15-oneplus_ace2_pro_b https://github.com/buguj23/realme-gt5-kernel-builder.git
+git clone -b 5.15.180 https://github.com/buguj23/realme-gt5-kernel-builder.git
 ```
