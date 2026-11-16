@@ -112,8 +112,13 @@ exp() {
 # hardcoding a path, and treat either export spelling as already done.
 tp_site() {
   local hdr=$1 f
-  for f in $(grep -rl 'CREATE_TRACE_POINTS' --include='*.c' "$COMMON" 2>/dev/null); do
-    grep -q "$hdr" "$f" && { echo "${f#"$COMMON"/}"; return 0; }
+  for f in $(grep -rl 'CREATE_TRACE_POINTS' --include='*.c' \
+        --exclude-dir=tools --exclude-dir=samples --exclude-dir=Documentation \
+        --exclude-dir=scripts --exclude-dir=selftests \
+        "$COMMON" 2>/dev/null | sort); do
+    grep -q "$hdr" "$f" || continue
+    echo "${f#"$COMMON"/}"
+    return 0
   done
   return 0
 }
@@ -121,9 +126,14 @@ exptp() {
   local f=$1; shift
   [ -n "$f" ] && [ -f "$COMMON/$f" ] || { echo "exptp: no instantiation site for $*" >&2; return 0; }
   for s in "$@"; do
-    grep -rqE "EXPORT_(TRACEPOINT_)?SYMBOL(_GPL)?\(\s*(__tracepoint_)?$s\s*\)" --include='*.c' "$COMMON" 2>/dev/null && continue
-    grep -qE "EXPORT_(TRACEPOINT_)?SYMBOL_GPL\(\s*(__tracepoint_)?$s\s*\)" "$COMMON/$f" \
-      || printf 'EXPORT_TRACEPOINT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
+    if grep -rqE "EXPORT_(TRACEPOINT_)?SYMBOL(_GPL)?\(\s*(__tracepoint_)?$s\s*\)" --include='*.c' "$COMMON" 2>/dev/null; then
+      echo "exptp: $s already exported"
+      continue
+    fi
+    if ! grep -qE "EXPORT_(TRACEPOINT_)?SYMBOL_GPL\(\s*(__tracepoint_)?$s\s*\)" "$COMMON/$f"; then
+      printf 'EXPORT_TRACEPOINT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
+      echo "exptp: $s -> $f"
+    fi
   done
 }
 exp security/selinux/avc.c avc_ss_reset avc_has_perm
