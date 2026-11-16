@@ -57,7 +57,7 @@ BOARD_BOOTCONFIG := \
     androidboot.memcg=1 \
     androidboot.usbcontroller=a600000.dwc3
 
-BOARD_KERNEL_CMDLINE := nosoftlockup
+BOARD_KERNEL_CMDLINE := video=vfb:640x400,bpp=32,memsize=3072000 nosoftlockup
 
 # Source = Action-Build OGKI common (scripts/00-fetch.sh)
 TARGET_KERNEL_SOURCE := kernel/oneplus/sm8550
