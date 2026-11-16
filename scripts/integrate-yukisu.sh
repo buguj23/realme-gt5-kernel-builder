@@ -111,21 +111,29 @@ exp() {
 # kernel/entry/common.c, other trees elsewhere). So locate it by header instead of
 # hardcoding a path, and treat either export spelling as already done.
 tp_site() {
-  local hdr=$1 f first=""
-  for f in $(grep -rl 'CREATE_TRACE_POINTS' --include='*.c' \
-        --exclude-dir=tools --exclude-dir=samples --exclude-dir=Documentation \
-        --exclude-dir=scripts --exclude-dir=selftests \
-        "$COMMON" 2>/dev/null | sort); do
-    grep -q "$hdr" "$f" || continue
-    # A file that already carries EXPORT_TRACEPOINT_SYMBOL is proven to be linked
-    # into vmlinux and to own instantiations; prefer it over a plain header match.
-    if grep -q 'EXPORT_TRACEPOINT_SYMBOL' "$f"; then
-      echo "${f#"$COMMON"/}"
-      return 0
-    fi
-    [ -n "$first" ] || first="${f#"$COMMON"/}"
+  local hdr=$1 f c
+  # Canonical instantiation sites first. Searching the whole tree by "includes the
+  # header + CREATE_TRACE_POINTS" is not enough: alphabetical order picks
+  # drivers/net/ethernet/freescale/dpaa/dpaa_eth.c for trace/events/sched.h and
+  # arch/arm/kernel/ptrace.c for trace/events/syscalls.h, neither of which is
+  # compiled for arm64, so the export lands nowhere.
+  case "$hdr" in
+    *sched.h)    set -- kernel/sched/core.c ;;
+    *syscalls.h) set -- kernel/entry/common.c kernel/trace/trace_syscalls.c ;;
+    *)           set -- ;;
+  esac
+  for c in "$@"; do
+    [ -f "$COMMON/$c" ] || continue
+    grep -q "$hdr" "$COMMON/$c" || continue
+    echo "$c"
+    return 0
   done
-  [ -n "$first" ] && echo "$first"
+  # Fallback stays inside the core kernel tree, which is what arm64 builds.
+  for f in $(grep -rl 'CREATE_TRACE_POINTS' --include='*.c' "$COMMON/kernel" 2>/dev/null | sort); do
+    grep -q "$hdr" "$f" || continue
+    echo "${f#"$COMMON"/}"
+    return 0
+  done
   return 0
 }
 exptp() {
