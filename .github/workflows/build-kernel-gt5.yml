@@ -1375,6 +1375,21 @@ jobs:
             cp "$GITHUB_WORKSPACE/kernel/AnyKernel3/anykernel.sh" ./AnyKernel3/anykernel.sh
           fi
 
+      - name: Report kernel and module vermagic
+        run: |
+          IMG=./AnyKernel3/Image
+          KBANNER=$(strings -a "$IMG" | grep -m1 '^Linux version 5\.' || true)
+          echo "Image: ${KBANNER:-'(not found)'}"
+          if [ -f ./AnyKernel3/kernelsu.ko ]; then
+            KOVER=$(modinfo -F vermagic ./AnyKernel3/kernelsu.ko 2>/dev/null \
+                    || strings -a ./AnyKernel3/kernelsu.ko | grep -m1 'vermagic=' || true)
+            echo "kernelsu.ko: ${KOVER:-'(not found)'}"
+          fi
+          echo "ROM side: the system_dlkm modules (zram.ko, zsmalloc.ko) must carry this"
+          echo "exact vermagic string and matching modversions CRCs, otherwise first-stage"
+          echo "init fails 'Failed to load kernel modules' -> boot loop."
+          echo "See docs/AUDIT_16.0.3.500.md; check with scripts/40-verify-crc.py."
+
       - name: Apply KPX and Replace Image
         if: ${{ github.event.inputs.KPM != 'N/A' }}
         run: |
