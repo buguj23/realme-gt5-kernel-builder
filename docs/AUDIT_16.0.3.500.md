@@ -64,6 +64,16 @@ Build #8 死在 modpost，6 个符号 `undefined`。在官方内核符号表里�
 
 ## 4. 模块加载链与换内核风险
 
+构建产物实测（`AnyKernel3_YukiSU_OGKI_5.15.180` 工件内）：
+
+| 项 | 值 |
+|---|---|
+| 我们 Image | `5.15.180-android13-10-o-g407e0678311e43` |
+| stock Image | `5.15.180-android13-8-o-01176-g6333b0dbc8ed` |
+| 我们 kernelsu.ko | `vermagic=5.15.180-android13-10-o-g407e0678311e43 SMP preempt mod_unload modversions aarch64` |
+
+KMI 代次（10 vs 8）与整串 release 都不同。vermagic 比较的是完整 `UTS_RELEASE`，加上 `CONFIG_MODVERSIONS=y` 的符号 CRC，stock `system_dlkm` 的 `zram.ko`/`zsmalloc.ko` 不可能被我们的 Image 接受。工作流已加入构建期 `::warning::KMI mismatch`，并在日志里同时打印 Image banner 与 kernelsu.ko vermagic。
+
 | 事实 | 证据 |
 |---|---|
 | 清单 | `vendor_boot` ramdisk：`modules.load`、`modules.load.recovery`、`modules.blocklist` |
