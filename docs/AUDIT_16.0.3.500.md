@@ -35,7 +35,14 @@ Build #8 死在 modpost，6 个符号 `undefined`。在官方内核符号表里�
 
 三个 OnePlusOSS sm8550 分支（`u_14.0.0_oneplus11`、`v_15.0.0_ace_2_pro`、`b_16.0.0_ace_2_pro`）逐一核对：4 个普通符号都在注释里的同一文件、`exported=0`；两个 tracepoint 在 `kernel/sched/core.c` 的 `CREATE_TRACE_POINTS` 处实例化，且该文件已有 `EXPORT_TRACEPOINT_SYMBOL_GPL(sched_switch)` 等同类导出的先例。
 
-修复：`scripts/integrate-yukisu.sh` 增加 4 条 `exp()` 与一个 `exptp()`（tracepoint 必须走 `EXPORT_TRACEPOINT_SYMBOL_GPL(<event>)`，展开成 `EXPORT_SYMBOL_GPL(__tracepoint_<event>)`；直接 `EXPORT_SYMBOL_GPL(__tracepoint_*)` 不是内核惯用法）。两者均幂等，且会跳过其他编译单元已导出的符号。
+修复：`scripts/integrate-yukisu.sh` 增加 4 条 `exp()` 与一个 `exptp()`。`exptp()` 最终形态是**跨编译单元导出**：往 `kernel/sched/core.c` 追加
+
+```c
+extern struct tracepoint __tracepoint_sys_enter;
+EXPORT_SYMBOL_GPL(__tracepoint_sys_enter);
+```
+
+原因来自两次实跑的对照：写进 `kernel/sched/core.c` 的导出生效（`sched_process_free/fork` 不再报错），写进 `kernel/entry/common.c` 的不生效（`sys_enter` 仍 undefined）——后者只在 `CONFIG_GENERIC_ENTRY` 下参与构建，arm64 不编它。`EXPORT_SYMBOL_GPL` 只需要符号地址，不需要同 TU 定义，因此不必再猜实例化文件。两者均幂等，且会跳过其他编译单元已导出的符号。
 
 ## 3. fstab 解析链（IDA：`init`）
 
@@ -113,13 +120,14 @@ KMI 代次（10 vs 8）与整串 release 都不同。vermagic 比较的是完整
 |---|---|---|---|
 | 5.15.180 | `...(5.15.180)` | `5.15.180-android13-10-o-g407e0678…` | android13-10 |
 | 5.15.167 | `...(5.15.167)` | `5.15.167-android13-4-o-g42ebb4fd…` | android13-4 |
-| 5.15.149 | `...(5.15.167)` | `5.15.167-android13-8-o-g124e2301…` | android13-8 |
-| 5.15.123 | 失败（`__tracepoint_sys_enter`） | — | — |
+| 5.15.149（修复前） | `...(5.15.167)` | `5.15.167-android13-8-o-g124e2301…` | android13-8 |
+| 5.15.149（修复后） | `...(5.15.149)` | `5.15.149-android13-6-o-g9cf837fc…` | android13-6 |
+| 5.15.123 | 见 §2 | — | — |
 
 两条问题：
 
-1. **149 实际建成 167**：`FILE→版本` 映射把 `RESUBLEVEL=149` 写进 `$GITHUB_ENV`，但版本步骤又用 `${{ github.event.inputs.RESUBLEVEL }}`（默认空串）覆盖同名变量，于是走「保持默认」。已改为「显式输入优先，否则用映射值」。
-2. **KMI 代次不一致**：同一矩阵内出现 android13-8 / android13-4 / android13-10。vermagic 必须与目标 ROM 的 `system_dlkm` 完全一致，所以按 ROM 选分支比按 SUBLEVEL 选更重要。
+1. **149 实际建成 167**：`FILE→版本` 映射把 `RESUBLEVEL=149` 写进 `$GITHUB_ENV`，但版本步骤又用 `${{ github.event.inputs.RESUBLEVEL }}`（默认空串）覆盖同名变量，于是走「保持默认」。已改为「显式输入优先，否则用映射值」；重跑产物确为 `5.15.149-android13-6-…`。
+2. **KMI 代次随之变化**：5.15.149 从 8 变 6，5.15.167 为 4，5.15.180 为 10，而 stock 16.0.3.500 是 **android13-8**。vermagic 必须与目标 ROM 的 `system_dlkm` 完全一致，所以按 ROM 选分支比按 SUBLEVEL 选更重要。
 
 ## 7. 本轮改动
 
