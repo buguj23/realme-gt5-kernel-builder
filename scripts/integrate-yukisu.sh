@@ -103,6 +103,19 @@ exp() {
     grep -q "EXPORT_SYMBOL_GPL($s)" "$COMMON/$f" || printf 'EXPORT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
   done
 }
+# Tracepoints are not EXPORT_SYMBOL'ed by name: the LLVM/Kbuild idiom is
+# EXPORT_TRACEPOINT_SYMBOL_GPL(<event>), which expands to
+# EXPORT_SYMBOL_GPL(__tracepoint_<event>). Instantiations live in the single
+# translation unit that defines CREATE_TRACE_POINTS.
+exptp() {
+  local f=$1; shift
+  [ -f "$COMMON/$f" ] || return 0
+  for s in "$@"; do
+    grep -rqE "EXPORT_TRACEPOINT_SYMBOL(_GPL)?\(\s*$s\s*\)" --include='*.c' "$COMMON" 2>/dev/null && continue
+    grep -q "EXPORT_TRACEPOINT_SYMBOL_GPL($s)" "$COMMON/$f" \
+      || printf 'EXPORT_TRACEPOINT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
+  done
+}
 exp security/selinux/avc.c avc_ss_reset avc_has_perm
 exp security/selinux/ss/avtab.c avtab_alloc avtab_destroy avtab_insert_nonunique avtab_search_node avtab_search_node_next
 exp security/selinux/ss/conditional.c cond_compute_av
@@ -134,6 +147,14 @@ exp kernel/seccomp.c seccomp_filter_release
 exp lib/is_single_threaded.c current_is_single_threaded
 exp kernel/bpf/btf.c btf_find_by_name_kind btf_name_by_offset btf_type_by_id btf_type_skip_modifiers
 exp kernel/bpf/verifier.c bpf_get_btf_vmlinux
+# modpost 5.15.180: undefined in kernelsu.ko, present-but-unexported in OEM OGKI
+# on all three OnePlusOSS sm8550 branches (u_14.0.0_oneplus11, v_15.0.0_ace_2_pro,
+# b_16.0.0_ace_2_pro) — verified against the official Image symbol table too.
+exp kernel/task_work.c task_work_cancel_match
+exp kernel/audit.c audit_log_n_untrustedstring
+exp security/commoncap.c cap_capable
+exp security/selinux/ss/services.c security_validate_transition
+exptp kernel/sched/core.c sched_process_free sched_process_fork
 for pair in "fs/open.c __arm64_sys_close" "kernel/nsproxy.c __arm64_sys_setns" "kernel/fork.c __arm64_sys_unshare"; do
   set -- $pair
   [ -f "$COMMON/$1" ] || continue
