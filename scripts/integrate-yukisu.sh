@@ -48,6 +48,22 @@ rm -rf "$DST/include/uapi"
 mkdir -p "$DST/include"
 cp -a "$WORK/YukiSU/uapi" "$DST/include/uapi"
 
+# Upstream keeps uapi/ at repo root, so kernel/feature/yukizygisk/patch_transaction.h
+# reaches it as ../../../uapi/. We relocate uapi/ to include/uapi (which Kbuild puts
+# on -I, hence every other file in the tree says "uapi/<h>"). That one header kept
+# the repo-root form and resolves to drivers/uapi (absent) -> clang: file not found.
+PT=$DST/feature/yukizygisk/patch_transaction.h
+if [ -f "$PT" ]; then
+  sed -i 's|#include "\.\./\.\./\.\./uapi/|#include "uapi/|' "$PT"
+  grep -q '#include "uapi/yukizygisk.h"' "$PT" \
+    || { echo "patch_transaction.h: uapi include not normalized" >&2; exit 1; }
+fi
+if grep -rq '"\.\./\.\./\.\./uapi/' "$DST"; then
+  echo "YukiSU sources still reach uapi via repo-root relative path:" >&2
+  grep -rn '"\.\./\.\./\.\./uapi/' "$DST" >&2
+  exit 1
+fi
+
 # No network during kernel make (Kbuild otherwise curls GitHub for version).
 sed -i 's|^KSU_GITHUB_VERSION := \$(shell.*|KSU_GITHUB_VERSION :=|' "$DST/Kbuild"
 sed -i 's|^  KSU_GITHUB_VERSION_COMMIT := \$(shell.*|  KSU_GITHUB_VERSION_COMMIT :=|' "$DST/Kbuild"
