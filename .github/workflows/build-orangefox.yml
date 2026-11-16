@@ -49,6 +49,7 @@ jobs:
         env:
           ROOT_RESERVE_MB: '8192'
           TEMP_RESERVE_MB: '2048'
+          SWAP_SIZE_MB: '8192'
           BUILD_MOUNT_PATH: '/mnt/ofox_workspace'
           MOUNT_OWNERSHIP: 'runner:runner'
           REMOVE_DOTNET: 'true'
@@ -57,8 +58,10 @@ jobs:
           REMOVE_CODEQL: 'true'
         run: |
           # A full fox_14.1/16.0 sync needs far more than the runner's ~14G /mnt.
+          df -h
           bash scripts/maximize-build-space.sh
           ln -sfn /mnt/ofox_workspace "${{ github.workspace }}/ofox_workspace"
+          echo "--- volume that repo sync will fill ---"
           df -h /mnt/ofox_workspace
 
       - name: Install Dependencies
