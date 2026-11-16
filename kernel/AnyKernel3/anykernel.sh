@@ -6,15 +6,15 @@
 # global properties
 properties() { '
 kernel.string=Realme GT5 (SM8550) Action-Build OGKI 5.15 + YukiSU LKM
-do.devicecheck=0
+do.devicecheck=1
 do.modules=0
 do.systemless=0
 do.cleanup=1
 do.cleanuponabort=0
 device.name1=ossi
-device.name2=salami
-device.name3=xigua
-device.name4=corot
+device.name2=RMX3820
+device.name3=RE5C33
+device.name4=ossi
 device.name5=RMX3820
 '; } # end properties
 

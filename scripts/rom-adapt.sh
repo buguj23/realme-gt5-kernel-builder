@@ -14,7 +14,7 @@ COLOROS=${COLOROS:-}
 if [ -z "$COLOROS" ] && [ -f "$REPO_DIR/kernel.json" ]; then
   COLOROS=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("coloros",""))' "$REPO_DIR/kernel.json")
 fi
-COLOROS=${COLOROS:-16.0.2.402}
+COLOROS=${COLOROS:-16.0.3.500}
 
 read_cat() {
   python3 - "$REPO_DIR/official/catalog.json" "$COLOROS" "$1" <<'PY'
