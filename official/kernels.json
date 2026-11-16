@@ -8,7 +8,10 @@
     "api": 34,
     "os_patch_level": "2024-10",
     "kmi": "android13-5.15",
-    "vermagic": "5.15.123-android13-8-00760-ga4e8787d5799 SMP preempt mod_unload modversions aarch64"
+    "vermagic": "5.15.123-android13-8-00760-ga4e8787d5799 SMP preempt mod_unload modversions aarch64",
+    "security_patch": "2024-10-05",
+    "fingerprint": "realme/RMX3820/RE5C33:14/UP1A.231005.007/T.1a73b78-941b-1:user/release-keys",
+    "metadata_fs": "f2fs"
   },
   "149": {
     "branch": "5.15.149",
@@ -19,7 +22,10 @@
     "api": 35,
     "os_patch_level": "2024-11",
     "kmi": "android13-5.15",
-    "vermagic": "5.15.149-android13-8-o-01120-g3337bebe8205 SMP preempt mod_unload modversions aarch64"
+    "vermagic": "5.15.149-android13-8-o-01120-g3337bebe8205 SMP preempt mod_unload modversions aarch64",
+    "security_patch": "2024-11-05",
+    "fingerprint": "realme/RMX3820/RE5C33:15/AP3A.240617.008/T.1b22798_7579-6758f:user/release-keys",
+    "metadata_fs": "f2fs"
   },
   "167": {
     "branch": "5.15.167",
@@ -30,7 +36,11 @@
     "api": 35,
     "os_patch_level": "2025-09",
     "kmi": "android13-5.15",
-    "vermagic": "5.15.167-android13-8-o-01142-g18bd462653c5 SMP preempt mod_unload modversions aarch64"
+    "vermagic": "5.15.167-android13-8-o-01142-g18bd462653c5 SMP preempt mod_unload modversions aarch64",
+    "security_patch": "2025-09-01",
+    "fingerprint": "realme/RMX3820/RE5C33:15/AP3A.240617.008/T.1fc6783-2-f6d31:user/release-keys",
+    "metadata_fs": "f2fs",
+    "predecessor_1300": "5.15.167-android13-8-o-01140-g043e86cdd499 ColorOS 15.0.0.1300"
   },
   "180": {
     "branch": "5.15.180",
@@ -41,6 +51,7 @@
     "api": 36,
     "os_patch_level": "2026-02",
     "kmi": "android13-5.15",
-    "vermagic": "5.15.180-android13-8-o-01176-g6333b0dbc8ed SMP preempt mod_unload modversions aarch64"
+    "vermagic": "5.15.180-android13-8-o-01176-g6333b0dbc8ed SMP preempt mod_unload modversions aarch64",
+    "metadata_fs": "f2fs"
   }
 }
