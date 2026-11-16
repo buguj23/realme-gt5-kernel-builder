@@ -103,16 +103,26 @@ exp() {
     grep -q "EXPORT_SYMBOL_GPL($s)" "$COMMON/$f" || printf 'EXPORT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
   done
 }
-# Tracepoints are not EXPORT_SYMBOL'ed by name: the LLVM/Kbuild idiom is
+# Tracepoints are not EXPORT_SYMBOL'ed by name: the kernel idiom is
 # EXPORT_TRACEPOINT_SYMBOL_GPL(<event>), which expands to
-# EXPORT_SYMBOL_GPL(__tracepoint_<event>). Instantiations live in the single
-# translation unit that defines CREATE_TRACE_POINTS.
+# EXPORT_SYMBOL_GPL(__tracepoint_<event>). The macro only compiles in the single
+# translation unit that defines CREATE_TRACE_POINTS and includes the event header,
+# and that unit differs between OEM trees (5.15.123 keeps it in
+# kernel/entry/common.c, other trees elsewhere). So locate it by header instead of
+# hardcoding a path, and treat either export spelling as already done.
+tp_site() {
+  local hdr=$1 f
+  for f in $(grep -rl 'CREATE_TRACE_POINTS' --include='*.c' "$COMMON" 2>/dev/null); do
+    grep -q "$hdr" "$f" && { echo "${f#"$COMMON"/}"; return 0; }
+  done
+  return 0
+}
 exptp() {
   local f=$1; shift
-  [ -f "$COMMON/$f" ] || return 0
+  [ -n "$f" ] && [ -f "$COMMON/$f" ] || { echo "exptp: no instantiation site for $*" >&2; return 0; }
   for s in "$@"; do
-    grep -rqE "EXPORT_TRACEPOINT_SYMBOL(_GPL)?\(\s*$s\s*\)" --include='*.c' "$COMMON" 2>/dev/null && continue
-    grep -q "EXPORT_TRACEPOINT_SYMBOL_GPL($s)" "$COMMON/$f" \
+    grep -rqE "EXPORT_(TRACEPOINT_)?SYMBOL(_GPL)?\(\s*(__tracepoint_)?$s\s*\)" --include='*.c' "$COMMON" 2>/dev/null && continue
+    grep -qE "EXPORT_(TRACEPOINT_)?SYMBOL_GPL\(\s*(__tracepoint_)?$s\s*\)" "$COMMON/$f" \
       || printf 'EXPORT_TRACEPOINT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
   done
 }
@@ -154,7 +164,11 @@ exp kernel/task_work.c task_work_cancel_match
 exp kernel/audit.c audit_log_n_untrustedstring
 exp security/commoncap.c cap_capable
 exp security/selinux/ss/services.c security_validate_transition
-exptp kernel/sched/core.c sched_process_free sched_process_fork
+exptp "$(tp_site trace/events/sched.h)" sched_process_free sched_process_fork
+# 5.15.123 in the OnePlusOSS tree exports sys_exit but not sys_enter, and modpost
+# rejects kernelsu.ko on exactly that symbol. Locating the site by header keeps
+# this correct for trees that instantiate syscall tracepoints elsewhere.
+exptp "$(tp_site trace/events/syscalls.h)" sys_enter
 for pair in "fs/open.c __arm64_sys_close" "kernel/nsproxy.c __arm64_sys_setns" "kernel/fork.c __arm64_sys_unshare"; do
   set -- $pair
   [ -f "$COMMON/$1" ] || continue
