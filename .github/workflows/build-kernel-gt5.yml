@@ -170,6 +170,7 @@ jobs:
           set -e
           cd "$GITHUB_WORKSPACE"
           # Official GT5 150W kernel → Action-Build SM8550 analogue
+          echo "KERNEL_VER=$FILE" >> $GITHUB_ENV
           case "$FILE" in
             5.15.180) FILE=oneplus_ace2_pro_b; echo "RESUBLEVEL=180" >> $GITHUB_ENV; echo "COLOROS=16.0.3.500" >> $GITHUB_ENV ;;
             5.15.167) FILE=oneplus_ace2_pro_v; echo "RESUBLEVEL=167" >> $GITHUB_ENV; echo "COLOROS=15.0.0.1400" >> $GITHUB_ENV ;;
@@ -428,8 +429,6 @@ jobs:
           sudo mv ~/repo /usr/local/bin/repo
 
       - name: Initialize Repo and Sync
-        env:
-          FILE: ${{ github.event.inputs.FILE }}
         run: |
           cd kernel_workspace
           mkdir -p .repo/manifests
@@ -634,8 +633,6 @@ jobs:
           echo "KSUVER=YukiSU-$(date +%Y%m%d)" >> $GITHUB_ENV
 
       - name: Apply Patches Action-Build 5.15
-        env:
-          FILE: ${{ github.event.inputs.FILE }}
         run: |
           cd kernel_workspace
           if false && [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
@@ -764,8 +761,6 @@ jobs:
           fi
 
       - name: Apply DROID_SPACES
-        env:
-          FILE: ${{ github.event.inputs.FILE }}
         if: ${{ github.event.inputs.DROID_SPACES == 'true' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
@@ -858,8 +853,6 @@ jobs:
           check_rejects .
 
       - name: Apply SCHED_HMBIRD
-        env:
-          FILE: ${{ github.event.inputs.FILE }}
         if: ${{ github.event.inputs.SCHED_HMBIRD == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/common
