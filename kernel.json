@@ -11,5 +11,21 @@
   "build_method": "gki",
   "build_method_meaning": "OEM OGKI flavor of oplus_build_kernel.sh, NOT Google generic GKI",
   "root": "YukiSU LKM CONFIG_KSU=m + Kasumi + YukiZygisk",
-  "metadata_fs": "ext4"
+  "metadata_fs": "f2fs",
+  "note": "calibrated against RMX3820_16.0.3.500(CN01) full OTA",
+  "linux_release": "5.15.180",
+  "sublevel": 180,
+  "coloros": "16.0.3.500",
+  "linux": "5.15.180-android13-8-o-01176-g6333b0dbc8ed",
+  "vermagic": "5.15.180-android13-8-o-01176-g6333b0dbc8ed SMP preempt mod_unload modversions aarch64",
+  "os_version": "13.0.0",
+  "os_patch_level": "2026-02",
+  "resublevel": 180,
+  "stock_dtbo": "official/stock/16.0.3.500/dtbo.img",
+  "stock_init_boot": "official/stock/16.0.3.500/init_boot.img",
+  "security_patch": "2026-02-01",
+  "fingerprint": "realme/RMX3820/RE5C33:16/BP2A.250605.015/T.5727b50-35127b2-34d6407:user/release-keys",
+  "incremental": "T.5727b50-35127b2-34d6407",
+  "oplus_project": "22635",
+  "ota_id": "RMX3820_11.H.28_3280_202601301628"
 }
