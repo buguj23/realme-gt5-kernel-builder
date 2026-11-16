@@ -105,11 +105,30 @@ KMI 代次（10 vs 8）与整串 release 都不同。vermagic 比较的是完整
 - `odm/lib64/libAncHumanRetain.so` 实为 **32 位 ARM 库放在 lib64**（官方打包瑕疵，不影响我们）。
 - `vendor/firmware/dpAP_{full,mini,modemssr}.mbn` 仅以 ELF 魔数开头，实为 modem 固件，不是 ELF（e_type=0），不计为缺陷。
 
-## 6. 本轮改动
+## 6. 构建矩阵实证（本轮）
+
+四个版本并行构建后的产物核对：
+
+| run 输入 | 产物名 | Image 实际版本 | KMI |
+|---|---|---|---|
+| 5.15.180 | `...(5.15.180)` | `5.15.180-android13-10-o-g407e0678…` | android13-10 |
+| 5.15.167 | `...(5.15.167)` | `5.15.167-android13-4-o-g42ebb4fd…` | android13-4 |
+| 5.15.149 | `...(5.15.167)` | `5.15.167-android13-8-o-g124e2301…` | android13-8 |
+| 5.15.123 | 失败（`__tracepoint_sys_enter`） | — | — |
+
+两条问题：
+
+1. **149 实际建成 167**：`FILE→版本` 映射把 `RESUBLEVEL=149` 写进 `$GITHUB_ENV`，但版本步骤又用 `${{ github.event.inputs.RESUBLEVEL }}`（默认空串）覆盖同名变量，于是走「保持默认」。已改为「显式输入优先，否则用映射值」。
+2. **KMI 代次不一致**：同一矩阵内出现 android13-8 / android13-4 / android13-10。vermagic 必须与目标 ROM 的 `system_dlkm` 完全一致，所以按 ROM 选分支比按 SUBLEVEL 选更重要。
+
+## 7. 本轮改动
+
 
 | 文件 | 改动 |
 |---|---|
 | `scripts/integrate-yukisu.sh` | 导出 modpost 拒绝的 6 个符号；新增 `exptp()`（tracepoint 专用、幂等） |
 | `configs/reference/rom_ikconfig.defconfig` | 由 5.15.200（含 `CONFIG_KSU=y`）替换为 16.0.3.500 的 5.15.180 真值 |
+| `.github/workflows/build-kernel-gt5.yml` | 构建期打印 Image banner / ko vermagic；KMI 与 stock 不符时 `::warning::`；SUBLEVEL 映射回退 |
+| `rom/device/realme/ossi/{device.mk,init.ossi.rc,sepolicy/vendor/file_contexts,prebuilt/README.md}` | 删除 `vendor_dlkm/lib/modules/kernelsu.ko` 及其标签、无效的 `enable` sysfs 写入 |
 
 验证方式：本地假树跑 `exp()/exptp()`，确认追加正确、二次执行不重复、已导出符号被跳过；四个版本各触发一次 CI 实跑。
