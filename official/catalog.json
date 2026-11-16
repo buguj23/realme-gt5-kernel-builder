@@ -265,14 +265,14 @@
     }
   },
   {
-    "coloros": "16.0.2.402",
-    "linux": "5.15.180-android13-8-o-01173-g24db146997d1",
-    "vermagic": "5.15.180-android13-8-o-01173-g24db146997d1 SMP preempt mod_unload modversions aarch64",
+    "coloros": "16.0.3.500",
+    "linux": "5.15.180-android13-8-o-01176-g6333b0dbc8ed",
+    "vermagic": "5.15.180-android13-8-o-01176-g6333b0dbc8ed SMP preempt mod_unload modversions aarch64",
     "sublevel": 180,
     "kmi": "android13-5.15",
     "boot_header_version": 4,
     "os_version": "13.0.0",
-    "os_patch_level": "2025-12",
+    "os_patch_level": "2026-02",
     "boot_ramdisk_size": 0,
     "kernel_size": 54123008,
     "kernel_sha256": "3cca81b80a60e6c215820ca728b1c7f814e5f4bc8e4b5cdb45f2205034a2b16e",
@@ -299,6 +299,7 @@
       "model": "RMX3820",
       "board": "RE5C33",
       "sku": "GT5 150W"
-    }
+    },
+    "metadata_fs": "f2fs"
   }
 ]

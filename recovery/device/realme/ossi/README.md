@@ -8,6 +8,6 @@ OGKI-aligned recovery. Dedicated `recovery` partition (100MiB, header v4).
 | `OrangeFox-5.15.123` | 5.15.123 | 14.0.0.1120 | 14.1 |
 | `OrangeFox-5.15.149` | 5.15.149 | 15.0.0.320 | 14.1 |
 | `OrangeFox-5.15.167` | 5.15.167 | 15.0.0.1400 | 14.1 |
-| `OrangeFox-5.15.180` | 5.15.180 | 16.0.2.402 | 16.0 |
+| `OrangeFox-5.15.180` | 5.15.180 | 16.0.3.500 | 16.0 |
 
 `lunch ofox_ossi-eng`
