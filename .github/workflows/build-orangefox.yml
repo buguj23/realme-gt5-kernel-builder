@@ -13,11 +13,19 @@ on:
           - "5.15.167"
           - "5.15.149"
           - "5.15.123"
+      RUNNER:
+        type: choice
+        description: "运行器：托管 runner 只有约 22G 可用，fox_$OF_BRANCH 全量 sync 放不下；自托管需 ≥64G 空闲且已装 repo/依赖"
+        required: true
+        default: ubuntu-22.04
+        options:
+          - ubuntu-22.04
+          - self-hosted
 
 jobs:
   build:
     name: OrangeFox GT5 ossi ${{ github.event.inputs.KERNEL }}
-    runs-on: ubuntu-22.04
+    runs-on: ${{ github.event.inputs.RUNNER || 'ubuntu-22.04' }}
     env:
       KERNEL: ${{ github.event.inputs.KERNEL }}
       CCACHE_COMPILERCHECK: "none"
@@ -45,9 +53,10 @@ jobs:
           ref: OrangeFox-${{ github.event.inputs.KERNEL }}
           path: ofox-branch
 
-      - name: Maximize Build Space
+      - name: Maximize Build Space (hosted runner only)
+        if: github.event.inputs.RUNNER != 'self-hosted'
         env:
-          ROOT_RESERVE_MB: '8192'
+          ROOT_RESERVE_MB: '4096'
           TEMP_RESERVE_MB: '2048'
           SWAP_SIZE_MB: '8192'
           BUILD_MOUNT_PATH: '/mnt/ofox_workspace'
@@ -56,13 +65,34 @@ jobs:
           REMOVE_ANDROID: 'true'
           REMOVE_HASKELL: 'true'
           REMOVE_CODEQL: 'true'
+          REMOVE_DOCKER_IMAGES: 'true'
         run: |
-          # A full fox_14.1/16.0 sync needs far more than the runner's ~14G /mnt.
+          # Never run this on a self-hosted box: it turns free space into LVM PVs.
           df -h
+          sudo rm -rf /opt/hostedtoolcache /usr/local/lib/node_modules /opt/az /usr/share/swift || true
           bash scripts/maximize-build-space.sh
+          echo "OF_WORKSPACE=/mnt/ofox_workspace" >> $GITHUB_ENV
           ln -sfn /mnt/ofox_workspace "${{ github.workspace }}/ofox_workspace"
           echo "--- volume that repo sync will fill ---"
           df -h /mnt/ofox_workspace
+
+      - name: Workspace layout (self-hosted)
+        if: github.event.inputs.RUNNER == 'self-hosted'
+        run: |
+          W="${{ github.workspace }}/ofox_workspace"
+          mkdir -p "$W"
+          echo "OF_WORKSPACE=$W" >> $GITHUB_ENV
+          df -h "$W"
+
+      - name: Space preflight
+        run: |
+          avail=$(df -BG --output=avail "$OF_WORKSPACE" | tail -1 | tr -dc '0-9')
+          echo "usable: ${avail}G at $OF_WORKSPACE (runner=${{ github.event.inputs.RUNNER }})"
+          need=32
+          if [ "$avail" -lt "$need" ]; then
+            echo "::error::fox_$OF_BRANCH 全量 sync + recoveryimage 约需 ${need}G，此运行器只有 ${avail}G。托管 runner（73G 盘、约 14G 空闲）上限即此；请以 RUNNER=self-hosted 在 ≥64G 空闲的机器上运行。"
+            exit 1
+          fi
 
       - name: Install Dependencies
         run: |
@@ -84,24 +114,23 @@ jobs:
           chmod a+x sync-tools/orangefox_sync.sh
           # patches/patch-manifest-fox_*.diff live inside the sync repo
           cd sync-tools
-          ./orangefox_sync.sh --branch "$OF_BRANCH" --path /mnt/ofox_workspace
-          cd "$GITHUB_WORKSPACE"
-          cd /mnt/ofox_workspace
+          ./orangefox_sync.sh --branch "$OF_BRANCH" --path "$OF_WORKSPACE"
+          cd "$OF_WORKSPACE"
           test -d bootable/recovery/gui/theme || git clone https://gitlab.com/OrangeFox/misc/theme.git bootable/recovery/gui/theme || true
 
       - name: Install GT5 ossi device tree
         run: |
-          mkdir -p ofox_workspace/device/realme ofox_workspace/device/oneplus
+          mkdir -p "$OF_WORKSPACE/device/realme" "$OF_WORKSPACE/device/oneplus"
           TREE=ofox-branch/recovery/device/realme/ossi
           test -d "$TREE"
-          cp -a "$TREE" ofox_workspace/device/realme/ossi
+          cp -a "$TREE" "$OF_WORKSPACE/device/realme/ossi"
           git clone --depth=1 https://github.com/sunmughan/android_device_oneplus_sm85xx-common.git \
-            ofox_workspace/device/oneplus/sm85xx-common
+            "$OF_WORKSPACE/device/oneplus/sm85xx-common"
           echo "ossi tree ready kernel=$KERNEL fox=$OF_BRANCH android=$ANDROID coloros=$COLOROS"
 
       - name: Build recoveryimage
         run: |
-          cd ofox_workspace
+          cd "$OF_WORKSPACE"
           set +e
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
