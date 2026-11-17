@@ -133,6 +133,8 @@ vermagic 比较的是完整 `UTS_RELEASE`，再加上 `CONFIG_MODVERSIONS=y` 的
 1. **149 实际建成 167**：`FILE→版本` 映射把 `RESUBLEVEL=149` 写进 `$GITHUB_ENV`，但版本步骤又用 `${{ github.event.inputs.RESUBLEVEL }}`（默认空串）覆盖同名变量，于是走「保持默认」。已改为「显式输入优先，否则用映射值」；重跑产物确为 `5.15.149-…`。
 2. **后缀是随机的**：`android13` 之后那段来自 `/dev/urandom`，所以同一输入两次构建的 vermagic 不同——这既是 149 前后两次 `-8` / `-6` 的原因，也让 ROM 模块无法稳定配对。已改为由 `FILE` 派生：`oneplus_11_u → 8-o-g2a096c7bd25218`、`oneplus_ace2_pro_v → 4-o-g61b3dba7291d31`、`oneplus_ace2_pro_b → 2-o-g7613986b97a87b`，形状与上游一致但可复现。
 
+确定性实测：`FILE=5.15.180` 的产物为 `5.15.180-android13-2-o-g7613986b97a87b`，与本地由 `FILE` 推算的值逐字一致。
+
 ## 7. 本轮改动
 
 
