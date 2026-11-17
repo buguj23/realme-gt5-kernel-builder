@@ -55,7 +55,7 @@ def stock_crc(facts):
     return None
 
 
-def package_mode(facts, pkg):
+def package_mode(facts, pkg, stock_dir=None):
     rows = []
     ok = True
     want = stock_crc(facts)
@@ -92,9 +92,29 @@ def package_mode(facts, pkg):
     first = facts.get("first_stage_modules") or []
     have = set(files)
     missing = [m for m in first if m not in have]
-    rows.append(("first-stage coverage", f"{len(first) - len(missing)}/{len(first)}", "all", not missing))
-    ok = ok and not missing
-    for name in missing[:5]:
+
+    # A module absent from the package may be borrowed from the stock pool only
+    # when its CRCs match the kernel — same rule rom-stage-kernel.py enforces.
+    unsatisfied = list(missing)
+    borrowed = []
+    if missing and stock_dir:
+        unsatisfied = []
+        for name in missing:
+            cand = os.path.join(stock_dir, name)
+            if not os.path.isfile(cand):
+                unsatisfied.append(name)
+                continue
+            crc = (kmi.module_versions(cand) or {}).get(kmi.LAYOUT)
+            if crc != want:
+                unsatisfied.append(name)
+            else:
+                borrowed.append(name)
+        rows.append(("borrowed from stock", str(len(borrowed)), "CRC-checked", True))
+
+    rows.append(("first-stage coverage",
+                 f"{len(first) - len(unsatisfied)}/{len(first)}", "all", not unsatisfied))
+    ok = ok and not unsatisfied
+    for name in unsatisfied[:5]:
         rows.append(("  missing", name, "present", False))
     return rows, ok
 
@@ -149,6 +169,7 @@ def main(argv):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--facts", required=True)
     ap.add_argument("--package")
+    ap.add_argument("--stock-modules", help="stock module pool allowed as CRC-checked fallback")
     ap.add_argument("--deliver")
     ap.add_argument("--json")
     a = ap.parse_args(argv)
@@ -156,7 +177,7 @@ def main(argv):
 
     rows, ok = [], True
     if a.package:
-        r, o = package_mode(facts, a.package); rows += r; ok = ok and o
+        r, o = package_mode(facts, a.package, a.stock_modules); rows += r; ok = ok and o
     if a.deliver:
         r, o = deliver_mode(facts, a.deliver); rows += r; ok = ok and o
     if not a.package and not a.deliver:
