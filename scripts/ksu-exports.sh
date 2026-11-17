@@ -20,11 +20,18 @@ COMMON=${1:-${KP_DIR:-$HOME/gt5_kernel_ab/kernel_platform}/common}
 # __tracepoint_sys_enter while 5.15.123 needed the export, so the guard has to look
 # wider than $COMMON.
 KP_ROOT=$(cd "$COMMON/.." 2>/dev/null && pwd || echo "$COMMON")
+# One pass over the platform, then O(1) lookups. Scanning the whole tree per symbol
+# took 28 minutes for the ~40 entries below on the build runner.
+EXPORT_INDEX=$(mktemp)
+trap 'rm -f "$EXPORT_INDEX"' EXIT
+grep -rhoE 'EXPORT_[A-Z_]*SYMBOL[A-Z_]*\([[:space:]]*(__tracepoint_)?[A-Za-z0-9_]+' \
+  --include='*.c' --include='*.h' \
+  --exclude-dir=out --exclude-dir=.repo --exclude-dir=.git \
+  "$KP_ROOT" 2>/dev/null \
+  | sed -E 's/.*\([[:space:]]*//' | sort -u > "$EXPORT_INDEX" || true
+echo "export index: $(wc -l < "$EXPORT_INDEX") symbols"
 exported_anywhere() {
-  grep -rqE "EXPORT_[A-Z_]*SYMBOL[A-Z_]*\(\s*(__tracepoint_)?$1\s*\)" \
-    --include='*.c' --include='*.h' \
-    --exclude-dir=out --exclude-dir=.repo --exclude-dir=.git \
-    "$KP_ROOT" 2>/dev/null
+  grep -qxF "$1" "$EXPORT_INDEX" || grep -qxF "__tracepoint_$1" "$EXPORT_INDEX"
 }
 exp() {
   local f=$1; shift
