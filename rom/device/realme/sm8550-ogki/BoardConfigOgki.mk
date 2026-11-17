@@ -65,10 +65,14 @@ TARGET_KERNEL_CONFIG := gki_defconfig
 TARGET_KERNEL_CLANG_COMPILE := true
 TARGET_KERNEL_ADDITIONAL_FLAGS := CONFIG_OPLUS_DEVICE_DTBS=y CONFIG_KSU=m
 
-# Prebuilt Image produced by this repo's 20-build.sh (preferred)
-ifneq ($(wildcard $(DEVICE_PATH)/prebuilt/Image),)
-TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/Image
-BOARD_PREBUILT_DTBOIMAGE := $(wildcard $(DEVICE_PATH)/prebuilt/dtbo.img)
+# Prebuilt kernel + modules, staged by scripts/rom-stage-kernel.py from one
+# kernel package (Image + every .ko + Module.symvers of the same build).
+# The generated file also sets BOARD_VENDOR_RAMDISK_KERNEL_MODULES[_LOAD],
+# BOARD_VENDOR_KERNEL_MODULES[_LOAD] and BOARD_SYSTEM_KERNEL_MODULES[_LOAD].
+-include $(DEVICE_PATH)/prebuilt/kernel-modules.mk
+
+ifeq ($(wildcard $(DEVICE_PATH)/prebuilt/Image),)
+$(error prebuilt/Image missing: run scripts/rom-stage-kernel.py with a kernel package; GKI fallback is forbidden)
 endif
 
 TARGET_KERNEL_EXT_MODULE_ROOT := kernel/oneplus/sm8550-modules
@@ -99,9 +103,11 @@ TARGET_KERNEL_EXT_MODULES := \
     nxp/opensource/driver \
     oplus/kernel/explorer
 
-# Metadata (GT5 stock is ext4 — do not use Lineage f2fs)
+# Metadata: stock 16.0.3.500 vendor_boot fstab mounts /metadata as f2fs
+# (verified with unpack_bootimg on stock_firmware_1603500/vendor_boot.img).
 BOARD_USES_METADATA_PARTITION := true
 BOARD_USES_QCOM_FBE_DECRYPTION := true
+BOARD_USES_SYSTEM_DLKMIMAGE := true
 
 # Partitions
 BOARD_FLASH_BLOCK_SIZE := 262144

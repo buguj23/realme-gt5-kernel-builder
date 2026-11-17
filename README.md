@@ -28,3 +28,18 @@ Actions → **Build Realme GT5 OGKI (KSU)** → 选 `FILE` 与 `KSU_VARIANT`。`
 ```bash
 git clone -b 5.15.180 https://github.com/buguj23/realme-gt5-kernel-builder.git
 ```
+
+## ROM（Project Infinity-X，ossi）
+
+设备树覆盖层在 `rom/`，内核必须用本仓库产出的 OGKI 包（`Image` + 全部 `.ko` + `Module.symvers` 同一次构建）：
+
+| 环节 | 工具 |
+|---|---|
+| 内核成套打包（CI） | `scripts/kernel-package.sh` → 工件 `kernel-package_<变体>_<版本>` |
+| 对齐校验 | `scripts/kmi.py verify`（`module_layout` 与逐符号 CRC） |
+| ROM 暂存 | `scripts/rom-stage-kernel.py`（原厂 146 项一阶段顺序，CRC 不符即中止） |
+| vendor_boot 守卫 | `scripts/rom-vendor-boot-fix.sh`（page `0x1000`、偏移、`modules.load`） |
+| IDA 侧复核 | `scripts/ida_kmi_check.py` |
+| 原厂清单抽取 | `scripts/stock-module-lists.sh` |
+
+工作流：**Build Project Infinity-X (ossi)**。`verify` 作业在托管 runner 上校验内核包；`build` 作业需要自托管 runner（AOSP 源码树 200 GB 起，托管 runner 的 14 GB 磁盘与 6 小时上限无法承载）。

@@ -1855,6 +1855,21 @@ jobs:
         run: |
           echo "value=${{ env.ZRAM_ALGO_U && format('_{0}', env.ZRAM_ALGO_U) || '' }}${{ github.event.inputs.KPM == 'KPM' && '_KPM' || github.event.inputs.KPM == 'KPN' && '_KPN' || '' }}${{ github.event.inputs.LSM_BBG == 'true' && '_BBG' || '' }}_ILH${{ github.event.inputs.SCHED_HMBIRD== 'true' && '_HMBIRD' || '' }}${{ github.event.inputs.DROID_SPACES== 'true' && '_DS' || '' }}${{ github.event.inputs.RE_KERNEL == 'true' && '_REKER' || '' }}${{ github.event.inputs.LZ4_UPDATE == 'true' && '_LZ4UPD' || '' }}" >> $GITHUB_OUTPUT
 
+      - name: Package kernel for ROM
+        env:
+          KP_IMAGE: ${{ github.workspace }}/kernel_workspace/kernel_platform/out/Final-Image-Find/Image
+        run: |
+          bash scripts/kernel-package.sh "$GITHUB_WORKSPACE/kernel_workspace" \
+            "$GITHUB_WORKSPACE/kernel-package" \
+            --label "${{ github.event.inputs.KSU_VARIANT }}-${{ github.event.inputs.FILE }}"
+
+      - name: Upload kernel package
+        if: always() && hashFiles('kernel-package/kernel-package.tar.zst') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: kernel-package_${{ github.event.inputs.KSU_VARIANT }}_${{ github.event.inputs.FILE }}
+          path: kernel-package/
+
       - name: Upload AnyKernel3
         uses: actions/upload-artifact@v7
         with:

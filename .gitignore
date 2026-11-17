@@ -22,3 +22,12 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Staged OGKI kernel package (binaries; written by scripts/rom-stage-kernel.py)
+rom/device/realme/ossi/prebuilt/Image
+rom/device/realme/ossi/prebuilt/kernel-modules.mk
+rom/device/realme/ossi/prebuilt/stage-report.json
+rom/device/realme/ossi/prebuilt/vendor_ramdisk/
+rom/device/realme/ossi/prebuilt/vendor_dlkm/
+rom/device/realme/ossi/prebuilt/system_dlkm/
+*.ko
