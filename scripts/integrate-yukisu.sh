@@ -185,7 +185,10 @@ exptp sched_process_free sched_process_fork
 # 5.15.123 in the OnePlusOSS tree exports sys_exit but not sys_enter, and modpost
 # rejects kernelsu.ko on exactly that symbol. Locating the site by header keeps
 # this correct for trees that instantiate syscall tracepoints elsewhere.
-exptp sys_enter
+# sys_enter is exported by scripts/ksu-exports.sh AFTER the Action-Build patch
+# series: on 5.15.167/180 one of those patches already adds
+# EXPORT_TRACEPOINT_SYMBOL_GPL(sys_enter), and exporting it here as well is a fatal
+# "exported twice" modpost error. 5.15.123 has no such patch and gets it there too.
 for pair in "fs/open.c __arm64_sys_close" "kernel/nsproxy.c __arm64_sys_setns" "kernel/fork.c __arm64_sys_unshare"; do
   set -- $pair
   [ -f "$COMMON/$1" ] || continue
