@@ -88,7 +88,10 @@ jobs:
         run: |
           avail=$(df -BG --output=avail "$OF_WORKSPACE" | tail -1 | tr -dc '0-9')
           echo "usable: ${avail}G at $OF_WORKSPACE (runner=${{ github.event.inputs.RUNNER }})"
-          need=${OF_MIN_SPACE_G:-31}
+          # Measured: 22G ENOSPC in prebuilts, 31G ENOSPC during sync. The hosted
+          # runner tops out at ~31G after reclamation, so it cannot host this build;
+          # a self-hosted runner with >=64G free is the supported path.
+          need=${OF_MIN_SPACE_G:-40}
           if [ "$avail" -lt "$need" ]; then
             echo "::error::fox_$OF_BRANCH 全量 sync + recoveryimage 约需 ${need}G，此运行器只有 ${avail}G。托管 runner（73G 盘、约 14G 空闲）上限即此；请以 RUNNER=self-hosted 在 ≥64G 空闲的机器上运行。"
             exit 1
