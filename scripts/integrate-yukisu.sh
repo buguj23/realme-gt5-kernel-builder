@@ -95,11 +95,24 @@ if ! grep -q 'drivers/kernelsu/Kconfig' "$COMMON/drivers/Kconfig"; then
 fi
 
 # Symbols the LKM resolves that OGKI may not export.
+#
+# The vmlinux link covers every project under kernel_platform (common, msm-kernel,
+# ...), so an export that already exists in ANY of them turns our addition into a
+# fatal "exported twice" modpost error. 5.15.167/180 hit exactly that for
+# __tracepoint_sys_enter while 5.15.123 needed the export, so the guard has to look
+# wider than $COMMON.
+KP_ROOT=$(cd "$COMMON/.." 2>/dev/null && pwd || echo "$COMMON")
+exported_anywhere() {
+  grep -rqE "EXPORT_[A-Z_]*SYMBOL[A-Z_]*\(\s*(__tracepoint_)?$1\s*\)" \
+    --include='*.c' --include='*.h' \
+    --exclude-dir=out --exclude-dir=.repo --exclude-dir=.git \
+    "$KP_ROOT" 2>/dev/null
+}
 exp() {
   local f=$1; shift
   [ -f "$COMMON/$f" ] || return 0
   for s in "$@"; do
-    grep -rqE "EXPORT_SYMBOL(_GPL)?\($s\)" --include='*.c' "$COMMON" 2>/dev/null && continue
+    exported_anywhere "$s" && continue
     grep -q "EXPORT_SYMBOL_GPL($s)" "$COMMON/$f" || printf 'EXPORT_SYMBOL_GPL(%s);\n' "$s" >> "$COMMON/$f"
   done
 }
@@ -119,7 +132,7 @@ exptp() {
   f=${EXPORT_TP_FILE:-kernel/sched/core.c}
   [ -f "$COMMON/$f" ] || { echo "exptp: $f missing" >&2; return 0; }
   for s in "$@"; do
-    if grep -rqE "EXPORT_(TRACEPOINT_)?SYMBOL(_GPL)?\(\s*(__tracepoint_)?$s\s*\)" --include='*.c' "$COMMON" 2>/dev/null; then
+    if exported_anywhere "$s"; then
       echo "exptp: $s already exported"
       continue
     fi
