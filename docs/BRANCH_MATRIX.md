@@ -108,3 +108,37 @@ python3 scripts/rom-select-blobs.py --base-list proprietary-files.txt \
 
 每个分支的清单由**该分支自己的 OTA** 生成，不可互换：A14 的 5.15.123 少 50 条平台项、
 Oplus HAL 少 19 条，正是跨版本 HAL 变更的体现。
+
+## 板级配置补齐（非内核部分）
+
+从同 SoC 的 `device/oneplus/sm8550-common/BoardConfigCommon.mk` 取用、并**排除所有
+GKI/内核项**后补入 `BoardConfigOgki.mk`：
+
+- 音频：`AUDIO_FEATURE_ENABLED_*`（DLKM / AGM / PAL / SSR / SVA / proxy…）、
+  `BOARD_USES_ALSA_AUDIO`、`TARGET_PROVIDES_{AUDIO_HAL,LIBAGM,LIBAR_PAL}`、
+  `BOARD_SUPPORTS_{SOUND_TRIGGER,OPENSOURCE_STHAL}`
+- 属性与文件标签：`TARGET_{ODM,PRODUCT,SYSTEM_EXT,VENDOR}_PROP`、
+  `TARGET_FS_CONFIG_GEN := device/oneplus/sm8550-common/config.fs`
+- 安全策略：`include hardware/oplus/sepolicy/qti/SEPolicy.mk`（与
+  `device/qcom/sepolicy_vndr` 并列）
+- WiFi：`WIFI_FEATURE_HOSTAPD_11AX`、`WIFI_HIDL_FEATURE_{AWARE,DUAL_INTERFACE}`、
+  `WIFI_HIDL_UNIFIED_SUPPLICANT_SERVICE_RC_ENTRY`、`..._PRIVATE_LIB_EVENT`
+- DTB：`BOARD_USES_QCOM_MERGE_DTBS_SCRIPT`
+- 分区保留：`BOARD_PRODUCTIMAGE_MINIMAL_PARTITION_RESERVED_SIZE := false`、
+  `-include vendor/lineage/config/BoardConfigReservedSize.mk`
+
+**未采用**其 `BOARD_USES_GENERIC_KERNEL_IMAGE := true`、`TARGET_KERNEL_*`、
+`BOARD_*_KERNEL_MODULES*`（改用本仓库成套内核包）、文件系统类型（测得以 ext4 为准）。
+
+### 待设备侧确认的一处
+
+`BoardConfigOgki.mk` 目前写 `BOARD_SUPER_PARTITION_GROUPS := oplus_dynamic_partitions`。
+本地没有设备 `lpdump` 记录；`super_empty.img` 是此前 ROM 构建产物（组名
+`oneplus_dynamic_partitions`），不能作为设备事实。上机执行一次：
+
+```bash
+adb shell lpdump | grep group_name
+```
+
+若输出与 `oplus_dynamic_partitions` 不符，改 `BOARD_SUPER_PARTITION_GROUPS` 与
+`BOARD_OPLUS_DYNAMIC_PARTITIONS_*` 的变量名即可——这是唯一会产生不可逆后果的配置项。
