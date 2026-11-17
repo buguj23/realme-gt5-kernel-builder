@@ -120,3 +120,35 @@ python3 scripts/branch-compare.py --facts facts.json \
    `adb shell lpdump | grep group_name` 确认——这是唯一可能造成不可逆后果的项。
 2. 机型专有 sepolicy 需要实机 denial 日志才能补；当前已含
    `device/qcom/sepolicy_vndr` 与 `hardware/oplus/sepolicy/qti`。
+
+## 附录：云端尝试的记录（不含任何凭据）
+
+一次性云主机（16 vCPU / 60 GB / 300 GB 数据盘，Ubuntu 26.04）上实际做过的事，
+供将来需要远端构建时复用：
+
+```bash
+# 依赖（Ubuntu 26.04：libxml2 / liblz4-tool 已改名，直接用下列集合）
+apt-get install -y git git-lfs python3 curl rsync ccache bison flex build-essential \
+  zip unzip bc gperf imagemagick libssl-dev libxml2-utils xsltproc zlib1g-dev \
+  libelf-dev lz4 zstd pngcrush openjdk-21-jdk gcc-multilib g++-multilib lib32z1-dev
+
+# repo 走清华
+curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/git/git-repo -o /usr/local/bin/repo
+chmod +x /usr/local/bin/repo
+export REPO_URL=https://mirrors.tuna.tsinghua.edu.cn/git/git-repo
+```
+
+结论（2026-11-17 实测）：
+
+| 路径 | 速率 |
+|---|---|
+| 清华 AOSP / Lineage 镜像 | 60 MB/s（单流大文件） |
+| GitHub 直连（云主机） | 18–25 KB/s |
+| 经本机代理的 SSH 反向隧道 | 3.4 MB/s |
+
+- A16 树同步到 **113 GB** 仍未结束，随后放弃；
+- 镜像对并发克隆排队（`Waiting in queue (Position 100+)`），`-j16` 并不能线性提速；
+- 反向隧道的数据对云主机是**入方向**（多数云厂商不计费），出方向才计费；
+- 四棵树 + 四次构建在 300 GB 内无法轮流完成，必须按第 6 节顺序清理。
+
+因此本地构建是默认路径；若再次使用远端，只需把第 3、4 节的脚本原样搬过去。
