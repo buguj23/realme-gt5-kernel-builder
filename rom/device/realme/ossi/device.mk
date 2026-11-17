@@ -31,5 +31,9 @@ PRODUCT_SOONG_NAMESPACES += \
     $(DEVICE_PATH) \
     device/realme/sm8550-ogki
 
-# Do not inherit Lineage sm8550-common (GKI). Vendor blobs still come from extract.
+# Platform common (same SoC): HAL packages, init scripts, vintf manifests, overlays
+# and the firmware mountpoints. Its BoardConfigCommon is deliberately NOT inherited —
+# BoardConfigOgki.mk keeps BOARD_USES_GENERIC_KERNEL_IMAGE=false.
+$(call inherit-product-if-exists, device/oneplus/sm8550-common/common.mk)
+
 $(call inherit-product-if-exists, vendor/realme/ossi/ossi-vendor.mk)

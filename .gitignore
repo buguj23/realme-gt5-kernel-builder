@@ -31,3 +31,4 @@ rom/device/realme/ossi/prebuilt/vendor_ramdisk/
 rom/device/realme/ossi/prebuilt/vendor_dlkm/
 rom/device/realme/ossi/prebuilt/system_dlkm/
 *.ko
+rom/vendor/realme/ossi/proprietary/
