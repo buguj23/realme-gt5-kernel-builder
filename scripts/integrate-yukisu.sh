@@ -29,19 +29,28 @@ rm -rf "$DST"
 mkdir -p "$DST"
 cp -a "$WORK/YukiSU/kernel/." "$DST/"
 
-# Upstream kasumi calls cancel_work(). That symbol only exists in some OEM
-# forks: OnePlusOSS android_kernel_common_oneplus_sm8550
-#   oneplus/sm8550_u_14.0.0_oneplus11 (5.15.123)  -> ABSENT  => build fails
+# Upstream kasumi calls cancel_work(), which only exists in some OEM forks:
+#   oneplus/sm8550_u_14.0.0_oneplus11 (5.15.123)  -> ABSENT  => link fails
 #   oneplus/sm8550_v_15.0.0_ace_2_pro (149/167)   -> present
 #   oneplus/sm8550_b_16.0.0_ace_2_pro (180)       -> present
-# cancel_work_sync() exists on all three and returns the same bool, and the
-# neighbouring code in these very files already uses the _sync form.
-while IFS= read -r -d '' f; do
-  sed -i -E 's/\bcancel_work\(/cancel_work_sync(/g' "$f"
-done < <(grep -rlZ --include='*.c' 'cancel_work(' "$DST" || true)
-if grep -rqE '\bcancel_work\(' --include='*.c' "$DST"; then
-  echo "YukiSU sources still call non-existent cancel_work()" >&2
-  exit 1
+# Only rewrite where the symbol is missing. cancel_work() does not wait for a
+# running callback while cancel_work_sync() does, and both kasumi call sites use
+# the non-blocking form to poll ("return false, retry later"), so rewriting on a
+# tree that has the real symbol would silently turn two quiesce paths blocking.
+if grep -qE '\bbool[[:space:]]+cancel_work[[:space:]]*\(' \
+      "$COMMON/include/linux/workqueue.h" 2>/dev/null \
+   && grep -rqE 'EXPORT_SYMBOL(_GPL)?\([[:space:]]*cancel_work[[:space:]]*\)' \
+      "$COMMON/kernel/workqueue.c" 2>/dev/null; then
+  echo "cancel_work() is declared and exported here; leaving YukiSU call sites as-is"
+else
+  echo "cancel_work() missing in this tree; rewriting YukiSU call sites to cancel_work_sync()"
+  while IFS= read -r -d '' f; do
+    sed -i -E 's/\bcancel_work\(/cancel_work_sync(/g' "$f"
+  done < <(grep -rlZ --include='*.c' 'cancel_work(' "$DST" || true)
+  if grep -rqE '\bcancel_work\(' --include='*.c' "$DST"; then
+    echo "YukiSU sources still call non-existent cancel_work()" >&2
+    exit 1
+  fi
 fi
 
 rm -rf "$DST/include/uapi"
