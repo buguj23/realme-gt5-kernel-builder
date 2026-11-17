@@ -45,3 +45,21 @@ python3 scripts/branch-compare.py --facts facts.json --deliver <rom-out-dir>
 
 `branch-compare.py` 在旧交付包（16.0.3.500）上会同时报出：`os_version` 16.0.0 vs
 13.0.0、一阶段 50 vs 146、`system_dlkm` CRC `0xedfc7a5c` vs `0x0222dd63`。
+
+## `module_layout` 相同 ≠ 符号级兼容
+
+四分支的 `module_layout` 都是 `0x0222dd63`，但**不能**因此把任一分支的模块挪给另一分支用。
+实测：拿 `16.0.3.500` 内核的符号表去配 `14.0.0.1120` 的首阶段模块，暂存器拒绝了三项：
+
+```
+phy-qcom-ufs-qmp-v4-kalama.ko : 7 symbol mismatches
+  (ufs_qcom_phy_dump_regs, ufs_qcom_phy_write_tbl, get_ufs_qcom_phy, ...)
+phy-qcom-ufs-qrbtc-sdm845.ko  : 3 symbol mismatches
+qcom_dma_heaps.ko             : 1 symbol mismatch (register_mtrack_debugger)
+```
+
+同一分支内（该分支内核包 + 该分支 OTA 模块）才会逐符号一致。因此：
+
+* 内核包必须由**该分支**工作流产出，`Module.symvers` 随之成套；
+* `scripts/rom-stage-kernel.py` 的借用只在**本分支符号表**下通过才成立；
+* 跨分支搬 .ko 会在 `load_module` 阶段被 `-ENOEXEC` 拒绝。
