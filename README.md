@@ -43,3 +43,26 @@ git clone -b 5.15.180 https://github.com/buguj23/realme-gt5-kernel-builder.git
 | 原厂清单抽取 | `scripts/stock-module-lists.sh` |
 
 工作流：**Build Project Infinity-X (ossi)**。`verify` 作业在托管 runner 上校验内核包；`build` 作业需要自托管 runner（AOSP 源码树 200 GB 起，托管 runner 的 14 GB 磁盘与 6 小时上限无法承载）。
+
+### 本地构建（推荐）
+
+完整手册见 **`docs/ROM_BUILD.md`**。四个脚本覆盖全流程：
+
+| 脚本 | 作用 |
+|---|---|
+| `scripts/rom-sync.sh` | `repo init` + 改写 remote 到清华镜像 + 增量同步 |
+| `scripts/rom-manifest-mirror.py` | 把 AOSP/Lineage/GitHub remote 指向国内镜像或加速前缀 |
+| `scripts/rom-provision-deps.sh` | 补齐清单没有的 `sm8550-common`、`hardware/oplus`、`pixelworks` |
+| `scripts/rom-build-local.sh` | 预检磁盘/输入 → 设备树 → Blob → 内核暂存 → `lunch` → `mka bacon` |
+
+首条命令：
+
+```bash
+scripts/rom-sync.sh --dir ~/rom16 --manifest https://github.com/ProjectInfinity-X/manifest --branch 16
+scripts/rom-build-local.sh --src ~/rom16 --branch 5.15.180 \
+  --blobs ~/gt5_work/dumps/5.15.180 --pool ~/gt5_work/pools/5.15.180 \
+  --pkg ~/gt5_work/pkgs/5.15.180 --lunch infinity_ossi-userdebug --deps-branch lineage-23.2
+```
+
+云端实测（16C/64G/300G）四棵树无法轮流容纳，且时间几乎全花在网络上（A16 单树同步至
+113 GB 仍未结束、镜像端并发排队），故不再使用。
