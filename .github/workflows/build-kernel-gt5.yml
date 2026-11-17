@@ -897,15 +897,14 @@ jobs:
           curl -LSs https://raw.githubusercontent.com/vc-teahouse/Baseband-guard/main/setup.sh | bash
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' ./security/Kconfig
 
-      - name: Re-assert KSU tracepoint exports after patches
+      - name: Apply KSU symbol exports after patches
         run: |
           # A patch may add its own EXPORT_TRACEPOINT_SYMBOL_GPL(sys_enter); exporting
           # the same symbol twice is a fatal "exported twice" modpost error at the
-          # vmlinux link. Running the check after the patch series lets the guard see
-          # theirs and add ours only where it is missing (5.15.123).
+          # vmlinux link. Running the whole export list after the patch series lets
+          # the guard see theirs and add only what is missing (5.15.123's sys_enter).
           bash "$GITHUB_WORKSPACE/scripts/ksu-exports.sh" \
-            "$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common" \
-            sched_process_free sched_process_fork sys_enter
+            "$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common"
 
       # 配置信息，带*为附加项目，具有一定危险性和不确定性
       - name: Add Configuration Settings

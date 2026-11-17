@@ -61,6 +61,14 @@ exptp() {
     echo "exptp: $s -> $f (extern + export)"
   done
 }
+# syscall entry points the LKM resolves by address
+for pair in "fs/open.c __arm64_sys_close" "kernel/nsproxy.c __arm64_sys_setns" "kernel/fork.c __arm64_sys_unshare"; do
+  set -- $pair
+  [ -f "$COMMON/$1" ] || continue
+  grep -q "EXPORT_SYMBOL_GPL($2)" "$COMMON/$1" \
+    || printf 'extern long %s(const struct pt_regs *regs);\nEXPORT_SYMBOL_GPL(%s);\n' "$2" "$2" >> "$COMMON/$1"
+done
+
 # Optional: ksu-exports.sh <common> <event>...  exports only those tracepoints.
 # Used by CI after the patch series, where a patch may already have exported them.
 if [ -n "${2:-}" ]; then
