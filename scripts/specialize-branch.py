@@ -75,7 +75,6 @@ Branch for **one** Action-Build SM8550 5.15 OGKI analogue.
 export FILE={file}
 scripts/00-fetch.sh
 scripts/10-patch.sh
-scripts/ksu-exports.sh "$KP_DIR/common"
 scripts/20-build.sh
 # drop Image into the ROM prebuilt slot (kernelsu.ko is loaded by ksud, not init)
 cp Image rom/device/realme/ossi/prebuilt/Image

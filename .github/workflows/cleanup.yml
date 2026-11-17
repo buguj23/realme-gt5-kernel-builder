@@ -7,11 +7,12 @@ on:
         type: choice
         description: '清理的工作流名称'
         required: true
-        default: 'Build Realme GT5 OGKI (YukiSU)'
+        default: 'Build Realme GT5 OGKI (SukiSU-Nova)'
         options:
-          - Build Realme GT5 OGKI (YukiSU)
+          - Build Realme GT5 OGKI (SukiSU-Nova)
           - OrangeFox Recovery (OFRP) CI/CD
-          - Build All OnePlus Kernels
+          - Build All OnePlus Kernels (BakaSU)
+          - Build All OnePlus Kernels (FinaSU)
       cache_mode:
         type: choice
         description: '缓存清理类型'
