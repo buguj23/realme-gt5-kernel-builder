@@ -10,7 +10,6 @@ on:
         default: 'Build Realme GT5 OGKI (KSU)'
         options:
           - Build Realme GT5 OGKI (KSU)
-          - OrangeFox Recovery (OFRP) CI/CD
       cache_mode:
         type: choice
         description: '缓存清理类型'
