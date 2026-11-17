@@ -12,14 +12,6 @@ on:
           - 5.15.167
           - 5.15.149
           - 5.15.123
-      STOCK_COMPAT:
-        type: choice
-        description: "模块兼容构建：用该 ROM 的 stock IKCONFIG 作基线，只叠加 KSU（保证 stock vendor_dlkm 的符号 CRC 可加载）"
-        required: true
-        default: "true"
-        options:
-          - "true"
-          - "false"
       SUSFS_CI:
         type: choice
         description: "SUSFS模块下载调用方向//SUSFS module branch"
@@ -476,21 +468,6 @@ jobs:
             sed -i 's/if check_defconfig == None:/if False:  # check_defconfig == None:/' kernel_platform/build/kernel/kleaf/common_kernels.bzl
           fi
 
-      - name: Stock-compatible config baseline
-        if: ${{ github.event.inputs.STOCK_COMPAT != 'false' }}
-        run: |
-          KP="$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common"
-          SRC="$GITHUB_WORKSPACE/configs/stock/${COLOROS}.config"
-          if [ ! -f "$SRC" ]; then
-            echo "::error::no stock IKCONFIG for ${COLOROS}; refusing to build a kernel whose modules cannot load"
-            exit 1
-          fi
-          cp "$SRC" "$KP/arch/arm64/configs/gki_defconfig"
-          echo "KSU_FEATURES_CONFIG=$GITHUB_WORKSPACE/configs/features.compat.config" >> "$GITHUB_ENV"
-          echo "baseline: $SRC ($(wc -l < "$SRC") lines) + KSU-only overlay"
-          awk -F'\t' -v r="$COLOROS" '$1==r{print "stock release: "$3"  suffix tail: "$4}' \
-            "$GITHUB_WORKSPACE/configs/stock/index.tsv"
-
       - name: Kernel Version Handling
         run: |
           cd kernel_workspace/kernel_platform
@@ -619,15 +596,10 @@ jobs:
           cd kernel_workspace/kernel_platform
           FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
 
-          # 确定性后缀（上游用 /dev/urandom 随机生成）：随机后缀会进入 UTS_RELEASE，
-          # 于是同一输入的两次构建得到不同 vermagic，ROM 的 system_dlkm 模块永远无法与
-          # 某颗内核稳定配对。这里保留同样形状 <digit>-o-g<hash>，但由 FILE 派生。
-          # SUFFIX 输入仍可覆盖；SUFFIX=-1 走树自带的 git 后缀。
-          STABLE_SEED="${FILE:-${KERNEL_REPOS:-gt5}}"
-          RANDOM_DIGIT=$(( $(printf '%s' "$STABLE_SEED" | cksum | cut -d' ' -f1) % 11 ))
-          RANDOM_HASH=$(printf '%s' "$STABLE_SEED" | sha256sum | cut -c1-14)
+          # 生成随机数字和随机hash
+          RANDOM_DIGIT=$(od -An -N1 -tu1 < /dev/urandom | tr -d '[:space:]' | awk '{print $1 % 11}')
+          RANDOM_HASH=$(od -An -N7 -tx1 /dev/urandom | tr -d ' \n')
           RANDOM_SUFFIX="${RANDOM_DIGIT}-o-g${RANDOM_HASH}"
-          echo "Deterministic kernel suffix: ${RANDOM_SUFFIX} (seed ${STABLE_SEED})"
 
           for f in ./common/scripts/setlocalversion ./"$KERNEL_REPOS"/scripts/setlocalversion ./external/dtc/scripts/setlocalversion; do
             [ -f "$f" ] || continue
@@ -741,7 +713,7 @@ jobs:
 
       # OGKI转换GKI，无需修改 dtbo 开机
       - name: Apply Convert HMBIRD_OGKI to HMBIRD_GKI
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && (fromJSON(env.VERSIONLEVEL) > 6 || (fromJSON(env.VERSIONLEVEL) == 6 && fromJSON(env.PATCHLEVEL) >= 6)) && github.event.inputs.SCHED_HMBIRD == 'false' }}
+        if: ${{ (fromJSON(env.VERSIONLEVEL) > 6 || (fromJSON(env.VERSIONLEVEL) == 6 && fromJSON(env.PATCHLEVEL) >= 6)) && github.event.inputs.SCHED_HMBIRD == 'false' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
           cd kernel_workspace/kernel_platform/common
@@ -759,7 +731,7 @@ jobs:
           check_rejects .
 
       - name: Apply BBRv3
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && github.event.inputs.CCM == 'true' && env.KMI != 'android16-6.12' }}
+        if: ${{ github.event.inputs.CCM == 'true' && env.KMI != 'android16-6.12' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
           cd kernel_workspace/kernel_platform/common
@@ -774,7 +746,7 @@ jobs:
           check_rejects .
 
       - name: Apply UNICODE_BYPASS
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && github.event.inputs.UNICODE_BYPASS == 'true' }}
+        if: ${{ github.event.inputs.UNICODE_BYPASS == 'true' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
           cd kernel_workspace/kernel_platform/common
@@ -787,7 +759,7 @@ jobs:
           check_rejects .
 
       - name: Apply RE_KERNEL
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && github.event.inputs.RE_KERNEL == 'true' }}
+        if: ${{ github.event.inputs.RE_KERNEL == 'true' }}
         run: |
           RE_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Re-Kernel/LKM-Source"
           cd kernel_workspace/kernel_platform/common
@@ -800,7 +772,7 @@ jobs:
           fi
 
       - name: Apply DROID_SPACES
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && github.event.inputs.DROID_SPACES == 'true' }}
+        if: ${{ github.event.inputs.DROID_SPACES == 'true' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
           cd kernel_workspace/kernel_platform/common
@@ -856,7 +828,7 @@ jobs:
           check_rejects .
 
       - name: Apply LZ4_DEV
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && github.event.inputs.LZ4_UPDATE == 'true' }}
+        if: ${{ github.event.inputs.LZ4_UPDATE == 'true' }}
         run: |
           set -euo pipefail
           LZ4_REPO="${GITHUB_WORKSPACE}/kernel_workspace/lz4_oplus"
@@ -864,7 +836,7 @@ jobs:
           . "${LZ4_REPO}/apply_lz4_oplus.sh"
 
       - name: Apply ZRAM
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && startsWith(github.event.inputs.ZRAM, '1/') }}
+        if: ${{ startsWith(github.event.inputs.ZRAM, '1/') }}
         run: |
           ZRAM="${{ github.event.inputs.ZRAM }}"
           if [[ "$(grep -o '/' <<< "$ZRAM" | wc -l)" -lt 2 ]]; then
@@ -892,7 +864,7 @@ jobs:
           check_rejects .
 
       - name: Apply SCHED_HMBIRD
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && github.event.inputs.SCHED_HMBIRD == 'true' }}
+        if: ${{ github.event.inputs.SCHED_HMBIRD == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/common
           CLEAN_FILE="${FILE//_bak/}"
@@ -918,7 +890,7 @@ jobs:
           fi
 
       - name: Apply LSM_BBG
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && github.event.inputs.LSM_BBG == 'true' }}
+        if: ${{ github.event.inputs.LSM_BBG == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/common
           echo "正在启用内核级基带保护支持…"
@@ -1419,32 +1391,8 @@ jobs:
             cp "$GITHUB_WORKSPACE/kernel/AnyKernel3/anykernel.sh" ./AnyKernel3/anykernel.sh
           fi
 
-      - name: Report kernel and module vermagic
-        run: |
-          IMG=./AnyKernel3/Image
-          KBANNER=$(strings -a "$IMG" | grep -m1 '^Linux version 5\.' || true)
-          echo "Image: ${KBANNER:-'(not found)'}"
-          if [ -f ./AnyKernel3/kernelsu.ko ]; then
-            KOVER=$(modinfo -F vermagic ./AnyKernel3/kernelsu.ko 2>/dev/null \
-                    || strings -a ./AnyKernel3/kernelsu.ko | grep -m1 'vermagic=' || true)
-            echo "kernelsu.ko: ${KOVER:-'(not found)'}"
-          fi
-          echo "ROM side: the system_dlkm modules (zram.ko, zsmalloc.ko) must carry this"
-          echo "exact vermagic string and matching modversions CRCs, otherwise first-stage"
-          echo "init fails 'Failed to load kernel modules' -> boot loop."
-          echo "See docs/AUDIT_16.0.3.500.md; check with scripts/40-verify-crc.py."
-          # Stock 16.0.3.500 boots 5.15.180-android13-8-o-01176-g6333b0dbc8ed. A build
-          # from a different KMI generation cannot load that ROM's system_dlkm.
-          case "${{ github.event.inputs.FILE }}" in
-            5.15.180)
-              if ! echo "${KBANNER}" | grep -q '5\.15\.180-android13-8'; then
-                echo "::warning::KMI mismatch: this Image is not android13-8, so stock 16.0.3.500 system_dlkm (zram.ko/zsmalloc.ko, vermagic 5.15.180-android13-8-o-01176-g6333b0dbc8ed) will be rejected at first stage. Flash only together with a system_dlkm built from this same tree, or build the ROM with this kernel."
-              fi
-              ;;
-          esac
-
       - name: Apply KPX and Replace Image
-        if: ${{ github.event.inputs.STOCK_COMPAT == 'false' && github.event.inputs.KPM != 'N/A' }}
+        if: ${{ github.event.inputs.KPM != 'N/A' }}
         run: |
           KPM_DIR="${GITHUB_WORKSPACE}/kernel_workspace/SukiSU_patch/kpm"
           # KPM_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches/kpm"
@@ -1507,33 +1455,6 @@ jobs:
         with:
           name: AnyKernel3_YukiSU_OGKI_${{ github.event.inputs.FILE }}_${{ env.KSUVER }}(${{ env.CKERNEL_VERSION }})${{ steps.suffix.outputs.value }}
           path: ./AnyKernel3/*
-
-      - name: Upload Module.symvers
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: Module.symvers_${{ github.event.inputs.FILE }}_${{ env.CKERNEL_VERSION }}${{ steps.suffix.outputs.value }}
-          path: |
-            ./kernel_workspace/**/Module.symvers
-          if-no-files-found: warn
-
-      - name: Collect module trees
-        if: ${{ always() }}
-        run: |
-          mkdir -p module-dump
-          find kernel_workspace -type d \( -name staging -o -name dist \) 2>/dev/null | head -20 | while read -r d; do
-            n=$(printf '%s' "$d" | tr '/' '_')
-            tar -czf "module-dump/${n}.tgz" -C "$d" . 2>/dev/null || true
-          done
-          ls -lh module-dump 2>/dev/null | head -10
-
-      - name: Upload module trees
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: module-trees_${{ github.event.inputs.FILE }}_${{ env.CKERNEL_VERSION }}${{ steps.suffix.outputs.value }}
-          path: module-dump/*.tgz
-          if-no-files-found: warn
 
       - name: Extract and Process ZRAM Module
         if: startsWith(github.event.inputs.ZRAM, '1/')
