@@ -12,6 +12,14 @@ on:
           - 5.15.167
           - 5.15.149
           - 5.15.123
+      STOCK_COMPAT:
+        type: choice
+        description: "模块兼容构建：用该 ROM 的 stock IKCONFIG 作基线，只叠加 KSU（保证 stock vendor_dlkm 的符号 CRC 可加载）"
+        required: true
+        default: "true"
+        options:
+          - "true"
+          - "false"
       SUSFS_CI:
         type: choice
         description: "SUSFS模块下载调用方向//SUSFS module branch"
@@ -468,6 +476,21 @@ jobs:
             sed -i 's/if check_defconfig == None:/if False:  # check_defconfig == None:/' kernel_platform/build/kernel/kleaf/common_kernels.bzl
           fi
 
+      - name: Stock-compatible config baseline
+        if: ${{ github.event.inputs.STOCK_COMPAT != 'false' }}
+        run: |
+          KP="$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common"
+          SRC="$GITHUB_WORKSPACE/configs/stock/${COLOROS}.config"
+          if [ ! -f "$SRC" ]; then
+            echo "::error::no stock IKCONFIG for ${COLOROS}; refusing to build a kernel whose modules cannot load"
+            exit 1
+          fi
+          cp "$SRC" "$KP/arch/arm64/configs/gki_defconfig"
+          echo "KSU_FEATURES_CONFIG=$GITHUB_WORKSPACE/configs/features.compat.config" >> "$GITHUB_ENV"
+          echo "baseline: $SRC ($(wc -l < "$SRC") lines) + KSU-only overlay"
+          awk -F'\t' -v r="$COLOROS" '$1==r{print "stock release: "$3"  suffix tail: "$4}' \
+            "$GITHUB_WORKSPACE/configs/stock/index.tsv"
+
       - name: Kernel Version Handling
         run: |
           cd kernel_workspace/kernel_platform
@@ -637,10 +660,13 @@ jobs:
         run: |
           bash "$GITHUB_WORKSPACE/scripts/integrate-yukisu.sh" \
             "$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common"
-          # Gate on APIs 5.15 lacks instead of discovering it 40 minutes later.
-          if grep -rqE '\bcancel_work\(' --include='*.c' \
-              "$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common/drivers/kernelsu"; then
-            echo "::error::kasumi still calls cancel_work()"; exit 1
+          # Only a tree without cancel_work() needs the rewrite; where the symbol is
+          # declared and exported, kasumi legitimately keeps its non-blocking call.
+          KP="$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/common"
+          if ! grep -qE '\bbool[[:space:]]+cancel_work[[:space:]]*\(' "$KP/include/linux/workqueue.h" 2>/dev/null \
+             && grep -rqE '\bcancel_work\(' --include='*.c' "$KP/drivers/kernelsu"; then
+            echo "::error::kasumi still calls cancel_work() but this tree does not export it"
+            exit 1
           fi
           echo "KSU_MANAGER_BRANCH=main" >> $GITHUB_ENV
           echo "KSUVER=YukiSU-$(date +%Y%m%d)" >> $GITHUB_ENV
@@ -1481,6 +1507,15 @@ jobs:
         with:
           name: AnyKernel3_YukiSU_OGKI_${{ github.event.inputs.FILE }}_${{ env.KSUVER }}(${{ env.CKERNEL_VERSION }})${{ steps.suffix.outputs.value }}
           path: ./AnyKernel3/*
+
+      - name: Upload Module.symvers
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Module.symvers_${{ github.event.inputs.FILE }}_${{ env.CKERNEL_VERSION }}${{ steps.suffix.outputs.value }}
+          path: |
+            ./kernel_workspace/**/Module.symvers
+          if-no-files-found: warn
 
       - name: Extract and Process ZRAM Module
         if: startsWith(github.event.inputs.ZRAM, '1/')

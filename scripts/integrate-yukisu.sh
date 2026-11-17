@@ -227,10 +227,13 @@ set_config() {
     printf '%s\n' "$val" >> "$CFG"
   fi
 }
+FEATURES_CONF=${KSU_FEATURES_CONFIG:-$REPO_DIR/configs/features.config}
+[ -f "$FEATURES_CONF" ] || { echo "features config not found: $FEATURES_CONF" >&2; exit 1; }
+echo "overlay: $FEATURES_CONF"
 while IFS= read -r kv; do
   [[ -z "$kv" || "$kv" =~ ^# ]] && continue
   set_config "$kv"
-done < "$REPO_DIR/configs/features.config"
+done < "$FEATURES_CONF"
 
 if [ -f "$COMMON/build.config.gki" ]; then
   sed -i 's/check_defconfig//' "$COMMON/build.config.gki" || true
