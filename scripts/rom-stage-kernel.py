@@ -73,6 +73,8 @@ def main(argv):
     ap.add_argument("--stock-modules", help="stock vendor_dlkm lib/modules for fallback")
     ap.add_argument("--system-modules", default="zram.ko,zsmalloc.ko")
     ap.add_argument("--no-stock-fallback", action="store_true")
+    ap.add_argument("--no-vendor-fill", action="store_true",
+                    help="do not complete vendor_dlkm from the stock pool")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
 
@@ -113,6 +115,22 @@ def main(argv):
             continue
         (system if name in system_names else vendor).append((name, path))
 
+    # A kernel build only emits a few modules; the rest of vendor_dlkm is the
+    # OEM's, which is usable only after the same per-symbol check. Without this
+    # fill the ROM would ship a vendor_dlkm holding a single module.
+    vendor_filled = 0
+    if a.stock_modules and not a.no_vendor_fill:
+        placed = {n for n, _ in vendor} | {n for n, _ in first_stage} | {n for n, _ in system}
+        for name in sorted(os.listdir(a.stock_modules)):
+            if not name.endswith(".ko") or name in placed:
+                continue
+            src = os.path.join(a.stock_modules, name)
+            good, _why = compatible(src, table)
+            if not good:
+                continue
+            vendor.append((name, src))
+            vendor_filled += 1
+
     if missing:
         print(f"ABORT: {len(missing)} first-stage module(s) unavailable:", file=sys.stderr)
         for n, why in missing[:10]:
@@ -120,8 +138,9 @@ def main(argv):
         return 1
 
     print(f"kernel module_layout=0x{kernel_layout:08x}" if kernel_layout else "kernel module_layout=UNKNOWN")
-    print(f"first-stage {len(first_stage)} (stock order) | vendor_dlkm {len(vendor)} | "
-          f"system_dlkm {len(system)} | borrowed-from-stock {len(borrowed)}")
+    print(f"first-stage {len(first_stage)} (stock order) | vendor_dlkm {len(vendor)} "
+          f"(+{vendor_filled} OEM) | system_dlkm {len(system)} | "
+          f"borrowed-from-stock {len(borrowed)}")
 
     dt = a.device_tree
     pre = os.path.join(dt, "prebuilt")
@@ -184,6 +203,7 @@ def main(argv):
         "vendor_dlkm": len(vendor),
         "system_dlkm": len(system),
         "borrowed_from_stock": borrowed,
+        "vendor_from_stock": vendor_filled,
     }
     with open(os.path.join(pre, "stage-report.json"), "w") as f:
         json.dump(summary, f, indent=1)

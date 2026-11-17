@@ -142,3 +142,19 @@ adb shell lpdump | grep group_name
 
 若输出与 `oplus_dynamic_partitions` 不符，改 `BOARD_SUPER_PARTITION_GROUPS` 与
 `BOARD_OPLUS_DYNAMIC_PARTITIONS_*` 的变量名即可——这是唯一会产生不可逆后果的配置项。
+
+## 逐分支暂存校验（内核包 × 本分支 OTA）
+
+`rom-stage-kernel.py` 对每个借用模块做**逐符号** CRC 比对（不只 `module_layout`），
+四个分支全部通过：
+
+| 分支 | 一阶段 | vendor_dlkm（含 OEM 补全） | system_dlkm | 结果 |
+|---|---|---|---|---|
+| `5.15.123` | 134/134 | 346（345 OEM + rekernel） | 2 | ✅ |
+| `5.15.149` | 145/145 | 379（378 + 1） | 2 | ✅ |
+| `5.15.167` | 145/145 | 381（380 + 1） | 2 | ✅ |
+| `5.15.180` | 146/146 | 386（385 + 1） | 2 | ✅ |
+
+内核包本身只带 3 个模块（`rekernel.ko`、`zram.ko`、`zsmalloc.ko`）：Oplus 厂商模块在
+另一条 bazel 构建里。因为逐符号 CRC 与 OEM 一致，暂存器按分支原厂池补全
+vendor_dlkm；若某个 OEM 模块的任一导入符号不匹配，它会被拒绝而不是被塞进去。
