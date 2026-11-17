@@ -1,42 +1,81 @@
 #!/usr/bin/env python3
-"""40-verify-crc.py — check whether a set of ROM modules can load on the built kernel.
+"""40-verify-crc.py — can these ROM modules load on the built kernel?
 
-Compares every symbol CRC imported by the modules (__versions section) against
-Module.symvers of the kernel. Any mismatch means the module will be rejected by
-modversions (usually 'module_layout' first).
+Every .ko records, per imported symbol, the CRC it was built against (__versions).
+The kernel compares each of those against its own Module.symvers; one mismatch and
+the module is rejected ("disagrees about version of symbol X"). The classic first
+casualty is `module_layout`, which covers struct module itself.
+
+usage: 40-verify-crc.py <Module.symvers> <dir-with-stock-.ko> [--list N]
+exit:  0 compatible, 1 incompatible
 """
 import os
 import subprocess
 import sys
+from collections import Counter
 
-symvers = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(
-    "~/gt5_kernel_ab/kernel_platform/out200/common/Module.symvers")
-moddir = sys.argv[2] if len(sys.argv) > 2 else os.path.expanduser(
-    "~/gt5_infinity_workspace/rom_check/vdlkm/modules")
+if len(sys.argv) < 3:
+    print(__doc__)
+    raise SystemExit(2)
 
-crc = {}
+symvers, moddir = sys.argv[1], sys.argv[2]
+show = 10
+if "--list" in sys.argv:
+    try:
+        show = int(sys.argv[sys.argv.index("--list") + 1])
+    except (IndexError, ValueError):
+        pass
+
+kernel = {}
 for line in open(symvers):
     parts = line.rstrip("\n").split("\t")
     if len(parts) >= 2:
-        crc[parts[1]] = parts[0]
+        kernel[parts[1]] = parts[0].lower()
 
-total = bad = 0
-for mod in sorted(f for f in os.listdir(moddir) if f.endswith(".ko")):
+modules = sorted(f for f in os.listdir(moddir) if f.endswith(".ko"))
+if not modules:
+    print(f"no .ko files in {moddir}")
+    raise SystemExit(2)
+
+total = 0
+bad = Counter()          # symbol -> times seen mismatched
+bad_modules = set()
+layout = None
+for mod in modules:
+    path = os.path.join(moddir, mod)
     try:
-        out = subprocess.run(["modprobe", "--dump-modversions",
-                              os.path.join(moddir, mod)],
-                             capture_output=True, text=True, timeout=60).stdout
+        out = subprocess.run(["modprobe", "--dump-modversions", path],
+                             capture_output=True, text=True, timeout=120).stdout
     except Exception:
         continue
+    mod_bad = False
     for line in out.splitlines():
         if "\t" not in line:
             continue
-        c, sym = line.split("\t", 1)
+        crc, sym = line.split("\t", 1)
         sym = sym.strip()
+        crc = crc.lower()
         total += 1
-        if sym not in crc or crc[sym].lower() != c.lower():
-            bad += 1
+        if sym == "module_layout" and layout is None:
+            layout = (crc, mod)
+        have = kernel.get(sym)
+        if have != crc:
+            n, sample_crc = bad.get(sym, (0, crc))
+            bad[sym] = (n + 1, sample_crc)
+            mod_bad = True
+    if mod_bad:
+        bad_modules.add(mod)
 
-print(f"imported refs: {total}  mismatches: {bad}")
-print("RESULT:", "COMPATIBLE" if bad == 0 else "INCOMPATIBLE")
-sys.exit(0 if bad == 0 else 1)
+print(f"modules checked : {len(modules)}")
+print(f"imported refs   : {total}")
+print(f"modules with ≥1 mismatch: {len(bad_modules)}")
+if layout:
+    stock_crc, sample = layout
+    ours = kernel.get("module_layout")
+    state = "MATCH" if ours == stock_crc else "MISMATCH"
+    print(f"module_layout   : stock={stock_crc} ours={ours or '(absent)'} -> {state}")
+print(f"distinct mismatched symbols: {len(bad)}")
+for sym, (n, stock_crc) in sorted(bad.items(), key=lambda kv: -kv[1][0])[:show]:
+    print(f"  {sym:40} stock={stock_crc} ours={kernel.get(sym, '(absent)')} refs={n}")
+print("RESULT:", "COMPATIBLE" if not bad else "INCOMPATIBLE")
+raise SystemExit(0 if not bad else 1)
