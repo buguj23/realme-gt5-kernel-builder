@@ -79,7 +79,9 @@ EXPORT_SYMBOL_GPL(__tracepoint_sys_enter);
 | stock Image | `5.15.180-android13-8-o-01176-g6333b0dbc8ed` |
 | 我们 kernelsu.ko | `vermagic=5.15.180-android13-10-o-g407e0678311e43 SMP preempt mod_unload modversions aarch64` |
 
-KMI 代次（10 vs 8）与整串 release 都不同。vermagic 比较的是完整 `UTS_RELEASE`，加上 `CONFIG_MODVERSIONS=y` 的符号 CRC，stock `system_dlkm` 的 `zram.ko`/`zsmalloc.ko` 不可能被我们的 Image 接受。工作流已加入构建期 `::warning::KMI mismatch`，并在日志里同时打印 Image banner 与 kernelsu.ko vermagic。
+`android13` 之后那段**不是 KMI 代次**：工作流用 `/dev/urandom` 生成 `${0..10}-o-g<7 字节 hex>` 作为后缀，直接进入 `UTS_RELEASE`。所以同一输入的两次构建会得到不同 vermagic（实测同为 5.15.180，先后出现 `-10-o-g407e0678…` 与 `-4-o-g61682ae9…`），ROM 的 `system_dlkm` 模块无法与某颗内核稳定配对。已改为由 `FILE` 派生的确定性后缀（见 §7）。
+
+vermagic 比较的是完整 `UTS_RELEASE`，再加上 `CONFIG_MODVERSIONS=y` 的符号 CRC，所以 stock `system_dlkm` 的 `zram.ko`/`zsmalloc.ko` 不可能被我们的 Image 接受。工作流已加入构建期 `::warning::KMI mismatch`，并在日志里同时打印 Image banner 与 kernelsu.ko vermagic。
 
 | 事实 | 证据 |
 |---|---|
@@ -116,29 +118,31 @@ KMI 代次（10 vs 8）与整串 release 都不同。vermagic 比较的是完整
 
 四个版本并行构建后的产物核对：
 
-| run 输入 | 产物名 | Image 实际版本 | KMI |
+| run 输入 | 产物名 | Image 实际版本 | 后缀（当时） |
 |---|---|---|---|
-| 5.15.180 | `...(5.15.180)` | `5.15.180-android13-10-o-g407e0678…` | android13-10 |
-| 5.15.167 | `...(5.15.167)` | `5.15.167-android13-4-o-g42ebb4fd…` | android13-4 |
-| 5.15.149（修复前） | `...(5.15.167)` | `5.15.167-android13-8-o-g124e2301…` | android13-8 |
-| 5.15.149（修复后） | `...(5.15.149)` | `5.15.149-android13-6-o-g9cf837fc…` | android13-6 |
-| 5.15.123 | `...(5.15.123)` | `5.15.123-android13-5-o-gbec64a8e…` | android13-5 |
+| 5.15.180 | `...(5.15.180)` | `5.15.180-android13-10-o-g407e0678…` | `10-o-g407e0678…` |
+| 5.15.167 | `...(5.15.167)` | `5.15.167-android13-4-o-g42ebb4fd…` | `4-o-g42ebb4fd…` |
+| 5.15.149（修复前） | `...(5.15.167)` | `5.15.167-android13-8-o-g124e2301…` | `8-o-g124e2301…` |
+| 5.15.149（修复后） | `...(5.15.149)` | `5.15.149-android13-6-o-g9cf837fc…` | `6-o-g9cf837fc…` |
+| 5.15.123 | `...(5.15.123)` | `5.15.123-android13-5-o-gbec64a8e…` | `5-o-gbec64a8e…` |
 
 四个版本均构建成功，`kernelsu.ko` 的 vermagic 与同批 Image 完全一致（同树同编译）。
 
 两条问题：
 
-1. **149 实际建成 167**：`FILE→版本` 映射把 `RESUBLEVEL=149` 写进 `$GITHUB_ENV`，但版本步骤又用 `${{ github.event.inputs.RESUBLEVEL }}`（默认空串）覆盖同名变量，于是走「保持默认」。已改为「显式输入优先，否则用映射值」；重跑产物确为 `5.15.149-android13-6-…`。
-2. **KMI 代次随之变化**：5.15.149 从 8 变 6，5.15.167 为 4，5.15.180 为 10，而 stock 16.0.3.500 是 **android13-8**。vermagic 必须与目标 ROM 的 `system_dlkm` 完全一致，所以按 ROM 选分支比按 SUBLEVEL 选更重要。
+1. **149 实际建成 167**：`FILE→版本` 映射把 `RESUBLEVEL=149` 写进 `$GITHUB_ENV`，但版本步骤又用 `${{ github.event.inputs.RESUBLEVEL }}`（默认空串）覆盖同名变量，于是走「保持默认」。已改为「显式输入优先，否则用映射值」；重跑产物确为 `5.15.149-…`。
+2. **后缀是随机的**：`android13` 之后那段来自 `/dev/urandom`，所以同一输入两次构建的 vermagic 不同——这既是 149 前后两次 `-8` / `-6` 的原因，也让 ROM 模块无法稳定配对。已改为由 `FILE` 派生：`oneplus_11_u → 8-o-g2a096c7bd25218`、`oneplus_ace2_pro_v → 4-o-g61b3dba7291d31`、`oneplus_ace2_pro_b → 2-o-g7613986b97a87b`，形状与上游一致但可复现。
 
 ## 7. 本轮改动
 
 
 | 文件 | 改动 |
 |---|---|
-| `scripts/integrate-yukisu.sh` | 导出 modpost 拒绝的 6 个符号；新增 `exptp()`（tracepoint 专用、幂等） |
+| `scripts/ksu-exports.sh` | 新增：平台级守卫 + 过滤模式的导出脚本，补丁序列之后运行 |
+| `scripts/integrate-yukisu.sh` | 导出 4 个普通符号与 sched tracepoint；`sys_enter` 交给补丁后的 `ksu-exports.sh` |
+| `.github/workflows/build-kernel-gt5.yml` | `Re-assert KSU tracepoint exports after patches`；确定性内核后缀；构建期打印 Image banner / ko vermagic 与 `::warning::KMI mismatch`；SUBLEVEL 映射回退 |
 | `configs/reference/rom_ikconfig.defconfig` | 由 5.15.200（含 `CONFIG_KSU=y`）替换为 16.0.3.500 的 5.15.180 真值 |
-| `.github/workflows/build-kernel-gt5.yml` | 构建期打印 Image banner / ko vermagic；KMI 与 stock 不符时 `::warning::`；SUBLEVEL 映射回退 |
 | `rom/device/realme/ossi/{device.mk,init.ossi.rc,sepolicy/vendor/file_contexts,prebuilt/README.md}` | 删除 `vendor_dlkm/lib/modules/kernelsu.ko` 及其标签、无效的 `enable` sysfs 写入 |
+| `.github/workflows/build-orangefox.yml` | `RUNNER` 可选自托管；空间脚本仅托管运行；preflight 按实测下限（40G）快速失败 |
 
-验证方式：本地假树跑 `exp()/exptp()`，确认追加正确、二次执行不重复、已导出符号被跳过；四个版本各触发一次 CI 实跑。
+验证方式：本地假树跑 `exp()/exptp()`/`ksu-exports.sh`，确认写入正确、二次执行不重复、已导出符号（含 `msm-kernel` 里的）被跳过；四个版本 CI 实跑全绿；149 与 123 的产物版本经镜像内字符串核对。

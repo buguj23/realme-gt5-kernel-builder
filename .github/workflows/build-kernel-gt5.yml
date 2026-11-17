@@ -596,10 +596,15 @@ jobs:
           cd kernel_workspace/kernel_platform
           FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
 
-          # 生成随机数字和随机hash
-          RANDOM_DIGIT=$(od -An -N1 -tu1 < /dev/urandom | tr -d '[:space:]' | awk '{print $1 % 11}')
-          RANDOM_HASH=$(od -An -N7 -tx1 /dev/urandom | tr -d ' \n')
+          # 确定性后缀（上游用 /dev/urandom 随机生成）：随机后缀会进入 UTS_RELEASE，
+          # 于是同一输入的两次构建得到不同 vermagic，ROM 的 system_dlkm 模块永远无法与
+          # 某颗内核稳定配对。这里保留同样形状 <digit>-o-g<hash>，但由 FILE 派生。
+          # SUFFIX 输入仍可覆盖；SUFFIX=-1 走树自带的 git 后缀。
+          STABLE_SEED="${FILE:-${KERNEL_REPOS:-gt5}}"
+          RANDOM_DIGIT=$(( $(printf '%s' "$STABLE_SEED" | cksum | cut -d' ' -f1) % 11 ))
+          RANDOM_HASH=$(printf '%s' "$STABLE_SEED" | sha256sum | cut -c1-14)
           RANDOM_SUFFIX="${RANDOM_DIGIT}-o-g${RANDOM_HASH}"
+          echo "Deterministic kernel suffix: ${RANDOM_SUFFIX} (seed ${STABLE_SEED})"
 
           for f in ./common/scripts/setlocalversion ./"$KERNEL_REPOS"/scripts/setlocalversion ./external/dtc/scripts/setlocalversion; do
             [ -f "$f" ] || continue
