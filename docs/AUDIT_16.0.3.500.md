@@ -150,3 +150,10 @@ vermagic 比较的是完整 `UTS_RELEASE`，再加上 `CONFIG_MODVERSIONS=y` 的
 | `.github/workflows/build-orangefox.yml` | `RUNNER` 可选自托管；空间脚本仅托管运行；preflight 按实测下限（40G）快速失败 |
 
 验证方式：本地假树跑 `exp()/exptp()`/`ksu-exports.sh`，确认写入正确、二次执行不重复、已导出符号（含 `msm-kernel` 里的）被跳过；四个版本 CI 实跑全绿；149 与 123 的产物版本经镜像内字符串核对。
+
+## 8. 决策：以上游为准（2026-11-17）
+
+模块兼容（compat）路线已放弃：它试图用 stock IKCONFIG 复现 OPPO 内部构建的 CRC，属于猜测性对齐。工作流回到 `Numbersf/Action-Build` 的原样管线，只保留 YukiSU 相关差异（`integrate-yukisu.sh`、补丁后 `sys_enter` 导出、YukiSU APK、AnyKernel3 命名）。随之删除：`STOCK_COMPAT` 输入与 stock 配置基线步骤、特性补丁门控、`configs/stock/*`、`configs/features.compat.config`、vermagic 报告与 `Module.symvers`/模块树上传。
+
+保留的相关事实（供后续判断，不是待办）：本仓库构建的内核 `module_layout = 0xbb266e1e`，stock ColorOS 四代模块为 `0x0222dd63`，二者不可互换；因此「只刷 boot 到原厂 ROM」不能加载原厂模块，需按上游方式配套使用（ROM 侧同源模块）。
+
