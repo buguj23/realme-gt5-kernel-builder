@@ -1517,6 +1517,24 @@ jobs:
             ./kernel_workspace/**/Module.symvers
           if-no-files-found: warn
 
+      - name: Collect module trees
+        if: ${{ always() }}
+        run: |
+          mkdir -p module-dump
+          find kernel_workspace -type d \( -name staging -o -name dist \) 2>/dev/null | head -20 | while read -r d; do
+            n=$(printf '%s' "$d" | tr '/' '_')
+            tar -czf "module-dump/${n}.tgz" -C "$d" . 2>/dev/null || true
+          done
+          ls -lh module-dump 2>/dev/null | head -10
+
+      - name: Upload module trees
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: module-trees_${{ github.event.inputs.FILE }}_${{ env.CKERNEL_VERSION }}${{ steps.suffix.outputs.value }}
+          path: module-dump/*.tgz
+          if-no-files-found: warn
+
       - name: Extract and Process ZRAM Module
         if: startsWith(github.event.inputs.ZRAM, '1/')
         id: zram_find
