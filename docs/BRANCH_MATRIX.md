@@ -63,3 +63,36 @@ qcom_dma_heaps.ko             : 1 symbol mismatch (register_mtrack_debugger)
 * 内核包必须由**该分支**工作流产出，`Module.symvers` 随之成套；
 * `scripts/rom-stage-kernel.py` 的借用只在**本分支符号表**下通过才成立；
 * 跨分支搬 .ko 会在 `load_module` 阶段被 `-ENOEXEC` 拒绝。
+
+## 闭源 Blob 清单（逐分支生成，可复现）
+
+清单不是手写的：`scripts/rom-select-blobs.py` 会挂载该分支 OTA 的
+`vendor/odm/system_ext/product/system/my_product` 镜像，逐条 `stat()` 上游
+`device/oneplus/sm8550-common` 清单，保留存在的条目（含 `;SYMLINK=`、
+`;MODULE_SUFFIX=` 注解），再补入本机实际存在、但平台清单没有的 Oplus HAL
+（`*/bin/hw/*oplus*`、`*/lib*/hw/*oplus*`、`*/lib*/*oplus*.so`、vintf manifest、
+oplus init rc、oplus permission xml）。
+
+16.0.3.500 实测：
+
+| 分区 | 平台清单 | 本机存在 |
+|---|---|---|
+| vendor | 1044 | 1044 |
+| odm | 137 | 128 |
+| system_ext | 111 | 111 |
+| product | 7 | 2 |
+| system / my_product | 8 | 0（A16 已移除 Hotword/ostatslog 映射项） |
+
+产出：`proprietary-files.txt` 1285 条平台项 + 349 条 Oplus 补充；`extract-files.py`
+对 1634 个文件跑完后生成 `ossi-vendor.mk`（1549 项）、`Android.bp`（30359 行）。
+缺失的 22 条均为该机型确实不带（contexthub、esim 等）。
+
+复现：
+
+```bash
+python3 scripts/rom-select-blobs.py --base-list proprietary-files.txt \
+  --images <ota-img-dir> --label <branch> \
+  --out proprietary-files.txt --materialize <dump-dir>
+# 然后在源码树的 device/realme/ossi 下
+./extract-files.py <dump-dir>
+```
