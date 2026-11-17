@@ -63,10 +63,11 @@ exptp() {
 }
 # syscall entry points the LKM resolves by address
 for pair in "fs/open.c __arm64_sys_close" "kernel/nsproxy.c __arm64_sys_setns" "kernel/fork.c __arm64_sys_unshare"; do
-  set -- $pair
-  [ -f "$COMMON/$1" ] || continue
-  grep -q "EXPORT_SYMBOL_GPL($2)" "$COMMON/$1" \
-    || printf 'extern long %s(const struct pt_regs *regs);\nEXPORT_SYMBOL_GPL(%s);\n' "$2" "$2" >> "$COMMON/$1"
+  f=${pair%% *}
+  s=${pair##* }
+  [ -f "$COMMON/$f" ] || continue
+  grep -q "EXPORT_SYMBOL_GPL($s)" "$COMMON/$f" \
+    || printf 'extern long %s(const struct pt_regs *regs);\nEXPORT_SYMBOL_GPL(%s);\n' "$s" "$s" >> "$COMMON/$f"
 done
 
 # Optional: ksu-exports.sh <common> <event>...  exports only those tracepoints.
