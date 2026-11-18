@@ -1,215 +1,214 @@
 #!/usr/bin/env python3
-"""rom-stage-kernel.py — stage one kernel package into the GT5 device tree.
-
-Input : a package produced by scripts/kernel-package.sh (Image, dtbo.img,
-        Module.symvers, modules/*.ko, manifest.json) and the *stock* module
-        ordering taken from the official vendor_boot.
-
-Output: device/realme/ossi/prebuilt/{Image,dtbo.img,vendor_ramdisk,vendor_dlkm,
-        system_dlkm,kernel-modules.mk,stage-report.json}
-
-Policy that makes the ROM bootable (see docs/AUDIT_16.0.3.500.md):
-  * first-stage set and load order come from STOCK modules.load, never from the
-    ROM's own generated list — a 50-entry list where stock has 146 means no UFS,
-    no FBE key module, no boot;
-  * a module missing from the package may be taken from the stock vendor_dlkm
-    only when the CRC of every imported symbol matches this kernel's
-    Module.symvers; anything else aborts the stage.
-
-usage:
-  rom-stage-kernel.py --package DIR --device-tree DIR --stock-modules-load FILE
-                      [--stock-modules DIR] [--system-modules zram.ko,zsmalloc.ko]
-                      [--no-stock-fallback] [--dry-run]
-"""
+"""Stage the kernel, stock device trees, and phase-specific module lists."""
 import argparse
 import json
-import os
+from pathlib import Path
+import re
 import shutil
+import struct
 import subprocess
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-import kmi  # noqa: E402
+import kmi
+from rom_inputs import baseline, require, sha256, stock_payload, verify_stock
+from rom_kernel_package import verify_package
+from rom_modules import dtb_for_ramdisk_fstab, load_pool, path_modules
+
+FS_MAKE = {"vendor_dlkm": "BOARD_VENDOR_DLKMIMAGE_FILE_SYSTEM_TYPE",
+           "system_dlkm": "BOARD_SYSTEM_DLKMIMAGE_FILE_SYSTEM_TYPE"}
 
 
-def read_list(path):
-    with open(path) as f:
-        return [l.strip() for l in f if l.strip() and not l.startswith("#")]
+def merged(*sets):
+    result = {}
+    for entries in sets:
+        for name, path in entries.items():
+            require(name not in result or sha256(result[name]) == sha256(path),
+                    f"conflicting instances of module {name}")
+            result[name] = path
+    return result
 
 
-def verify(pkg):
-    symvers = os.path.join(pkg, "Module.symvers")
-    mods = os.path.join(pkg, "modules")
-    image = os.path.join(pkg, "Image")
-    res = subprocess.run(
-        [sys.executable, os.path.join(HERE, "kmi.py"), "verify",
-         "--symvers", symvers, "--modules", mods, "--image", image],
-        capture_output=True, text=True)
-    return res.returncode == 0, (res.stdout + res.stderr).strip()
-
-
-def kernel_symvers(pkg):
-    return kmi.read_symvers(os.path.join(pkg, "Module.symvers"))
-
-
-def compatible(module_path, table):
-    """Every symbol the module imports must carry the kernel's CRC."""
-    vers = kmi.module_versions(module_path)
-    if not vers:
-        return False, "no __versions"
-    wrong = [s for s, crc in vers.items() if s in table and table[s] != crc]
-    if wrong:
-        return False, f"{len(wrong)} symbol mismatches e.g. {wrong[:3]}"
-    return True, "ok"
-
-
-def main(argv):
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--package", required=True)
-    ap.add_argument("--device-tree", required=True)
-    ap.add_argument("--stock-modules-load", required=True,
-                    help="modules.load extracted from the official vendor_boot")
-    ap.add_argument("--stock-modules", help="stock vendor_dlkm lib/modules for fallback")
-    ap.add_argument("--system-modules", default="zram.ko,zsmalloc.ko")
-    ap.add_argument("--no-stock-fallback", action="store_true")
-    ap.add_argument("--no-vendor-fill", action="store_true",
-                    help="do not complete vendor_dlkm from the stock pool")
-    ap.add_argument("--dry-run", action="store_true")
-    a = ap.parse_args(argv)
-
-    ok, report = verify(a.package)
-    print(report)
-    if not ok:
-        print("ABORT: package is not internally aligned", file=sys.stderr)
-        return 1
-
-    table = kernel_symvers(a.package)
-    kernel_layout = table.get(kmi.LAYOUT)
-    pkg_mods = os.path.join(a.package, "modules")
-    have = {f: os.path.join(pkg_mods, f) for f in os.listdir(pkg_mods) if f.endswith(".ko")}
-
-    stock_order = read_list(a.stock_modules_load)
-    system_names = {s.strip() for s in a.system_modules.split(",") if s.strip()}
-
-    first_stage, vendor, system, borrowed, missing = [], [], [], [], []
-    for name in stock_order:
-        path = have.get(name)
-        if path is None:
-            cand = os.path.join(a.stock_modules, name) if a.stock_modules else None
-            if cand and os.path.isfile(cand) and not a.no_stock_fallback:
-                good, why = compatible(cand, table)
-                if not good:
-                    missing.append((name, f"stock fallback rejected: {why}"))
-                    continue
-                borrowed.append(name)
-                path = cand
-            else:
-                missing.append((name, "absent from package"))
+def dependency_closure(names, pool, dep_file):
+    """Select only the modules reachable from a stock ramdisk load list."""
+    dependencies = {}
+    if dep_file.is_file():
+        for line in dep_file.read_text().splitlines():
+            if not line.strip():
                 continue
-        first_stage.append((name, path))
+            source, sep, providers = line.partition(":")
+            require(sep, f"{dep_file}: malformed dependency entry")
+            dependencies[Path(source).name] = [Path(provider).name for provider in providers.split()]
 
-    used = {n for n, _ in first_stage}
-    for name, path in sorted(have.items()):
-        if name in used:
+    def canonical(name):
+        return Path(name).name.removesuffix(".ko").replace("-", "_")
+
+    softdep_file = dep_file.with_name("modules.softdep")
+    if softdep_file.is_file():
+        modules = {canonical(name): name for name in pool}
+        require(len(modules) == len(pool), f"{dep_file.parent}: ambiguous kernel module names")
+        for line in softdep_file.read_text().splitlines():
+            parts = line.split("#", 1)[0].split(maxsplit=2)
+            if not parts:
+                continue
+            require(len(parts) == 3 and parts[0] == "softdep", f"{softdep_file}: malformed soft dependency")
+            name = modules.get(canonical(parts[1]))
+            if name:
+                references = re.sub(r"\b(?:pre|post):", " ", parts[2]).split()
+                # A soft dependency may be absent in the original image.
+                dependencies.setdefault(name, []).extend(
+                    modules[canonical(ref)] for ref in references if canonical(ref) in modules)
+    result = {}
+    pending = list(names)
+    while pending:
+        name = pending.pop()
+        if name in result:
             continue
-        (system if name in system_names else vendor).append((name, path))
+        require(name in pool, f"ramdisk module {name} or its dependency is missing")
+        result[name] = pool[name]
+        pending.extend(dependencies.get(name, ()))
+    return result
 
-    # A kernel build only emits a few modules; the rest of vendor_dlkm is the
-    # OEM's, which is usable only after the same per-symbol check. Without this
-    # fill the ROM would ship a vendor_dlkm holding a single module.
-    vendor_filled = 0
-    if a.stock_modules and not a.no_vendor_fill:
-        placed = {n for n, _ in vendor} | {n for n, _ in first_stage} | {n for n, _ in system}
-        for name in sorted(os.listdir(a.stock_modules)):
-            if not name.endswith(".ko") or name in placed:
-                continue
-            src = os.path.join(a.stock_modules, name)
-            good, _why = compatible(src, table)
-            if not good:
-                continue
-            vendor.append((name, src))
-            vendor_filled += 1
 
-    if missing:
-        print(f"ABORT: {len(missing)} first-stage module(s) unavailable:", file=sys.stderr)
-        for n, why in missing[:10]:
-            print(f"  {n}: {why}", file=sys.stderr)
-        return 1
+def verify_symbols(symvers, phase, modules, providers=None):
+    try:
+        catalog = kmi.symbol_catalog(symvers, providers if providers is not None else modules)
+    except ValueError as error:
+        raise ValueError(f"{phase}: {error}") from error
+    for name, path in modules.items():
+        require(kmi.arm64_module(path), f"{phase}: {name} is not an AArch64 module")
+        problems = kmi.module_problems(path, catalog)
+        require(not problems, f"{phase}: {name}: {', '.join(problems[:6])}")
 
-    print(f"kernel module_layout=0x{kernel_layout:08x}" if kernel_layout else "kernel module_layout=UNKNOWN")
-    print(f"first-stage {len(first_stage)} (stock order) | vendor_dlkm {len(vendor)} "
-          f"(+{vendor_filled} OEM) | system_dlkm {len(system)} | "
-          f"borrowed-from-stock {len(borrowed)}")
 
-    dt = a.device_tree
-    pre = os.path.join(dt, "prebuilt")
-    layout = {
-        "Image": os.path.join(a.package, "Image"),
-        "dtbo.img": os.path.join(a.package, "dtbo.img"),
-    }
+def select_modules(package, stock, lists):
+    packaged = path_modules(package / "modules")
+
+    def replace(modules):
+        return {name: packaged.get(name, source) for name, source in modules.items()}
+
+    shared = path_modules(stock / "ramdisk")
+    recovery_pool = merged(shared, path_modules(stock / "recovery"))
+    early = replace(dependency_closure(lists["first_stage"], shared, stock / "ramdisk/modules.dep"))
+    deps = stock / "recovery/modules.dep"
+    if not deps.is_file() and not deps.with_name("modules.softdep").is_file():
+        deps = stock / "ramdisk/modules.dep"
+    recovery = replace(dependency_closure(lists["recovery"], recovery_pool, deps))
+    vendor = replace(path_modules(stock / "vendor_dlkm"))
+    system = replace(path_modules(stock / "system_dlkm"))
+    # New build modules are available in vendor_dlkm. Retain the stock load order.
+    for name, path in packaged.items():
+        if not any(name in modules for modules in (early, recovery, vendor, system)):
+            vendor[name] = path
+
+    symvers = package / "Module.symvers"
+    verify_symbols(symvers, "normal first stage", early)
+    verify_symbols(symvers, "Recovery", recovery)
+    verify_symbols(symvers, "system_dlkm", system, merged(early, system))
+    verify_symbols(symvers, "normal boot DLKM", vendor, merged(early, system, vendor))
+    partitions = {"vendor_ramdisk": merged(early, recovery), "vendor_dlkm": vendor, "system_dlkm": system}
+    if packaged:
+        features = {tuple(kmi.vermagic(path).split()[1:]) for path in packaged.values()}
+        require(len(features) == 1 and next(iter(features)), "inconsistent kernel package vermagic flags")
+        for group, modules in partitions.items():
+            for name, path in modules.items():
+                require(tuple(kmi.vermagic(path).split()[1:]) in features,
+                        f"{group}: {name}: vermagic flags differ from the packaged kernel modules")
+    return partitions
+
+
+def stage(a):
+    payload = stock_payload(a.stock_images, a.branch, a.payload_metadata)
+    package = verify_package(a.package, a.branch)
+    pool = load_pool(a.stock_pool, payload["sha256"])
+    verify_stock(a.stock_images, payload, ("vendor_boot", "dtbo"))
+    lists = pool["lists"]
+    partitions = select_modules(a.package, a.stock_pool, lists)
+    with (a.stock_images / "dtbo.img").open("rb") as stream:
+        require(stream.read(4) == b"\xd7\xb7\xab\x1e", "stock DTBO header has invalid magic")
+    original_dtb = (a.stock_pool / "dtb.img").read_bytes()
+    # The pool is locally generated from the same vendor_boot and tied to its hash
+    # by the checker. Compare with the source image here as well.
+    source_boot = a.stock_images / "vendor_boot.img"
+    with source_boot.open("rb") as stream:
+        header = stream.read(2128)
+        _, page, kernel, ramdisk, ramdisk_size = struct.unpack_from("<5I", header, 8)
+        tags, = struct.unpack_from("<I", header, 2076)
+        hsize, dtb_size, dtb_addr = struct.unpack_from("<IIQ", header, 2096)
+        stream.seek(((hsize + page - 1) // page + (ramdisk_size + page - 1) // page) * page)
+        require(stream.read(dtb_size) == original_dtb, "stock pool DTB differs from vendor_boot")
+    dtb, dtb_updates = dtb_for_ramdisk_fstab(original_dtb)
+    print(f"Module order verified: normal {len(lists['first_stage'])}, Recovery {len(lists['recovery'])}, "
+          f"vendor_dlkm {len(lists['vendor_dlkm'])}, system_dlkm {len(lists['system_dlkm'])}")
+    print(f"Selected ramdisk fstab for {dtb_updates} stock DTBs with legacy vendor mounts")
     if a.dry_run:
-        print("dry-run: no files written")
-        return 0
+        return
+    pre = a.device_tree / "prebuilt"
+    pre.mkdir(exist_ok=True)
+    # The caller installs the overlay in a clean build tree. Refuse stale
+    # staging files whenever the direct CLI is used in an existing overlay.
+    require(not (pre / "kernel-modules.mk").exists(), f"{pre}: remove the previous kernel staging output first")
+    shutil.copyfile(a.package / "Image", pre / "Image")
+    shutil.copyfile(a.stock_images / "dtbo.img", pre / "dtbo.img")
+    (pre / "dtb").mkdir(exist_ok=True)
+    (pre / "dtb" / "ossi.dtb").write_bytes(dtb)
+    mk = [
+        "# Generated by rom-stage-kernel.py",
+        "TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/Image",
+        "TARGET_FORCE_PREBUILT_KERNEL := true",
+        "BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img",
+        "BOARD_PREBUILT_DTBIMAGE_DIR := $(DEVICE_PATH)/prebuilt/dtb",
+        f"BOARD_KERNEL_PAGESIZE := {page}",
+        "BOARD_MKBOOTIMG_ARGS += "
+        f"--kernel_offset {kernel:#x} --ramdisk_offset {ramdisk:#x} --tags_offset {tags:#x} --dtb_offset {dtb_addr:#x}",
+    ]
+    for partition, prefix, list_key in (
+        ("vendor_ramdisk", "VENDOR_RAMDISK", "first_stage"),
+        ("vendor_dlkm", "VENDOR", "vendor_dlkm"),
+        ("system_dlkm", "SYSTEM", "system_dlkm"),
+    ):
+        dest = pre / partition
+        dest.mkdir()
+        modules = partitions[partition]
+        for name, src in modules.items():
+            shutil.copyfile(src, dest / name)
+        paths = " ".join(f"$(DEVICE_PATH)/prebuilt/{partition}/{name}" for name in sorted(modules))
+        mk.append(f"BOARD_{prefix}_KERNEL_MODULES := {paths}")
+        mk.append(f"BOARD_{prefix}_KERNEL_MODULES_LOAD := {' '.join(lists[list_key]) or 'false'}")
+        if partition == "vendor_ramdisk":
+            mk.append("BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := " + " ".join(lists["recovery"]))
+        if partition in pool["fs"]:
+            fs = pool["fs"][partition]
+            require(fs in ("ext4", "erofs"), f"unexpected stock filesystem {fs}")
+            mk.append(f"{FS_MAKE[partition]} := {fs}")
+        original = a.stock_pool / ("ramdisk" if partition == "vendor_ramdisk" else partition)
+        for name, suffix in (("modules.blocklist", "BLOCKLIST_FILE"), ("modules.options", "OPTIONS_FILE")):
+            if (original / name).is_file():
+                shutil.copyfile(original / name, dest / name)
+                mk.append(f"BOARD_{prefix}_KERNEL_MODULES_{suffix} := $(DEVICE_PATH)/prebuilt/{partition}/{name}")
+    report = {"package": package, "stock_payload": payload["sha256"], "lists": lists, "fs": pool["fs"],
+              "dtbs_using_ramdisk_fstab": dtb_updates,
+              "boot_security_patch": baseline(a.branch)["security_patch"],
+              "module_abi": {part: {name: kmi.module_abi(path) for name, path in sorted(mods.items())}
+                             for part, mods in partitions.items()}}
+    (pre / "stage-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    (pre / "kernel-modules.mk").write_text("\n".join(mk) + "\n")
 
-    shutil.rmtree(os.path.join(pre, "vendor_ramdisk"), ignore_errors=True)
-    shutil.rmtree(os.path.join(pre, "vendor_dlkm"), ignore_errors=True)
-    shutil.rmtree(os.path.join(pre, "system_dlkm"), ignore_errors=True)
-    for name, src in layout.items():
-        if os.path.isfile(src):
-            shutil.copy2(src, os.path.join(pre, name))
 
-    def place(base, items):
-        d = os.path.join(pre, base, "lib", "modules")
-        os.makedirs(d, exist_ok=True)
-        for name, src in items:
-            shutil.copy2(src, os.path.join(d, name))
-        return d
-
-    stage_dir = place("vendor_ramdisk", first_stage)
-    vendor_dir = place("vendor_dlkm", vendor)
-    system_dir = place("system_dlkm", system)
-    with open(os.path.join(stage_dir, "modules.load"), "w") as f:
-        f.write("\n".join(n for n, _ in first_stage) + "\n")
-
-    mk = []
-    mk.append("# Generated by scripts/rom-stage-kernel.py — do not edit.")
-    mk.append(f"# module_layout CRC 0x{kernel_layout:08x}" if kernel_layout else "# module_layout CRC unknown")
-    mk.append("BOARD_USES_SYSTEM_DLKMIMAGE := true")
-    mk.append("BOARD_VENDOR_RAMDISK_KERNEL_MODULES := \\")
-    mk += [f"    $(DEVICE_PATH)/prebuilt/vendor_ramdisk/lib/modules/{n} \\" for n, _ in first_stage]
-    mk.append("")
-    mk.append("BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD := "
-              + " ".join(n for n, _ in first_stage))
-    mk.append("BOARD_VENDOR_KERNEL_MODULES := \\")
-    mk += [f"    $(DEVICE_PATH)/prebuilt/vendor_dlkm/lib/modules/{n} \\" for n, _ in vendor]
-    mk.append("")
-    # _LOAD is a name list, not a file: build/make reads it as a variable.
-    mk.append("BOARD_VENDOR_KERNEL_MODULES_LOAD := " + " ".join(n for n, _ in vendor))
-    if system:
-        mk.append("BOARD_SYSTEM_KERNEL_MODULES := \\")
-        mk += [f"    $(DEVICE_PATH)/prebuilt/system_dlkm/lib/modules/{n} \\" for n, _ in system]
-        mk.append("")
-        mk.append("BOARD_SYSTEM_KERNEL_MODULES_LOAD := " + " ".join(n for n, _ in system))
-    mk.append("TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/Image")
-    if os.path.isfile(os.path.join(pre, "dtbo.img")):
-        mk.append("BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img")
-    with open(os.path.join(pre, "kernel-modules.mk"), "w") as f:
-        f.write("\n".join(mk) + "\n")
-
-    summary = {
-        "module_layout_crc": f"0x{kernel_layout:08x}" if kernel_layout else None,
-        "first_stage": len(first_stage),
-        "vendor_dlkm": len(vendor),
-        "system_dlkm": len(system),
-        "borrowed_from_stock": borrowed,
-        "vendor_from_stock": vendor_filled,
-    }
-    with open(os.path.join(pre, "stage-report.json"), "w") as f:
-        json.dump(summary, f, indent=1)
-    print(f"staged into {pre}")
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ("package", "device-tree", "stock-pool", "stock-images"):
+        parser.add_argument("--" + name, required=True, type=Path)
+    parser.add_argument("--branch", required=True)
+    parser.add_argument("--payload-metadata", type=Path)
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+    try:
+        stage(args)
+    except (OSError, ValueError, KeyError, struct.error, subprocess.CalledProcessError) as error:
+        print(f"FAIL: kernel stage: {error}", file=sys.stderr)
+        return 1
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    raise SystemExit(main())

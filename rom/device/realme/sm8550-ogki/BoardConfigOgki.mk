@@ -57,10 +57,10 @@ TARGET_PROVIDES_LIBAR_PAL := true
 
 # Boot images
 BOARD_BOOT_HEADER_VERSION := 4
-BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
+BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION) --os_version 13.0.0 --os_patch_level $(BOOT_SECURITY_PATCH)
 BOARD_RAMDISK_USE_LZ4 := true
 BOARD_INIT_BOOT_HEADER_VERSION := 4
-BOARD_MKBOOTIMG_INIT_ARGS += --header_version $(BOARD_INIT_BOOT_HEADER_VERSION)
+BOARD_MKBOOTIMG_INIT_ARGS += --header_version $(BOARD_INIT_BOOT_HEADER_VERSION) --os_version 13.0.0 --os_patch_level $(BOOT_SECURITY_PATCH)
 
 # ---- KERNEL: OEM OGKI, never Google GKI ----
 BOARD_USES_GENERIC_KERNEL_IMAGE := false
@@ -98,11 +98,8 @@ BOARD_PRODUCTIMAGE_MINIMAL_PARTITION_RESERVED_SIZE := false
 # kernel package (Image + every .ko + Module.symvers of the same build).
 # The generated file also sets BOARD_VENDOR_RAMDISK_KERNEL_MODULES[_LOAD],
 # BOARD_VENDOR_KERNEL_MODULES[_LOAD] and BOARD_SYSTEM_KERNEL_MODULES[_LOAD].
--include $(DEVICE_PATH)/prebuilt/kernel-modules.mk
-
-ifeq ($(wildcard $(DEVICE_PATH)/prebuilt/Image),)
-$(error prebuilt/Image missing: run scripts/rom-stage-kernel.py with a kernel package; GKI fallback is forbidden)
-endif
+$(foreach f,Image dtb/ossi.dtb dtbo.img kernel-modules.mk,$(if $(wildcard $(DEVICE_PATH)/prebuilt/$(f)),,$(error Incomplete OGKI staging, missing $(f))))
+include $(DEVICE_PATH)/prebuilt/kernel-modules.mk
 
 TARGET_KERNEL_EXT_MODULE_ROOT := kernel/oneplus/sm8550-modules
 TARGET_KERNEL_EXT_MODULES := \
@@ -137,6 +134,7 @@ TARGET_KERNEL_EXT_MODULES := \
 BOARD_USES_METADATA_PARTITION := true
 BOARD_USES_QCOM_FBE_DECRYPTION := true
 BOARD_USES_SYSTEM_DLKMIMAGE := true
+BOARD_USES_VENDOR_DLKMIMAGE := true
 
 # Partitions
 BOARD_FLASH_BLOCK_SIZE := 262144
@@ -147,20 +145,20 @@ BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 201326592
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 104857600
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 233871900672
 
-# Measured on every Realme GT5 full OTA (14.0.0.1120 .. 16.0.3.500):
-# vendor/odm are erofs, product/system/system_ext ext4, and BOTH dlkm
-# partitions are ext4 — the earlier erofs lines came from the OnePlus tree.
+# DLKM filesystem types come from the actual stock images in kernel-modules.mk.
 BOARD_ODMIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE := ext4
-BOARD_SYSTEM_DLKMIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := erofs
-BOARD_VENDOR_DLKMIMAGE_FILE_SYSTEM_TYPE := ext4
 
-BOARD_SUPER_PARTITION_GROUPS := oplus_dynamic_partitions
-BOARD_OPLUS_DYNAMIC_PARTITIONS_PARTITION_LIST := odm product system system_dlkm system_ext vendor vendor_dlkm
-BOARD_OPLUS_DYNAMIC_PARTITIONS_SIZE := $(shell echo $$(($(BOARD_SUPER_PARTITION_SIZE) - 4194304)))
+# Populate the group, physical super capacity, and all confirmed OEM mounts.
+$(foreach f,oem-partitions.mk fstab.ossi oem-avb-keys/*.avbpubkey,$(if $(wildcard $(DEVICE_PATH)/prebuilt/$(f)),,$(error Incomplete OEM staging, missing $(f))))
+include $(DEVICE_PATH)/prebuilt/oem-partitions.mk
+ifeq ($(strip $(OGKI_STAGED_OEM_PARTITIONS)),)
+$(error OEM partition manifest is empty)
+endif
+$(foreach partition,$(OGKI_STAGED_OEM_PARTITIONS),$(if $(wildcard $(DEVICE_PATH)/prebuilt/oem_partitions/$(partition).img),,$(error Missing OEM image $(partition).img)))
 
 TARGET_COPY_OUT_ODM := odm
 TARGET_COPY_OUT_PRODUCT := product
@@ -171,46 +169,53 @@ TARGET_COPY_OUT_VENDOR_DLKM := vendor_dlkm
 
 # Recovery
 BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE := true
-TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/fstab.default
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/prebuilt/fstab.ossi
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 
-# AVB — flags=3 matches the working ROM vbmeta
+# AVB verification remains enabled. The local builder's default certificate is
+# for userdebug. Production signing is a separate release configuration.
+ifeq ($(TARGET_BUILD_VARIANT),user)
+$(error The ossi overlay is configured for userdebug builds)
+endif
 BOARD_AVB_ENABLE := true
-BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 3
 BOARD_MOVE_GSI_AVB_KEYS_TO_VENDOR_BOOT := true
+OSSI_AVB_KEY ?= external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_KEY_PATH := $(OSSI_AVB_KEY)
+BOARD_AVB_ALGORITHM := SHA256_RSA4096
+OSSI_BOOT_ROLLBACK_INDEX := $(shell date -u -d '$(BOOT_SECURITY_PATCH)' +%s)
 
-BOARD_AVB_BOOT_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_BOOT_KEY_PATH := $(OSSI_AVB_KEY)
 BOARD_AVB_BOOT_ALGORITHM := SHA256_RSA4096
-BOARD_AVB_BOOT_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_BOOT_ROLLBACK_INDEX := $(OSSI_BOOT_ROLLBACK_INDEX)
 BOARD_AVB_BOOT_ROLLBACK_INDEX_LOCATION := 4
 
-BOARD_AVB_DTBO_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_DTBO_KEY_PATH := $(OSSI_AVB_KEY)
 BOARD_AVB_DTBO_ALGORITHM := SHA256_RSA4096
-BOARD_AVB_DTBO_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_DTBO_ROLLBACK_INDEX := $(OSSI_BOOT_ROLLBACK_INDEX)
 BOARD_AVB_DTBO_ROLLBACK_INDEX_LOCATION := 3
 
-BOARD_AVB_RECOVERY_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_RECOVERY_KEY_PATH := $(OSSI_AVB_KEY)
 BOARD_AVB_RECOVERY_ALGORITHM := SHA256_RSA4096
-BOARD_AVB_RECOVERY_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_RECOVERY_ROLLBACK_INDEX := $(OSSI_BOOT_ROLLBACK_INDEX)
 BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
 
 BOARD_AVB_VBMETA_SYSTEM := system system_dlkm system_ext product
-BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := $(OSSI_AVB_KEY)
 BOARD_AVB_VBMETA_SYSTEM_ALGORITHM := SHA256_RSA4096
 BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
 BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX_LOCATION := 2
 
 BOARD_AVB_VBMETA_VENDOR := odm vendor vendor_dlkm
-BOARD_AVB_VBMETA_VENDOR_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_VBMETA_VENDOR_KEY_PATH := $(OSSI_AVB_KEY)
 BOARD_AVB_VBMETA_VENDOR_ALGORITHM := SHA256_RSA4096
-BOARD_AVB_VBMETA_VENDOR_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_VBMETA_VENDOR_ROLLBACK_INDEX := $(OSSI_BOOT_ROLLBACK_INDEX)
 BOARD_AVB_VBMETA_VENDOR_ROLLBACK_INDEX_LOCATION := 5
 
-BOARD_AVB_VENDOR_BOOT_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_VENDOR_BOOT_KEY_PATH := $(OSSI_AVB_KEY)
 BOARD_AVB_VENDOR_BOOT_ALGORITHM := SHA256_RSA4096
-BOARD_AVB_VENDOR_BOOT_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_VENDOR_BOOT_ROLLBACK_INDEX := $(OSSI_BOOT_ROLLBACK_INDEX)
 BOARD_AVB_VENDOR_BOOT_ROLLBACK_INDEX_LOCATION := 6
 
 # WiFi

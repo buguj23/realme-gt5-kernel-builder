@@ -5,7 +5,7 @@
 #   * header v4, ramdisk_size=0, os_version always 13.0.0 (KMI ABI)
 #   * KMI android13-5.15 on ColorOS 13/14/15/16
 #   * dtbo + init_boot stay STOCK for that ColorOS
-#   * vbmeta flags=0 stock; custom Image needs flags=3
+#   * This diagnostic prepares images only. The ROM builder signs and verifies the AVB chain.
 set -euo pipefail
 REPO_DIR=$(cd "$(dirname "$0")/.." && pwd)
 KP_DIR=${KP_DIR:-$HOME/gt5_kernel_ab/kernel_platform}
@@ -67,34 +67,5 @@ for f in dtbo.img init_boot.img recovery.img; do
   fi
 done
 
-# Custom kernel: disable AVB (stock flags=0 would reject our Image).
-if [ -f "$STOCK/vbmeta.img" ]; then
-  python3 - "$STOCK/vbmeta.img" "$OUT/vbmeta.img" <<'PY'
-import struct, sys
-from pathlib import Path
-data=bytearray(Path(sys.argv[1]).read_bytes())
-# AvbVBMetaImageHeader.flags at offset 120, big-endian
-# 1=HASH_TREE disable? AVB_VBMETA_IMAGE_FLAGS_HASHTREE_DISABLED=1
-# AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED=2 → flags=3
-struct.pack_into('>I', data, 120, 3)
-Path(sys.argv[2]).write_bytes(data)
-print('vbmeta flags -> 3 (verification disabled for custom OGKI Image)')
-PY
-fi
-
-cat > "$OUT/FLASH.txt" <<EOF
-Realme GT5 150W (ossi / RMX3820) ColorOS ${COLOROS}
-Official linux: $(read_cat linux)
-boot header: v4 os_version=${OS_VERSION} os_patch=${OS_PATCH} (kernel ABI, not userspace)
-
-fastboot getvar current-slot
-fastboot --set-active=a
-fastboot flash boot_a     boot.img          # our OGKI Image, official header
-fastboot flash dtbo_a     dtbo.img          # STOCK this ColorOS
-fastboot flash init_boot_a init_boot.img    # STOCK this ColorOS
-fastboot flash vbmeta_a   vbmeta.img        # flags=3
-# Do NOT flash Google GKI. Do NOT flash analogue OnePlus dtbo.
-fastboot reboot
-EOF
 ls -lh "$OUT"
 echo "COLOROS=$COLOROS os=$OS_VERSION/$OS_PATCH"

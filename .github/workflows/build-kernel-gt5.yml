@@ -342,13 +342,15 @@ jobs:
       - name: Check Disk Space
         run: df -h
 
-      - name: Create and Enable 3G Swap
+      - name: Enable additional swap when supported
         run: |
-          sudo swapoff -a
-          sudo fallocate -l 3G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
+          if [ -z "$(swapon --show=NAME --noheadings)" ]; then
+            swap=$(mktemp "$RUNNER_TEMP/ossi-swap.XXXXXXXX")
+            if ! { fallocate -l 3G "$swap" && sudo mkswap "$swap" && sudo swapon "$swap"; }; then
+              unlink "$swap"
+              echo "::warning::Runner swap unavailable. Continuing with the configured RAM."
+            fi
+          fi
           free -h
 
       - name: Set Cache Environment
@@ -1960,14 +1962,31 @@ jobs:
 
       - name: Package kernel for ROM
         env:
-          KP_IMAGE: ${{ github.workspace }}/kernel_workspace/kernel_platform/out/Final-Image-Find/Image
+          GT5_BASELINE: ${{ inputs.FILE }}
+          GT5_VARIANT: ${{ inputs.KSU_VARIANT }}
+          FAST_BUILD: ${{ inputs.FAST_BUILD }}
+          FALLBACK: ${{ steps.fast_build.outputs.fallback }}
         run: |
-          bash scripts/kernel-package.sh "$GITHUB_WORKSPACE/kernel_workspace" \
+          set -euo pipefail
+          PLATFORM="$GITHUB_WORKSPACE/kernel_workspace/kernel_platform"
+          if [ "$FAST_BUILD" = true ] && [ "$FALLBACK" != true ]; then
+            KBUILD="$PLATFORM/common/out"
+          else
+            mapfile -t KBUILDS < <(find "$PLATFORM" -type f -name Module.symvers -print | while IFS= read -r symvers; do
+              dir=$(dirname "$symvers")
+              if [ -f "$dir/arch/arm64/boot/Image" ] && [ -f "$dir/modules.order" ]; then
+                printf '%s\n' "$dir"
+              fi
+            done)
+            [ "${#KBUILDS[@]}" = 1 ] || { echo "Expected a single complete Kbuild output for the ROM package" >&2; exit 1; }
+            KBUILD="${KBUILDS[0]}"
+          fi
+          bash scripts/kernel-package.sh "$KBUILD" \
             "$GITHUB_WORKSPACE/kernel-package" \
-            --label "${{ github.event.inputs.KSU_VARIANT }}-${{ github.event.inputs.FILE }}"
+            --branch "$GT5_BASELINE" --variant "$GT5_VARIANT" --commit "$GITHUB_SHA"
 
       - name: Upload kernel package
-        if: always() && hashFiles('kernel-package/kernel-package.tar.zst') != ''
+        if: success() && hashFiles('kernel-package/kernel-package.tar.zst') != ''
         uses: actions/upload-artifact@v7
         with:
           name: kernel-package_${{ github.event.inputs.KSU_VARIANT }}_${{ github.event.inputs.FILE }}

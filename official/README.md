@@ -17,7 +17,7 @@ These are **OEM OGKI** kernels. Every version reports KMI `android13-5.15` even 
 
 Partition sizes (all builds): boot 192MiB, dtbo 24MiB, init_boot 8MiB, recovery 100MiB, vbmeta 12KiB.
 
-Official `vbmeta` flags=0 (verification on). Custom Image needs `flags=3` or resign. **Keep stock `dtbo` + `init_boot`** for that ColorOS; analogue DTB is OnePlus, not ossi.
+Stock `vbmeta` uses flags=0. ROM builds sign and verify their own AVB chain and use the matching stock DTB and DTBO. For 16.0.3.500, the extracted kernel SHA-256 has been measured. The four whole-image hashes still requiring that OTA are recorded as `null`. The pinned payload metadata hash is listed in `kernels.json`.
 
 ```bash
 scripts/import-official.sh "/path/to/GT5 150W.zip"

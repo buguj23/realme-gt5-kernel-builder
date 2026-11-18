@@ -1,6 +1,6 @@
-# 官方全量包对照（禁止混刷 / 禁止自编译完整 ROM）
+# 官方 OTA 基线对照
 
-设备恒为 **RMX3820 / RE5C33 / 工程 22635**。下列均为 CN 全量 AB OTA，payload minor=8。
+设备恒为 **RMX3820 / RE5C33 / 工程 22635**。表内固件属于 CN A/B OTA。审计中核验的 A14/A15 payload 标记为部分更新。
 
 | ColorOS | 内核 UTS | os_patch | 指纹 incremental | `/metadata` | 对应 git 分支 |
 |---|---|---|---|---|---|
@@ -21,18 +21,6 @@
 
 先前「设备原 metadata=ext4」**不是这五份官方全量包**。官方 CN 全量从 14.0.0.1120 到 16.0.3.500 全是 f2fs。ext4 fstab 对上 f2fs 分区 = 挂载失败/循环（`PROBLEMS_AND_PLAN.md`）。
 
-## 安全刷法（唯一允许）
+## 原厂输入校验
 
-1. 手机先处于上表**某一行**的官方 ColorOS（完整 super + vendor_boot + vendor_dlkm + dtbo + init_boot）。
-2. 只刷该行分支打出来的 **AnyKernel3 boot**（Image + kernelsu.ko）。
-3. **不刷** 自编译 system / vendor / odm / product / super / userdata / metadata。
-4. dtbo、init_boot、vendor_boot、vendor_dlkm 必须与该行 ColorOS **同包**。1300 与 1400 虽同为 5.15.167，scm 不同，禁止交叉。
-5. 自定义 boot 若 AVB 拦：只对 vbmeta 关校验（flags=3），不要换官方 vbmeta 公钥。
-6. OrangeFox：独立 recovery 分区、不含内核；不能当 fastbootd。
-
-## 明确禁止
-
-- 自编译完整类原生再刷 super（成本高、AVB/动态分区/oplus my_* 逻辑分区、FBE 全是砖点）
-- 用 5.15.167 分支产物刷在 15.0.0.1300 上
-- 16.0.2.402 的 dtbo/init_boot 配 16.0.3.500 内核
-- 自建 vendor_dlkm 替换官方模块
+按同一行校验并准备原厂输入。15.0.0.1300 与 15.0.0.1400 的内核均为 5.15.167，各自具有不同 UTS 和 OTA 元数据标识。16.0.2.402 与 16.0.3.500 也需要各自的原厂 DTB、DTBO 与模块。对应构建参数见 [ROM_BUILD.md](ROM_BUILD.md)。

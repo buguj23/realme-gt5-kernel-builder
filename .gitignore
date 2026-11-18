@@ -30,5 +30,10 @@ rom/device/realme/ossi/prebuilt/stage-report.json
 rom/device/realme/ossi/prebuilt/vendor_ramdisk/
 rom/device/realme/ossi/prebuilt/vendor_dlkm/
 rom/device/realme/ossi/prebuilt/system_dlkm/
+rom/device/realme/ossi/prebuilt/dtb/
+rom/device/realme/ossi/prebuilt/fstab.ossi
+rom/device/realme/ossi/prebuilt/oem-avb-keys/
+rom/device/realme/ossi/prebuilt/oem-partitions.mk
+rom/device/realme/ossi/prebuilt/oem-partitions.json
 *.ko
 rom/vendor/realme/ossi/proprietary/

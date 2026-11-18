@@ -21,8 +21,9 @@
 | Infinity-X 前一版 ROM 内核（5.15.200） | — | `0xedfc7a5c` |
 | 该 ROM 的 `vendor_boot` 模块 | 306 | `0xedfc7a5c` |
 
-结论：Action-Build 的 OGKI 内核与原厂模块同 CRC，可直接配对；ROM 自编的
-5.15.200 内核与原厂模块不同 CRC，必须成套替换。
+结论：上述 `module_layout` 相同只是一项必要条件，不能证明原厂模块可直接配对。
+还须验证每个导入符号 CRC、实际交付的模块导出提供者，以及首阶段依赖所在分区。
+ROM 自编的 5.15.200 内核与上述模块布局不同，不能混用。
 
 复现：
 
@@ -34,6 +35,17 @@ python3 scripts/ida_kmi_check.py --symvers Module.symvers --modules <dir> --imag
 
 IDA 侧脚本在读 ELF 时用符号表/`__versions`；对裸 `Image` 用 `Module.symvers`
 给出的 CRC 做字节扫描（与审计同法）。
+
+`kmi.py verify` 拒绝缺失 `__versions` / `module_layout`、未知符号、CRC 不匹配以及
+重复导出。`Module.symvers` 的模块行不能替代实际交付的 `.ko`：内建符号取 vmlinux 行，
+模块符号从交付 ELF 的 `__ksymtab_*` / `__crc_*` 提取。
+`rom-stage-kernel.py` 对最终交付集合做同一检查，并要求首阶段导入的模块提供者也在
+vendor ramdisk 内；不再静默跳过未通过的 OEM vendor 模块。
+
+此前四分支在平铺模块池中出现 `zsmalloc.ko` 与 `oplus_bsp_zsmalloc.ko`
+重复导出 `zs_*`。现在独立检查正常首阶段、正常启动的 DLKM 和 Recovery，
+在同一阶段出现重复导出时拒绝交付。该行为已用 AArch64 ELF 样本验证，
+原厂 DLKM 和 schema 2 内核包的整套复验待做。构建同源记录取自打包清单。
 
 ## 2. 三项致命项与对应守卫
 
@@ -53,21 +65,14 @@ vendor_cmdline "video=vfb:640x400,bpp=32,memsize=3072000 nosoftlockup bootconfig
 bootconfig 85 B
 ```
 
-`rom-vendor-boot-fix.sh --check-only` 在交付包上会同时报出这三项，可用作 CI 门禁。
+构建入口使用 `rom-verify-delivery.py` 验收 target-files 与 OTA，包括独立 Recovery 镜像中的程序与挂载表。`rom-vendor-boot-fix.sh --check-only` 单独校验 vendor_boot 头部、两套模块顺序及其引用的 ELF。
 
 ## 3. 分区与文件系统（原厂实测）
 
 * `/metadata` **f2fs**（原厂 `vendor_boot` 的 `first_stage_ramdisk/fstab.qcom`）。
-* `system` / `system_ext` / `product` ext4；`vendor` / `vendor_dlkm` / `system_dlkm` erofs；
-  `odm` erofs。
+* 构建时从经过 OTA 哈希校验的两个 DLKM 镜像分别识别 ext4 或 EROFS。
 * `boot` 头 v4 内无 ramdisk；首阶段模块与 fstab 在 `vendor_boot`。
 
-## 4. 刷机边界（防 ARB / 双槽损坏）
+## 4. 发布签名
 
-只刷 OS 分区：`boot`、`init_boot`、`vendor_boot`、`dtbo`、`vbmeta`、`super` 内逻辑分区。
-不要随 ROM 脚本覆盖 `xbl`、`abl`、`tz`、`hyp` 等引导链——这些一旦触发高版本
-Rollback Index，EDL 也回不去。原厂全量包与解出的 `boot/init_boot/vendor_boot/dtbo/vbmeta`
-必须本地归档，作为每次刷机前的兜底。
-
-AVB：自编 `vbmeta` 需 `--flags 3`（HASHTREE_DISABLED | VERIFICATION_DISABLED），
-与可用 ROM 的做法一致。
+当前构建输出 userdebug 工件并保持 AVB 验证启用。构建以实际 target-files 的 AVB 信任链和 OEM 镜像签名检查为收集条件。

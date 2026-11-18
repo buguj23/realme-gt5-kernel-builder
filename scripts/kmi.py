@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""kmi.py — prove an Image and a set of .ko come from one build.
+"""kmi.py — verify a delivered module set's symbol CRCs and provider closure.
 
 With CONFIG_MODVERSIONS=y the kernel rejects any module whose __versions entry
 for an imported symbol disagrees with the kernel's own CRC. The first casualty is
@@ -7,8 +7,10 @@ for an imported symbol disagrees with the kernel's own CRC. The first casualty i
 Vermagic strings do NOT gate this: same_magic() ignores the version prefix.
 
 Sources of truth:
-  * kernel side  — Module.symvers produced by the same build as the Image
-  * module side  — ELF section __versions, 64 entries of {u64 crc; char name[56]}
+  * built-in exports — vmlinux rows in the build's Module.symvers
+  * module exports — delivered ELF __ksymtab_* and absolute __crc_* symbols
+  * module imports — ELF __versions, 64-byte {u64 crc; char name[56]} entries
+Image CRC occurrence is a necessary consistency check, not build provenance proof.
 
 usage:
   kmi.py symvers  Module.symvers                       # print module_layout CRC
@@ -20,6 +22,7 @@ usage:
 exit: 0 aligned, 1 misaligned, 2 usage/IO error
 """
 import argparse
+import hashlib
 import json
 import os
 import struct
@@ -103,6 +106,22 @@ def module_versions(path):
     return versions_map(path) or fallback_versions(path)
 
 
+def arm64_module(path):
+    with open(path, "rb") as stream:
+        hdr = stream.read(20)
+    return (len(hdr) == 20 and hdr[:6] == b"\x7fELF\x02\x01"
+            and struct.unpack_from("<HH", hdr, 16) == (1, 183))
+
+
+def vermagic(path):
+    for name, data, _ in elf_sections(path):
+        if name == ".modinfo":
+            entries = [v[9:].decode("ascii") for v in data.split(b"\0") if v.startswith(b"vermagic=")]
+            if len(entries) == 1:
+                return entries[0]
+    raise ValueError(f"{path}: missing or ambiguous ELF vermagic")
+
+
 # ------------------------------------------------------------------ symvers
 def read_symvers(path):
     """{symbol: crc} for every exported symbol in Module.symvers."""
@@ -113,6 +132,69 @@ def read_symvers(path):
             if len(parts) >= 2 and parts[0].startswith("0x"):
                 table[parts[1]] = int(parts[0], 16)
     return table
+
+
+def module_exports(path):
+    """Read actual arm64 module exports, not consumer __versions claims."""
+    sections = {name: data for name, data, _ in elf_sections(path)
+                if name in (".symtab", ".strtab")}
+    strings = sections.get(".strtab", b"")
+    symbols = sections.get(".symtab", b"")
+    exported, crcs = set(), {}
+    for offset in range(0, len(symbols), 24):
+        name, info, _, index, value, _ = struct.unpack_from("<IBBHQQ", symbols, offset)
+        if info & 0xf == 3:  # STT_SECTION is not an exported symbol.
+            continue
+        end = strings.find(b"\0", name)
+        symbol = strings[name:end].decode("ascii", "replace")
+        if symbol.startswith("__ksymtab_"):
+            exported.add(symbol[len("__ksymtab_"):])
+        elif symbol.startswith("__crc_") and index == 0xfff1:  # SHN_ABS
+            crcs[symbol[len("__crc_"):]] = value
+    missing = exported - crcs.keys()
+    if missing:
+        raise ValueError(f"{path}: export CRC unavailable: {sorted(missing)[:3]}")
+    return {name: crcs[name] for name in exported}
+
+
+def module_abi(path):
+    """Fingerprint the KMI of an AArch64 module before and after debug stripping."""
+    if not arm64_module(path):
+        raise ValueError(f"{path}: not an AArch64 kernel module")
+    imports = versions_map(path)
+    if not imports or LAYOUT not in imports:
+        raise ValueError(f"{path}: missing __versions/module_layout")
+    contract = {"vermagic": vermagic(path), "imports": imports, "exports": module_exports(path)}
+    return hashlib.sha256(json.dumps(contract, sort_keys=True).encode("ascii")).hexdigest()
+
+
+def symbol_catalog(symvers, modules):
+    """Map symbols to (CRC, provider); only delivered .ko can provide exports."""
+    catalog = {}
+    with open(symvers) as source:
+        for line in source:
+            fields = line.split()
+            if len(fields) >= 3 and fields[2] == "vmlinux":
+                catalog[fields[1]] = (int(fields[0], 16), None)
+    for name, path in modules.items():
+        for symbol, crc in module_exports(path).items():
+            if symbol in catalog:
+                raise ValueError(f"duplicate export {symbol}: {name}")
+            catalog[symbol] = (crc, name)
+    return catalog
+
+
+def module_problems(path, catalog):
+    versions = module_versions(path)
+    if not versions or LAYOUT not in versions:
+        return ["missing __versions/module_layout"]
+    problems = []
+    for symbol, crc in versions.items():
+        if symbol not in catalog:
+            problems.append(f"{symbol}: no delivered provider")
+        elif catalog[symbol][0] != crc:
+            problems.append(f"{symbol}: CRC mismatch")
+    return problems
 
 
 # --------------------------------------------------------------------- verbs
@@ -141,7 +223,7 @@ def cmd_modules(args):
     print(f"{len(files)} modules in {args.modules}")
     for crc, n in census.most_common():
         print(f"  {n:4d}  {crc}")
-    return 0 if len(census) == 1 and "<no __versions>" not in census else 1
+    return 0 if len(census) == 1 and not any(key.startswith("<") for key in census) else 1
 
 
 def cmd_image(args):
@@ -170,32 +252,19 @@ def cmd_verify(args):
         print(f"FAIL {args.modules}: no .ko")
         return 2
 
-    bad_layout = []
-    mismatched = {}
-    no_versions = []
-    for name in files:
-        vers = module_versions(os.path.join(args.modules, name))
-        if not vers:
-            no_versions.append(name)
-            continue
-        if vers.get(LAYOUT) != kernel_layout:
-            bad_layout.append((name, vers.get(LAYOUT)))
-        diff = sum(1 for sym, crc in vers.items() if sym in table and table[sym] != crc)
-        if diff:
-            mismatched[name] = diff
-
+    paths = {name: os.path.join(args.modules, name) for name in files}
+    try:
+        catalog = symbol_catalog(args.symvers, paths)
+        problems = {name: issues for name, path in paths.items()
+                    if (issues := module_problems(path, catalog))}
+    except (ValueError, struct.error) as exc:
+        print(f"FAIL symbol providers: {exc}")
+        return 1
     print(f"kernel {LAYOUT} = 0x{kernel_layout:08x}  ({len(table)} symbols in symvers)")
-    print(f"modules: {len(files)}  layout-match: {len(files) - len(bad_layout) - len(no_versions)}")
-    if no_versions:
-        print(f"  no __versions (unsigned/none): {len(no_versions)} e.g. {no_versions[:3]}")
-    if bad_layout:
-        shown = ", ".join(f"{n}=0x{c:08x}" if c else f"{n}=?" for n, c in bad_layout[:5])
-        print(f"  LAYOUT MISMATCH: {len(bad_layout)} e.g. {shown}")
-    if mismatched:
-        worst = sorted(mismatched.items(), key=lambda kv: -kv[1])[:5]
-        print(f"  SYMBOL MISMATCH: {len(mismatched)} module(s), worst {worst}")
-
-    ok = not bad_layout and not mismatched
+    print(f"modules: {len(files)}; rejected: {len(problems)}")
+    for name, issues in problems.items():
+        print(f"  {name}: {len(issues)} unresolved/mismatched imports: {issues[:3]}")
+    ok = not problems
     if args.image:
         ok = cmd_image(argparse.Namespace(image=args.image,
                                           crc=f"0x{kernel_layout:08x}")) == 0 and ok

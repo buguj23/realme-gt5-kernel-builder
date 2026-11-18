@@ -27,6 +27,10 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
+
+from rom_inputs import BASE_PARTITIONS
+from rom_modules import check_vendor_boot
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -88,8 +92,14 @@ def package_mode(facts, pkg, stock_dir=None):
         hits = open(image, "rb").read().count(want.to_bytes(4, "little"))
         rows.append(("Image embeds CRC", f"{hits} hit(s)", ">=1", hits >= 1))
         ok = ok and hits >= 1
+    else:
+        rows.append(("Image", "missing", "present", False))
+        ok = False
 
     first = facts.get("first_stage_modules") or []
+    if not first:
+        rows.append(("first-stage module list", "empty", "present", False))
+        return rows, False
     have = set(files)
     missing = [m for m in first if m not in have]
 
@@ -123,12 +133,21 @@ def deliver_mode(facts, deliver):
     rows = []
     ok = True
 
+    expected = BASE_PARTITIONS | {"boot", "vendor_boot", "init_boot", "dtbo", "recovery",
+                                  "vbmeta", "vbmeta_system", "vbmeta_vendor"}
+    for name in sorted(expected):
+        if not os.path.isfile(os.path.join(deliver, f"{name}.img")):
+            rows.append((f"{name}.img", "missing", "present", False))
+            ok = False
+
     boot = os.path.join(deliver, "boot.img")
     if os.path.isfile(boot):
         rel = bf.kernel_release(boot)
         want = facts.get("kernel_release")
-        rows.append(("kernel release", rel or "?", want or "?", want is None or rel == want))
-        ok = ok and (want is None or rel == want)
+        stock_branch = (want or "").split("-", 1)[0]
+        match = bool(stock_branch and rel and rel.split("-", 1)[0] == stock_branch)
+        rows.append(("kernel branch", rel or "?", stock_branch or "?", match))
+        ok = ok and match
         hdr = bf.boot_header(boot)
         w_hdr = facts.get("boot_header") or {}
         for k in ("header_version", "os_version"):
@@ -140,8 +159,16 @@ def deliver_mode(facts, deliver):
     if os.path.isfile(vb):
         lists = bf.vendor_ramdisk_list(vb)
         first = lists.get("modules.load", [])
-        rows.append(("first-stage entries", str(len(first)), str(facts.get("first_stage")), len(first) == facts.get("first_stage")))
-        ok = ok and len(first) == facts.get("first_stage")
+        want_first = facts.get("first_stage_modules") or []
+        match = bool(want_first) and first == want_first
+        stock = Path(facts.get("stock", deliver)) / "vendor_boot.img"
+        if match:
+            try:
+                check_vendor_boot(Path(vb), stock)
+            except (OSError, ValueError):
+                match = False
+        rows.append(("first-stage and Recovery", str(len(first)), str(len(want_first)), match))
+        ok = ok and match
         line = lists.get("metadata_line")
         rows.append(("/metadata", (line or "?").split()[2] if line else "?",
                      (facts.get("metadata_line") or "? ? ?").split()[2],
@@ -152,11 +179,15 @@ def deliver_mode(facts, deliver):
         img = os.path.join(deliver, f"{part}.img")
         if not os.path.isfile(img):
             continue
-        mods = bf.extract_modules(img, os.path.join("/tmp", f"cmp_{part}_{os.getpid()}"))
-        census = bf.crc_census(mods)
-        want = facts.get(f"{part}_crc") or {}
-        rows.append((f"{part} CRC", json.dumps(census), json.dumps(want), census == want))
-        ok = ok and census == want
+        from tempfile import TemporaryDirectory
+        with TemporaryDirectory(prefix=f"cmp_{part}_") as dest:
+            mods = bf.extract_modules(img, dest)
+            census = bf.crc_census(mods)
+        want = stock_crc(facts)
+        layout = f"0x{want:08x}" if want is not None else "unknown"
+        match = set(census) == {layout}
+        rows.append((f"{part} CRC", json.dumps(census), layout, match))
+        ok = ok and match
         got_fs = bf.fs_type(img)
         want_fs = (facts.get("fs_types") or {}).get(part)
         rows.append((f"{part} fs", got_fs or "?", want_fs or "?", want_fs is None or got_fs == want_fs))

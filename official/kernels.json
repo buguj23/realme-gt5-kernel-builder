@@ -11,7 +11,12 @@
     "vermagic": "5.15.123-android13-8-00760-ga4e8787d5799 SMP preempt mod_unload modversions aarch64",
     "security_patch": "2024-10-05",
     "fingerprint": "realme/RMX3820/RE5C33:14/UP1A.231005.007/T.1a73b78-941b-1:user/release-keys",
-    "metadata_fs": "f2fs"
+    "metadata_fs": "f2fs",
+    "payload_metadata_sha256": "kU0RZmAoQjsKUXqfkjp+GHh2jVIZEfkRh3pdUsbETyA=",
+    "source_manifest": "https://github.com/LineageOS/android",
+    "source_branch": "lineage-21.0",
+    "deps_branch": "lineage-21",
+    "product": "lineage_ossi"
   },
   "149": {
     "branch": "5.15.149",
@@ -25,7 +30,12 @@
     "vermagic": "5.15.149-android13-8-o-01120-g3337bebe8205 SMP preempt mod_unload modversions aarch64",
     "security_patch": "2024-11-05",
     "fingerprint": "realme/RMX3820/RE5C33:15/AP3A.240617.008/T.1b22798_7579-6758f:user/release-keys",
-    "metadata_fs": "f2fs"
+    "metadata_fs": "f2fs",
+    "payload_metadata_sha256": "3FQtS2u21MJg0xzEH5sM5u7KxPaoFK0EKeqqmza5V60=",
+    "source_manifest": "https://github.com/ProjectInfinity-X/manifest",
+    "source_branch": "15",
+    "deps_branch": "lineage-22.2",
+    "product": "infinity_ossi"
   },
   "167": {
     "branch": "5.15.167",
@@ -40,6 +50,11 @@
     "security_patch": "2025-09-01",
     "fingerprint": "realme/RMX3820/RE5C33:15/AP3A.240617.008/T.1fc6783-2-f6d31:user/release-keys",
     "metadata_fs": "f2fs",
+    "payload_metadata_sha256": "dPfUQ0BjKuupJu20H71GSvl1s+Njy0R8hrDKJwnx0u8=",
+    "source_manifest": "https://github.com/ProjectInfinity-X/manifest",
+    "source_branch": "15",
+    "deps_branch": "lineage-22.2",
+    "product": "infinity_ossi",
     "predecessor_1300": "5.15.167-android13-8-o-01140-g043e86cdd499 ColorOS 15.0.0.1300"
   },
   "180": {
@@ -52,6 +67,12 @@
     "os_patch_level": "2026-02",
     "kmi": "android13-5.15",
     "vermagic": "5.15.180-android13-8-o-01176-g6333b0dbc8ed SMP preempt mod_unload modversions aarch64",
-    "metadata_fs": "f2fs"
+    "metadata_fs": "f2fs",
+    "security_patch": "2026-02-01",
+    "payload_metadata_sha256": "PL9Zfu/u8Yct68g3xLHJPIA9YqhvX31Pu3nDqARBSBU=",
+    "source_manifest": "https://github.com/ProjectInfinity-X/manifest",
+    "source_branch": "16",
+    "deps_branch": "lineage-23.2",
+    "product": "infinity_ossi"
   }
 }

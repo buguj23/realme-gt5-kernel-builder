@@ -18,8 +18,7 @@
 * `module_layout` CRC 全部 **`0x0222dd63`** —— 四套原厂 `vendor_dlkm` 模块
   （345/378/380/385 个）与 `system_dlkm`（各 2 个）逐一核对，无一例外。
   这解释了为什么同一套 OGKI 构建方法能为四条分支产出可加载的内核。
-* 文件系统布局一致：`vendor`、`odm` erofs；`product`、`system`、`system_ext` ext4；
-  **`vendor_dlkm`、`system_dlkm` 都是 ext4**；`/metadata` **f2fs**。
+* 四份原厂 fstab 的 `/metadata` 均为 **f2fs**。两个 DLKM 文件系统从对应 OTA 的实际镜像识别，当前工作区待补齐这些镜像复验。
 * `boot` 头 v4、`os_version` 均为 `13.0.0`（KMI 版本，不是 Android 版本）。
 
 ## 必须逐分支处理的事实
@@ -29,7 +28,7 @@
 | 一阶段 `modules.load` | 134 / 145 / 145 / 146 项，顺序与集合都不同；用错分支的清单会缺 UFS/FBE 模块 |
 | `vendor_dlkm` 模块集合 | 345 / 378 / 380 / 385 个 |
 | SPL → `BOOT_SECURITY_PATCH` | 2024-10 / 2024-11 / 2025-09 / 2026-02 |
-| `PRODUCT_SHIPPING_API_LEVEL` | 34 / 35 / 35 / 36 |
+| ROM 平台 SDK | 34 / 35 / 35 / 36 |
 | 内核包 | 必须由**该分支**的 `Build Realme GT5 OGKI (KSU)` 运行产出 |
 
 ## 每分支的校验命令
@@ -58,7 +57,7 @@ phy-qcom-ufs-qrbtc-sdm845.ko  : 3 symbol mismatches
 qcom_dma_heaps.ko             : 1 symbol mismatch (register_mtrack_debugger)
 ```
 
-同一分支内（该分支内核包 + 该分支 OTA 模块）才会逐符号一致。因此：
+同一分支也应以暂存时的逐符号校验结果为准。因此：
 
 * 内核包必须由**该分支**工作流产出，`Module.symvers` 随之成套；
 * `scripts/rom-stage-kernel.py` 的借用只在**本分支符号表**下通过才成立；
@@ -93,8 +92,8 @@ oplus init rc、oplus permission xml）。
 python3 scripts/rom-select-blobs.py --base-list proprietary-files.txt \
   --images <ota-img-dir> --label <branch> \
   --out proprietary-files.txt --materialize <dump-dir>
-# 然后在源码树的 device/realme/ossi 下
-./extract-files.py <dump-dir>
+# 然后在源码树的 device/realme/ossi 下按分支选择平台 SDK
+OSSI_PLATFORM_SDK=36 ./extract-files.py <dump-dir>
 ```
 
 ### 四分支 Blob 提取结果
@@ -128,33 +127,8 @@ GKI/内核项**后补入 `BoardConfigOgki.mk`：
   `-include vendor/lineage/config/BoardConfigReservedSize.mk`
 
 **未采用**其 `BOARD_USES_GENERIC_KERNEL_IMAGE := true`、`TARGET_KERNEL_*`、
-`BOARD_*_KERNEL_MODULES*`（改用本仓库成套内核包）、文件系统类型（测得以 ext4 为准）。
+`BOARD_*_KERNEL_MODULES*`。DLKM 分区文件系统取自对应原厂镜像。
 
-### 待设备侧确认的一处
+## 逐分支暂存校验
 
-`BoardConfigOgki.mk` 目前写 `BOARD_SUPER_PARTITION_GROUPS := oplus_dynamic_partitions`。
-本地没有设备 `lpdump` 记录；`super_empty.img` 是此前 ROM 构建产物（组名
-`oneplus_dynamic_partitions`），不能作为设备事实。上机执行一次：
-
-```bash
-adb shell lpdump | grep group_name
-```
-
-若输出与 `oplus_dynamic_partitions` 不符，改 `BOARD_SUPER_PARTITION_GROUPS` 与
-`BOARD_OPLUS_DYNAMIC_PARTITIONS_*` 的变量名即可——这是唯一会产生不可逆后果的配置项。
-
-## 逐分支暂存校验（内核包 × 本分支 OTA）
-
-`rom-stage-kernel.py` 对每个借用模块做**逐符号** CRC 比对（不只 `module_layout`），
-四个分支全部通过：
-
-| 分支 | 一阶段 | vendor_dlkm（含 OEM 补全） | system_dlkm | 结果 |
-|---|---|---|---|---|
-| `5.15.123` | 134/134 | 346（345 OEM + rekernel） | 2 | ✅ |
-| `5.15.149` | 145/145 | 379（378 + 1） | 2 | ✅ |
-| `5.15.167` | 145/145 | 381（380 + 1） | 2 | ✅ |
-| `5.15.180` | 146/146 | 386（385 + 1） | 2 | ✅ |
-
-内核包本身只带 3 个模块（`rekernel.ko`、`zram.ko`、`zsmalloc.ko`）：Oplus 厂商模块在
-另一条 bazel 构建里。因为逐符号 CRC 与 OEM 一致，暂存器按分支原厂池补全
-vendor_dlkm；若某个 OEM 模块的任一导入符号不匹配，它会被拒绝而不是被塞进去。
+初版暂存结果使用平铺模块池和较弱的门禁。当前构建按启动阶段与分区校验，完整原厂输入和 schema 2 内核包就绪后重新验证。三个 A14/A15 OTA 的组名为 `qti_dynamic_partitions`，组配额为 `14491320320` 字节。A16 的组名及配额以匹配原厂 payload 和 LP 布局为准。

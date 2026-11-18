@@ -1,52 +1,40 @@
 name: Build Project Infinity-X (ossi)
 
-# Two stages:
-#   verify — runs on a GitHub-hosted runner, proves the kernel package is internally
-#            aligned (Image + every .ko + Module.symvers from one build).
-#   build  — full ROM compile; needs a self-hosted runner (>=200 GB free disk,
-#            >=16 GB RAM). GitHub-hosted runners cannot host an AOSP tree: 14 GB
-#            disk and a 6-hour job cap.
 on:
   workflow_dispatch:
     inputs:
       kernel_run_id:
-        description: "GT5 kernel run id (blank = latest successful run)"
+        description: "Optional run ID of a compatible GT5 kernel build"
         required: false
         default: ""
       kernel_file:
-        description: "Kernel branch the package was built from"
+        description: "Stock ROM baseline"
         type: choice
         required: true
-        default: 5.15.180
-        options: [5.15.180, 5.15.167, 5.15.149, 5.15.123]
+        default: "5.15.180"
+        options: ["5.15.180", "5.15.167", "5.15.149", "5.15.123"]
       ksu_variant:
+        description: "Kernel package variant"
         type: choice
         required: true
         default: BakaSU
         options: [BakaSU, SukiSU-Nova, FinaSU]
-      build_type:
-        type: choice
-        required: true
-        default: userdebug
-        options: [userdebug, user]
-      manifest_url:
-        required: true
-        default: "https://github.com/ProjectInfinity-X/manifest"
-      manifest_branch:
-        required: true
-        default: "main"
       source_dir:
-        description: "Source tree on the self-hosted runner"
+        description: "Android checkout on the runner (default: ~/gt5-rom/<branch>)"
         required: false
-        default: "$HOME/infinity"
+        default: ""
       stock_dir:
-        description: "Stock image dir on the runner (vendor_boot/vendor_dlkm/system_dlkm .img)"
+        description: "Verified stock input directory (default: ~/gt5-stock/<branch>)"
         required: false
-        default: "$HOME/gt5-stock"
+        default: ""
+      stock_slot:
+        description: "Active stock slot when both groups in the LP dump match"
+        type: choice
+        default: auto
+        options: [auto, a, b]
       run_build:
-        description: "Run the ROM build job (self-hosted runner required)"
+        description: "Build and verify a userdebug ROM on the self-hosted runner"
         type: boolean
-        required: false
         default: false
 
 permissions:
@@ -55,191 +43,68 @@ permissions:
 
 jobs:
   verify:
-    name: verify kernel package
     runs-on: ubuntu-latest
     outputs:
-      run-id: ${{ steps.pick.outputs.run-id }}
+      run-id: ${{ steps.kernel.outputs.run-id }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Resolve kernel run
-        id: pick
+        with:
+          persist-credentials: false
+      - name: ROM unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Resolve and verify matching kernel package
+        id: kernel
         env:
           GH_TOKEN: ${{ github.token }}
-          WANT: ${{ github.event.inputs.kernel_run_id }}
+          WANTRUN: ${{ inputs.kernel_run_id }}
+          BRANCH: ${{ inputs.kernel_file }}
+          VARIANT: ${{ inputs.ksu_variant }}
         run: |
-          set -euo pipefail
-          if [ -n "$WANT" ]; then id=$WANT; else
-            id=$(gh run list -R "$GITHUB_REPOSITORY" -w "Build Realme GT5 OGKI (KSU)" \
-                   -s success -L 1 --json databaseId -q '.[0].databaseId')
-          fi
-          [ -n "$id" ] || { echo "no successful kernel run found" >&2; exit 1; }
-          echo "run-id=$id" >> "$GITHUB_OUTPUT"
-          echo "using kernel run $id"
-
-      - name: Download kernel package
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RUN: ${{ steps.pick.outputs.run-id }}
-          WANT: kernel-package_${{ github.event.inputs.ksu_variant }}_${{ github.event.inputs.kernel_file }}
-        run: |
-          set -euo pipefail
-          mkdir -p pkg
-          art=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/artifacts" \
-                  --jq ".artifacts[] | select(.name==\"$WANT\") | .id" | head -n1)
-          [ -n "$art" ] || { echo "artifact $WANT missing on run $RUN" >&2; exit 1; }
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$art/zip" > pkg.zip
-          unzip -q pkg.zip -d pkg-inner
-          tar --zstd -xf pkg-inner/kernel-package.tar.zst -C pkg
-          ls -la pkg pkg/modules | head -20
-
-      - name: Prove KMI alignment
-        run: |
-          python3 scripts/kmi.py verify \
-            --symvers pkg/Module.symvers \
-            --modules pkg/modules \
-            --image pkg/Image
-
-      - name: Device tree sanity
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import pathlib, sys
-          tree = pathlib.Path("rom/device/realme/ossi")
-          need = ["BoardConfig.mk", "device.mk", "infinity_ossi.mk", "fstab.default"]
-          missing = [f for f in need if not (tree / f).is_file()]
-          board = (pathlib.Path("rom/device/realme/sm8550-ogki/BoardConfigOgki.mk")).read_text()
-          checks = {
-            "BOARD_USES_GENERIC_KERNEL_IMAGE := false": "GKI must stay off",
-            "kernel-modules.mk": "staged module lists must be included",
-            "BOARD_USES_SYSTEM_DLKMIMAGE := true": "system_dlkm must be built",
-          }
-          bad = [why for needle, why in checks.items() if needle not in board]
-          if missing or bad:
-              print("device tree problems:", missing, bad); sys.exit(1)
-          print("device tree OK")
-          PY
+          python3 scripts/rom-resolve-kernel.py --repo "$GITHUB_REPOSITORY" \
+            --branch "$BRANCH" --variant "$VARIANT" --run-id "$WANTRUN" \
+            --output "$RUNNER_TEMP/ossi-kernel-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            --github-output "$GITHUB_OUTPUT"
 
   build:
-    name: build ROM (${{ github.event.inputs.build_type }})
     if: ${{ inputs.run_build }}
     needs: verify
     runs-on: [self-hosted, linux, x64, gt5-rom]
+    concurrency:
+      group: ossi-self-hosted-rom
+      cancel-in-progress: false
     timeout-minutes: 720
     steps:
       - uses: actions/checkout@v4
-
-      - name: Download kernel package
+        with:
+          persist-credentials: false
+      - name: Fetch the verified kernel artifact
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN: ${{ needs.verify.outputs.run-id }}
-          WANT: kernel-package_${{ github.event.inputs.ksu_variant }}_${{ github.event.inputs.kernel_file }}
+          WANTRUN: ${{ needs.verify.outputs.run-id }}
+          BRANCH: ${{ inputs.kernel_file }}
+          VARIANT: ${{ inputs.ksu_variant }}
+        run: |
+          python3 scripts/rom-resolve-kernel.py --repo "$GITHUB_REPOSITORY" \
+            --branch "$BRANCH" --variant "$VARIANT" --run-id "$WANTRUN" \
+            --output "$RUNNER_TEMP/ossi-kernel-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+      - name: Build and verify target-files and OTA
+        env:
+          BRANCH: ${{ inputs.kernel_file }}
+          ROM_SOURCE: ${{ inputs.source_dir }}
+          STOCK_DIR: ${{ inputs.stock_dir }}
+          STOCK_SLOT: ${{ inputs.stock_slot }}
         run: |
           set -euo pipefail
-          mkdir -p pkg
-          art=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/artifacts" \
-                  --jq ".artifacts[] | select(.name==\"$WANT\") | .id" | head -n1)
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$art/zip" > pkg.zip
-          unzip -q pkg.zip -d pkg-inner
-          tar --zstd -xf pkg-inner/kernel-package.tar.zst -C pkg
-
-      - name: Stock module lists
-        env:
-          STOCK: ${{ github.event.inputs.stock_dir }}
-        run: |
-          bash scripts/stock-module-lists.sh "$STOCK" stock-out
-
-      - name: Verify package against this branch's OTA
-        env:
-          STOCK: ${{ github.event.inputs.stock_dir }}
-          FILE: ${{ github.event.inputs.kernel_file }}
-        run: |
-          set -euo pipefail
-          python3 scripts/branch-facts.py --stock "$STOCK" --label "$FILE" --json stock-facts.json
-          python3 - <<'PY'
-          import json, sys, os
-          facts = json.load(open("stock-facts.json"))
-          rel = facts.get("kernel_release") or ""
-          want = os.environ["FILE"]
-          if not rel.startswith(want + "-"):
-              print(f"selected kernel branch {want} but the stock OTA reports {rel!r}", file=sys.stderr)
-              print("point stock_dir at the full OTA that matches the branch", file=sys.stderr)
-              sys.exit(1)
-          print(f"stock baseline matches {want}: {rel}")
-          PY
-          python3 scripts/branch-compare.py --facts stock-facts.json --package pkg \
-            --stock-modules stock-out/stock-modules
-
-      - name: Sync source
-        env:
-          URL: ${{ github.event.inputs.manifest_url }}
-          BR: ${{ github.event.inputs.manifest_branch }}
-          SRC: ${{ github.event.inputs.source_dir }}
-        run: |
-          set -euo pipefail
-          mkdir -p "$SRC" && cd "$SRC"
-          if [ ! -d .repo ]; then
-            repo init --depth=1 -u "$URL" -b "$BR"
-          fi
-          repo sync -c -j"$(nproc)" --force-sync --no-clone-bundle --no-tags
-
-      - name: Drop device overlay
-        env:
-          SRC: ${{ github.event.inputs.source_dir }}
-        run: |
-          set -euo pipefail
-          for d in device/realme/ossi device/realme/sm8550-ogki vendor/realme/ossi; do
-            mkdir -p "$SRC/$(dirname "$d")"
-            rsync -a --delete "rom/$d/" "$SRC/$d/"
-          done
-
-      - name: Stage kernel package
-        env:
-          SRC: ${{ github.event.inputs.source_dir }}
-        run: |
-          set -euo pipefail
-          python3 scripts/rom-stage-kernel.py \
-            --package pkg \
-            --device-tree "$SRC/device/realme/ossi" \
-            --stock-modules-load stock-out/stock-modules.load \
-            --stock-modules stock-out/stock-modules
-
-      - name: Build
-        env:
-          SRC: ${{ github.event.inputs.source_dir }}
-          TYPE: ${{ github.event.inputs.build_type }}
-        run: |
-          set -euo pipefail
-          cd "$SRC"
-          . build/envsetup.sh
-          lunch "infinity_ossi-$TYPE"
-          mka bacon -j"$(nproc)"
-
-      - name: Guard vendor_boot envelope
-        env:
-          SRC: ${{ github.event.inputs.source_dir }}
-          STOCK: ${{ github.event.inputs.stock_dir }}
-        run: |
-          set -euo pipefail
-          OUT="$SRC/out/target/product/ossi"
-          bash scripts/rom-vendor-boot-fix.sh "$OUT/vendor_boot.img" \
-            --stock "$STOCK/vendor_boot.img" --check-only
-
-      - name: Collect
-        env:
-          SRC: ${{ github.event.inputs.source_dir }}
-        run: |
-          set -euo pipefail
-          OUT="$SRC/out/target/product/ossi"
-          mkdir -p dist
-          cp "$OUT"/ProjectInfinity-X-*.zip dist/ 2>/dev/null || cp "$OUT"/lineage-*.zip dist/
-          for i in boot.img vendor_boot.img dtbo.img init_boot.img vbmeta.img; do
-            cp "$OUT/$i" dist/ 2>/dev/null || true
-          done
-          sha256sum dist/* > dist/SHA256SUMS.txt
-          ls -la dist
-
+          SRC="${ROM_SOURCE:-$HOME/gt5-rom/$BRANCH}"
+          STOCK="${STOCK_DIR:-$HOME/gt5-stock/$BRANCH}"
+          stock_args=()
+          if [[ "$STOCK_SLOT" != auto ]]; then stock_args+=(--stock-slot "$STOCK_SLOT"); fi
+          bash scripts/rom-build-local.sh --sync --src "$SRC" --branch "$BRANCH" \
+            --stock-images "$STOCK" \
+            --pkg "$RUNNER_TEMP/ossi-kernel-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            --output "$RUNNER_TEMP/ossi-rom-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" "${stock_args[@]}"
       - uses: actions/upload-artifact@v7
         with:
-          name: Infinity-X_ossi_${{ github.event.inputs.build_type }}_${{ github.event.inputs.kernel_file }}
-          path: dist/
+          name: ossi_userdebug_${{ inputs.kernel_file }}_${{ inputs.ksu_variant }}
+          path: ${{ runner.temp }}/ossi-rom-${{ github.run_id }}-${{ github.run_attempt }}/
+          if-no-files-found: error

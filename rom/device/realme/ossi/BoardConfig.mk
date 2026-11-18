@@ -4,11 +4,8 @@
 
 DEVICE_PATH := device/realme/ossi
 
-# Super: same kalama envelope as OnePlus 11 / Ace2 Pro
-BOARD_SUPER_PARTITION_SIZE := 16940199936
-
+include $(DEVICE_PATH)/branch.mk
 include device/realme/sm8550-ogki/BoardConfigOgki.mk
--include $(DEVICE_PATH)/branch.mk
 
 # Assert
 TARGET_OTA_ASSERT_DEVICE := ossi,RMX3820,RE5C33,Ossi,RealmeGT5

@@ -17,14 +17,23 @@ usage:
 
 DIR must contain <partition>.img for the partitions the list references.
 Requires passwordless sudo for `mount -o loop,ro`.
+Missing images, mount failures, and failed materialization are fatal; only missing
+individual blobs are filtered from the list.
+Materialization requires --label (kernel release or ColorOS version) and writes
+.rom-blob-identity.json only after every selected file has been copied.
 """
 import argparse
 import json
 import os
+from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+from contextlib import ExitStack
+
+from rom_inputs import BASE_PARTITIONS, NAME, stock_payload, require, sha256, verify_stock
 
 # Oplus-specific payload the platform list has no reason to carry.
 EXTRA_PATTERNS = [
@@ -49,9 +58,12 @@ def parse_entry(line):
     body = raw.lstrip('-+ ')
     # extract-utils syntax: "<src>[:<dst>][;ANNOTATION=...]" — the source is
     # what must exist in the dump.
-    path = body.split(";", 1)[0].split(":", 1)[0].strip()
+    path = re.split(r"[;:|]", body, maxsplit=1)[0].strip()
     if not path or "/" not in path:
         return None
+    partition = path.split("/", 1)[0]
+    require(NAME.fullmatch(partition) and (partition in BASE_PARTITIONS or partition.startswith("my_"))
+            and ".." not in Path(path).parts, f"unsupported blob path {path!r}")
     return path, raw
 
 
@@ -67,10 +79,11 @@ class Mounts:
         res = run(cmd)
         if res.returncode != 0:
             res = run([*self.sudo, "mount", "-o", "loop,ro", "-t", "ext4", image, self.mnt])
-        return res.returncode == 0
+        if res.returncode != 0:
+            raise RuntimeError(f"failed to mount {image}: {res.stderr.strip()}")
 
     def _umount(self):
-        run([*self.sudo, "umount", self.mnt])
+        run([*self.sudo, "umount", self.mnt], check=True)
         self.mounted = None
 
     def __enter__(self):
@@ -82,23 +95,21 @@ class Mounts:
 
     def open(self, partition):
         if self.mounted == partition:
-            return True
+            return
         if self.mounted:
             self._umount()
         image = os.path.join(self.image_dir, f"{partition}.img")
         if not os.path.isfile(image):
-            return False
-        if not self._mount(image):
-            return False
+            raise FileNotFoundError(f"partition image not found: {image}")
+        self._mount(image)
         self.mounted = partition
-        return True
 
     def exists(self, partition, rel):
-        return self.open(partition) and os.path.isfile(os.path.join(self.mnt, rel))
+        self.open(partition)
+        return os.path.isfile(os.path.join(self.mnt, rel))
 
     def walk(self, partition):
-        if not self.open(partition):
-            return []
+        self.open(partition)
         root = self.mnt
         out = []
         for dirpath, _dirs, files in os.walk(root):
@@ -124,20 +135,39 @@ def main(argv):
     ap.add_argument("--no-extras", action="store_true")
     ap.add_argument("--materialize", help="copy the selected files into this dump dir")
     ap.add_argument("--label", default="")
+    ap.add_argument("--payload-metadata", type=Path)
     a = ap.parse_args(argv)
+    with ExitStack() as cleanup:
+        return select(a, cleanup)
 
-    mnt = a.mount or tempfile.mkdtemp(prefix="blobmnt-")
+
+def select(a, cleanup):
+    sources = [parsed for line in Path(a.base_list).read_text().splitlines()
+               if (parsed := parse_entry(line))]
+    dump = None
+    if a.materialize:
+        if not a.label:
+            raise ValueError("--materialize requires --label (kernel release or ColorOS version)")
+        payload = stock_payload(a.images, a.label, a.payload_metadata)
+        image_parts = {path.split("/", 1)[0] for path, _ in sources}
+        if not a.no_extras:
+            image_parts.update(("odm", "vendor"))
+        verify_stock(a.images, payload, sorted(image_parts))
+        output = Path(a.materialize)
+        require(not output.exists() and not output.is_symlink(), f"{output}: select a new blob dump directory")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        temp = Path(cleanup.enter_context(tempfile.TemporaryDirectory(prefix=".ossi-blobs-", dir=output.parent)))
+        dump = temp / "blobs"
+        dump.mkdir()
+
+    mnt = a.mount or cleanup.enter_context(tempfile.TemporaryDirectory(prefix="blobmnt-"))
     os.makedirs(mnt, exist_ok=True)
     sudo = bool(os.environ.get("SUDO_MOUNT", "1") == "1")
 
     kept, dropped, seen = [], [], set()
     per_part = {}
     with Mounts(a.images, mnt, sudo=sudo) as mounts:
-        for line in open(a.base_list):
-            parsed = parse_entry(line)
-            if not parsed:
-                continue
-            path, original = parsed
+        for path, original in sources:
             part = path.split("/", 1)[0]
             rel = path.split("/", 1)[1]
             per_part.setdefault(part, [0, 0])
@@ -147,6 +177,7 @@ def main(argv):
                 seen.add(path)
                 per_part[part][0] += 1
             else:
+                require(";REQUIRED" not in original, f"required stock blob is missing: {path}")
                 dropped.append(path)
 
         extras = []
@@ -163,23 +194,20 @@ def main(argv):
                             break
             extras.sort()
 
-        if a.materialize:
-            os.makedirs(a.materialize, exist_ok=True)
-            copied = 0
-            targets = [l.lstrip('-+ ').split(";", 1)[0].split(":", 1)[0].strip() for l in kept]
+        if dump:
+            targets = [parse_entry(line)[0] for line in kept]
             targets += [p for p, _ in extras]
-            for src in targets:
+            paths = {}
+            for src in sorted(set(targets)):
                 part, rel = src.split("/", 1)
-                if not mounts.open(part):
-                    continue
-                s_path = os.path.join(mnt, rel)
-                if not os.path.isfile(s_path):
-                    continue
-                d_path = os.path.join(a.materialize, src)
-                os.makedirs(os.path.dirname(d_path), exist_ok=True)
-                subprocess.run(["cp", "-a", s_path, d_path], check=False)
-                copied += 1
-            print(f"materialized {copied} files into {a.materialize}")
+                mounts.open(part)
+                source = (Path(mnt) / rel).resolve(strict=True)
+                require(source.is_relative_to(Path(mnt).resolve()), f"{src}: blob symlink leaves the stock filesystem")
+                dest = dump / src
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, dest)
+                paths[src] = sha256(dest)
+            require(paths, "stock blob selection is empty")
 
     header = [
         "## Generated by scripts/rom-select-blobs.py — every line below was stat()ed",
@@ -210,9 +238,19 @@ def main(argv):
     }
     if a.report:
         json.dump(report, open(a.report, "w"), indent=1)
+    if dump:
+        identity = {"schema": 3, "label": a.label, "stock_payload": payload["sha256"],
+                    "files": paths, "list_sha256": sha256(a.out)}
+        (dump / ".rom-blob-identity.json").write_text(json.dumps(identity, indent=2) + "\n")
+        dump.rename(output)
+        print(f"materialized {len(paths)} files into {output}")
     print(json.dumps(report, indent=1))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    try:
+        raise SystemExit(main(sys.argv[1:]))
+    except (OSError, ValueError, RuntimeError, KeyError, subprocess.CalledProcessError) as error:
+        print(f"FAIL: stock blobs: {error}", file=sys.stderr)
+        raise SystemExit(1)

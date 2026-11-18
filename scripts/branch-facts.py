@@ -42,7 +42,8 @@ def kernel_release(boot_img):
 
 
 def boot_header(boot_img):
-    out = run(["unpack_bootimg", "--boot_img", boot_img]).stdout
+    with tempfile.TemporaryDirectory(prefix="ossi-boot-header-") as temp:
+        out = run(["unpack_bootimg", "--boot_img", boot_img, "--out", temp], check=True).stdout
     info = {}
     for line in out.splitlines():
         if ":" in line:
