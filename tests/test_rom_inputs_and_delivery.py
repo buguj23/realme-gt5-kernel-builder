@@ -287,7 +287,11 @@ class RomInputTests(unittest.TestCase):
 
         modules = {
             "extract_utils.fixups_blob": SimpleNamespace(blob_fixup=Fixup, blob_fixups_user_type=dict),
-            "extract_utils.fixups_lib": SimpleNamespace(lib_fixups={}, lib_fixups_user_type=dict),
+            "extract_utils.fixups_lib": SimpleNamespace(
+                lib_fixup_remove=lambda *a, **kw: "",
+                lib_fixups={},
+                lib_fixups_user_type=dict,
+            ),
             "extract_utils.main": SimpleNamespace(ExtractUtils=None, ExtractUtilsModule=lambda *a, **kw: kw),
         }
         script = SCRIPTS.parent / "rom/device/realme/ossi/extract-files.py"
@@ -302,6 +306,14 @@ class RomInputTests(unittest.TestCase):
         self.assertNotIn(fingerprint, results[34])
         self.assertEqual(results[35][fingerprint].calls, [shim])
         self.assertEqual(results[36][fingerprint].calls, [compat, shim])
+        self.assertEqual(
+            results[35]["system_ext/bin/wfdservice64"].calls,
+            [("add_needed", ("libwfdservice_shim.so",))],
+        )
+        self.assertEqual(
+            results[35]["system_ext/lib64/libwfdservice.so"].calls,
+            [("replace_needed", ("android.media.audio.common.types-V2-cpp.so", "android.media.audio.common.types-V4-cpp.so"))],
+        )
 
     @unittest.skipUnless(all(shutil.which(t) for t in ("mkbootimg", "clang")),
                          "requires Android mkbootimg and clang")
@@ -472,6 +484,67 @@ class RomInputTests(unittest.TestCase):
         (vendor_out / "ossi-vendor.mk").write_text(
             "PRODUCT_COPY_FILES += vendor/realme/ossi/proprietary/vendor/firmware/CAMERA_ICP.b10:vendor/firmware/CAMERA_ICP.b10\n")
         checker["verify_vendor"](vendor_out, selected)
+
+    def test_soong_dedup_and_checked_in_android_bp_unique(self):
+        import re
+        from collections import Counter
+        entries = [
+            "odm/lib/rfsa/adsp/aiboost/libQnnHtpV73Skel.so|aaa",
+            "odm/lib/rfsa/adsp/libQnnHtpV73Skel.so|bbb",
+            "vendor/lib/rfsa/adsp/libQnnHtpV73Skel.so|ccc",
+            "odm/lib/rfsa/adsp/libQnnSaver.so|ddd",
+            "odm/lib64/libQnnSaver.so|eee",
+            "vendor/lib/rfsa/adsp/nearby.napp_header|fff",
+            "vendor/lib/rfsa/adsp/nearby.so|111",
+            "odm/lib/vendor.oplus.hardware.cwb@1.0.so|222",
+            "odm/lib64/vendor.oplus.hardware.cwb@1.0.so|333",
+            "vendor/lib/vendor.oplus.hardware.cwb@1.0.so|444",
+            "vendor/lib64/vendor.oplus.hardware.cwb@1.0.so|555",
+        ]
+        deduped = BLOBS["dedup_soong_entries"](entries)
+        by_group = {}
+        for line in deduped:
+            grp, base, suf, *_ = BLOBS["soong_module_identity"](line)
+            by_group[grp] = base + suf
+        self.assertEqual(len(by_group), len(set(by_group.values())))
+        # Both 32-bit and 64-bit vendor variants must share one Soong suffix
+        self.assertIn(";MODULE_SUFFIX=_vendor|", deduped[9])
+        self.assertIn(";MODULE_SUFFIX=_vendor|", deduped[10])
+
+        # Verify committed vendor Android.bp has zero duplicate module names
+        repo = SCRIPTS.parent
+        bp_text = (repo / "rom/vendor/realme/ossi/Android.bp").read_text()
+        names = re.findall(r'^\s*name:\s*"([^"]+)"', bp_text, re.M)
+        dups = {k: v for k, v in Counter(names).items() if v > 1}
+        self.assertEqual(dups, {})
+
+    def test_select_blobs_sar_and_excluded_extras(self):
+        self.assertTrue(BLOBS["is_excluded_extra"]("vendor/lib64/vendor.oplus.hardware.performance-V1-ndk.so"))
+        self.assertTrue(BLOBS["is_excluded_extra"]("odm/etc/vintf/manifest/manifest_performance_aidl.xml"))
+        self.assertFalse(BLOBS["is_excluded_extra"]("odm/bin/hw/vendor.oplus.hardware.charger-V5-service"))
+
+        # Simulate extracted System-as-Root system partition layout
+        sys_root = self.root / "sys_mnt"
+        (sys_root / "system/lib64").mkdir(parents=True)
+        target_lib = sys_root / "system/lib64/libostatslog.so"
+        target_lib.write_bytes(b"ELF")
+        mounts = BLOBS["Mounts"](str(self.root), str(self.root / "mnt"), sudo=False)
+        mounts.extracted["system"] = str(sys_root)
+        mounts.mounted = "system"
+        self.assertTrue(mounts.exists("system", "lib64/libostatslog.so"))
+        self.assertEqual(mounts.path_for("system", "lib64/libostatslog.so"), target_lib.resolve())
+
+    def test_kernel_config_fragments_syntax(self):
+        import re
+        repo = SCRIPTS.parent
+        cfg_files = [repo / "configs/features.config", *sorted((repo / "configs/fragments").glob("*.config"))]
+        self.assertGreaterEqual(len(cfg_files), 2)
+        for cfg in cfg_files:
+            for lineno, raw in enumerate(cfg.read_text().splitlines(), 1):
+                line = raw.strip()
+                if not line or line.startswith("#"):
+                    continue
+                self.assertRegex(line, r"^CONFIG_[A-Za-z0-9_]+=(y|m|n|\d+|\".*\")$", f"{cfg}:{lineno}: {line}")
 
 
 if __name__ == "__main__":

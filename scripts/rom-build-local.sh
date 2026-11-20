@@ -133,8 +133,16 @@ bash "$HERE/rom-provision-deps.sh" "$SRC" --branch "$DEPS_BR"
 if [ -z "$BLOBS" ]; then
   BLOBS="$WORK/blobs"
   selected="$WORK/proprietary-files.txt"
-  python3 "$HERE/rom-select-blobs.py" --images "$STOCK" --label "$BR" \
-    --base-list "${BLOB_LIST:-$SRC/device/oneplus/sm8550-common/proprietary-files.txt}" \
+  blob_args=()
+  if [ -n "${BLOB_LIST:-}" ]; then
+    blob_args+=(--base-list "$BLOB_LIST")
+  else
+    blob_args+=(--base-list "$SRC/device/oneplus/sm8550-common/proprietary-files.txt")
+    [ -f "$REPO_ROOT/rom/device/realme/ossi/proprietary-files.txt" ] &&
+      blob_args+=(--extra-list "$REPO_ROOT/rom/device/realme/ossi/proprietary-files.txt")
+  fi
+  python3 "$HERE/rom-select-blobs.py" --mount "$WORK/blobmnt" --images "$STOCK" --label "$BR" \
+    "${blob_args[@]}" \
     --payload-metadata "$METADATA" --materialize "$BLOBS" --out "$selected"
   BLOB_LIST=$selected
 fi

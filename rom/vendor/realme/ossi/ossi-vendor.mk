@@ -7,6 +7,759 @@ PRODUCT_SOONG_NAMESPACES += \
 
 PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/odm/etc/QtiFtmPublicKey.pem:$(TARGET_COPY_OUT_ODM)/etc/QtiFtmPublicKey.pem \
+    vendor/realme/ossi/proprietary/odm/etc/aac_richtap.config:$(TARGET_COPY_OUT_ODM)/etc/aac_richtap.config \
+    vendor/realme/ossi/proprietary/odm/etc/acdbdata/Audio_Parameter_Version.txt:$(TARGET_COPY_OUT_ODM)/etc/acdbdata/Audio_Parameter_Version.txt \
+    vendor/realme/ossi/proprietary/odm/etc/acdbdata/FTM/acdb_cal.acdb:$(TARGET_COPY_OUT_ODM)/etc/acdbdata/FTM/acdb_cal.acdb \
+    vendor/realme/ossi/proprietary/odm/etc/acdbdata/FTM/workspaceFileXml.qwsp:$(TARGET_COPY_OUT_ODM)/etc/acdbdata/FTM/workspaceFileXml.qwsp \
+    vendor/realme/ossi/proprietary/odm/etc/acdbdata/acdb_cal.acdb:$(TARGET_COPY_OUT_ODM)/etc/acdbdata/acdb_cal.acdb \
+    vendor/realme/ossi/proprietary/odm/etc/camera/AiFace.json:$(TARGET_COPY_OUT_ODM)/etc/camera/AiFace.json \
+    vendor/realme/ossi/proprietary/odm/etc/camera/CameraHWConfiguration.config:$(TARGET_COPY_OUT_ODM)/etc/camera/CameraHWConfiguration.config \
+    vendor/realme/ossi/proprietary/odm/etc/camera/M_FaceAttribute_RGB_age_gender_1.7.1.model.hardcode:$(TARGET_COPY_OUT_ODM)/etc/camera/M_FaceAttribute_RGB_age_gender_1.7.1.model.hardcode \
+    vendor/realme/ossi/proprietary/odm/etc/camera/anc/fusion_model:$(TARGET_COPY_OUT_ODM)/etc/camera/anc/fusion_model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/anc/fusion_model_post:$(TARGET_COPY_OUT_ODM)/etc/camera/anc/fusion_model_post \
+    vendor/realme/ossi/proprietary/odm/etc/camera/anc_cl_kernel.cache:$(TARGET_COPY_OUT_ODM)/etc/camera/anc_cl_kernel.cache \
+    vendor/realme/ossi/proprietary/odm/etc/camera/anc_cl_kernel_ins.cache:$(TARGET_COPY_OUT_ODM)/etc/camera/anc_cl_kernel_ins.cache \
+    vendor/realme/ossi/proprietary/odm/etc/camera/ancbokehseg/anc_cl_kernel.cache:$(TARGET_COPY_OUT_ODM)/etc/camera/ancbokehseg/anc_cl_kernel.cache \
+    vendor/realme/ossi/proprietary/odm/etc/camera/ancsegbase/anc_cl_kernel.cache:$(TARGET_COPY_OUT_ODM)/etc/camera/ancsegbase/anc_cl_kernel.cache \
+    vendor/realme/ossi/proprietary/odm/etc/camera/ancsegbase/ancsegmulti_2_model.data:$(TARGET_COPY_OUT_ODM)/etc/camera/ancsegbase/ancsegmulti_2_model.data \
+    vendor/realme/ossi/proprietary/odm/etc/camera/ancsegbase/ancsegmulti_5_model.data:$(TARGET_COPY_OUT_ODM)/etc/camera/ancsegbase/ancsegmulti_5_model.data \
+    vendor/realme/ossi/proprietary/odm/etc/camera/ancsegbase/model.data:$(TARGET_COPY_OUT_ODM)/etc/camera/ancsegbase/model.data \
+    vendor/realme/ossi/proprietary/odm/etc/camera/arcsoft_eis_configure:$(TARGET_COPY_OUT_ODM)/etc/camera/arcsoft_eis_configure \
+    vendor/realme/ossi/proprietary/odm/etc/camera/asd/class.dlc:$(TARGET_COPY_OUT_ODM)/etc/camera/asd/class.dlc \
+    vendor/realme/ossi/proprietary/odm/etc/camera/asd/detect.dlc:$(TARGET_COPY_OUT_ODM)/etc/camera/asd/detect.dlc \
+    vendor/realme/ossi/proprietary/odm/etc/camera/ashdr/ncf_pack.ncf:$(TARGET_COPY_OUT_ODM)/etc/camera/ashdr/ncf_pack.ncf \
+    vendor/realme/ossi/proprietary/odm/etc/camera/camera_engmode.xml:$(TARGET_COPY_OUT_ODM)/etc/camera/camera_engmode.xml \
+    vendor/realme/ossi/proprietary/odm/etc/camera/capture_bokeh_params.json:$(TARGET_COPY_OUT_ODM)/etc/camera/capture_bokeh_params.json \
+    vendor/realme/ossi/proprietary/odm/etc/camera/capture_lutportrait_params.json:$(TARGET_COPY_OUT_ODM)/etc/camera/capture_lutportrait_params.json \
+    vendor/realme/ossi/proprietary/odm/etc/camera/capture_neonportrait_params.json:$(TARGET_COPY_OUT_ODM)/etc/camera/capture_neonportrait_params.json \
+    vendor/realme/ossi/proprietary/odm/etc/camera/cfr_bin/CFR_OPlus_EF017_UW_snapshot.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/cfr_bin/CFR_OPlus_EF017_UW_snapshot.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/cfr_bin/CFR_imx581.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/cfr_bin/CFR_imx581.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/cfr_bin/CFR_imx709.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/cfr_bin/CFR_imx709.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/cfr_bin/CFR_imx890.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/cfr_bin/CFR_imx890.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/camera_unit_config:$(TARGET_COPY_OUT_ODM)/etc/camera/config/camera_unit_config \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/camera_unit_feature_config.protobuf:$(TARGET_COPY_OUT_ODM)/etc/camera/config/camera_unit_feature_config.protobuf \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/imx890:$(TARGET_COPY_OUT_ODM)/etc/camera/config/imx890 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/oplus_camera_algo_switch_config:$(TARGET_COPY_OUT_ODM)/etc/camera/config/oplus_camera_algo_switch_config \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/oplus_camera_aps_config:$(TARGET_COPY_OUT_ODM)/etc/camera/config/oplus_camera_aps_config \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/oplus_camera_config:$(TARGET_COPY_OUT_ODM)/etc/camera/config/oplus_camera_config \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/oplus_preview_decision_params.json:$(TARGET_COPY_OUT_ODM)/etc/camera/config/oplus_preview_decision_params.json \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/s5k3p9:$(TARGET_COPY_OUT_ODM)/etc/camera/config/s5k3p9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/sr_params.xml:$(TARGET_COPY_OUT_ODM)/etc/camera/config/sr_params.xml \
+    vendor/realme/ossi/proprietary/odm/etc/camera/config/video_beauty_default_config:$(TARGET_COPY_OUT_ODM)/etc/camera/config/video_beauty_default_config \
+    vendor/realme/ossi/proprietary/odm/etc/camera/distortionParams.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/distortionParams.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ColorMatrix1_imx581_2.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ColorMatrix1_imx581_2.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ColorMatrix1_imx709_3.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ColorMatrix1_imx709_3.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ColorMatrix1_imx890_0.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ColorMatrix1_imx890_0.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ColorMatrix2_imx581_2.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ColorMatrix2_imx581_2.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ColorMatrix2_imx709_3.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ColorMatrix2_imx709_3.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ColorMatrix2_imx890_0.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ColorMatrix2_imx890_0.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/D28HUESATMap_imx581_2.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/D28HUESATMap_imx581_2.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/D28HUESATMap_imx709_3.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/D28HUESATMap_imx709_3.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/D28HUESATMap_imx890_0.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/D28HUESATMap_imx890_0.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/D65HUESATMap_imx581_2.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/D65HUESATMap_imx581_2.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/D65HUESATMap_imx709_3.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/D65HUESATMap_imx709_3.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/D65HUESATMap_imx890_0.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/D65HUESATMap_imx890_0.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ToneCurve_imx581_2.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ToneCurve_imx581_2.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ToneCurve_imx709_3.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ToneCurve_imx709_3.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/dng/ToneCurve_imx890_0.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/dng/ToneCurve_imx890_0.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/eis_camera.vcfg:$(TARGET_COPY_OUT_ODM)/etc/camera/eis_camera.vcfg \
+    vendor/realme/ossi/proprietary/odm/etc/camera/facesr_hd_composite_ref_4.1.18_qcom8550_ppl3_ocl.model:$(TARGET_COPY_OUT_ODM)/etc/camera/facesr_hd_composite_ref_4.1.18_qcom8550_ppl3_ocl.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_default:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_default \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/000.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/000.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/000_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/000_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/001.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/001.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/001_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/001_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/002.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/002.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/002_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/002_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/003.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/003.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/003_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/003_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/010.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/010.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/010_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/010_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/011.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/011.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/011_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/011_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/012.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/012.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/012_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/012_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/013.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/013.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/100.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/100.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/100_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/100_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/101.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/101.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/101_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/101_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/102.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/102.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/102_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/102_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/103.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/103.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/103_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/103_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/110.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/110.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/110_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/110_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/111.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/111.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/111_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/111_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/112.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/112.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/112_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/112_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/113.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/113.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/200.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/200.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/200_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/200_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/201.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/201.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/201_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/201_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/202.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/202.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/202_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/202_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/203.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/203.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/203_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/203_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/210.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/210.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/210_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/210_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/211.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/211.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/211_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/211_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/212.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/212.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/212_pre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/212_pre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/213.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/213.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/AIdeblemishSnapMask.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/AIdeblemishSnapMask.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/DREAM_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/DREAM_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/DREAM_4_5_354_654.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/DREAM_4_5_354_654.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/EYES_MUTIL_3_4_354_654.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/EYES_MUTIL_3_4_354_654.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/EYES_MUTIL_4_4_354_654.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/EYES_MUTIL_4_4_354_654.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/FIRST_LOVE_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/FIRST_LOVE_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/GROOMED_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/GROOMED_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/MIDNIGHT_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/MIDNIGHT_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/NEWYEAR_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/NEWYEAR_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/ORANGE_CRUSH_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/ORANGE_CRUSH_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/PEACH_PINK_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/PEACH_PINK_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/RED_VELVET_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/RED_VELVET_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/ROSE_NUDE_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/ROSE_NUDE_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SEA_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SEA_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SEA_4_5_178_440.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SEA_4_5_178_440.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SEA_4_5_354_654.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SEA_4_5_354_654.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SEA_eye_mouth_screen_frame0.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SEA_eye_mouth_screen_frame0.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SEA_eye_mouth_screen_frame1.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SEA_eye_mouth_screen_frame1.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SEA_eye_mouth_screen_frame2.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SEA_eye_mouth_screen_frame2.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SEA_eye_mouth_screen_frame3.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SEA_eye_mouth_screen_frame3.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SEA_eye_mouth_screen_frame4.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SEA_eye_mouth_screen_frame4.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SHIMMER_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SHIMMER_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SHIMMER_4_4_178_440.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SHIMMER_4_4_178_440.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SHIMMER_4_4_354_654.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SHIMMER_4_4_354_654.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame0.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame0.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame1.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame1.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame2.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame2.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame3.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame3.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame4.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SHIMMER_eye_mouth_screen_frame4.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SMOKEY_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SMOKEY_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SNOW_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SNOW_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SNOW_4_4_354_654.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SNOW_4_4_354_654.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_00.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_00.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_01.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_01.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_02.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_02.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_03.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_03.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_10.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_10.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_11.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_11.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_12.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_12.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_13.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_13.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_BW.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_BW.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/SkinLUT_Red.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/SkinLUT_Red.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/UNIQUE_EYES_1_4_1005_838.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/UNIQUE_EYES_1_4_1005_838.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/beauty_body.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/beauty_body.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/brightLut.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/brightLut.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/eyeBright.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/eyeBright.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/eye_retouch_chinese.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/eye_retouch_chinese.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/eyesMask.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/eyesMask.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/eyesMaskNew.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/eyesMaskNew.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/eyesMaskNew.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/eyesMaskNew.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/faceLipsMaskPre.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/faceLipsMaskPre.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/face_retouch_chinese.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/face_retouch_chinese.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/face_retouch_pre_chinese.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/face_retouch_pre_chinese.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/mouthmask.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/mouthmask.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/preSkinmask137.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/preSkinmask137.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/preSkinmask296.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/preSkinmask296.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/redToneLut.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/redToneLut.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs00.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs00.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs01.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs01.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs02.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs02.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs03.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs03.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs04.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs04.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs05.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs05.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs06.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs06.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs10.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs10.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs11.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs11.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs12.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs12.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs13.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs13.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs_yuv16_00.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs_yuv16_00.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs_yuv16_01.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs_yuv16_01.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs_yuv16_02.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs_yuv16_02.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs_yuv16_03.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs_yuv16_03.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs_yuv16_10.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs_yuv16_10.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs_yuv16_11.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs_yuv16_11.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs_yuv16_12.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs_yuv16_12.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinLUTs_yuv16_13.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinLUTs_yuv16_13.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinmask.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinmask.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinmask.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinmask.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/skinmask_new.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/skinmask_new.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapEyeBright.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapEyeBright.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapFemale000.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapFemale000.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapFemale001.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapFemale001.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapFemale002.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapFemale002.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapFemale003.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapFemale003.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapMale010.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapMale010.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapMale011.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapMale011.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapMale012.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapMale012.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapMouthMask.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapMouthMask.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/snapSkinmask.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/snapSkinmask.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/unify_skin_base.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/unify_skin_base.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fb_model/whiteToneLut.png:$(TARGET_COPY_OUT_ODM)/etc/camera/fb_model/whiteToneLut.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fdc_cl.cache:$(TARGET_COPY_OUT_ODM)/etc/camera/fdc_cl.cache \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fdc_lite_cl.cache:$(TARGET_COPY_OUT_ODM)/etc/camera/fdc_lite_cl.cache \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/B1VLf4peM:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/B1VLf4peM \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/B1aMqioxf:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/B1aMqioxf \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/B1nmcmWbG:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/B1nmcmWbG \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/B1si_XbZz:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/B1si_XbZz \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/B612Pretty.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/B612Pretty.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/BJJAwoigM:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/BJJAwoigM \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/BJyKIwqxz:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/BJyKIwqxz \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/BeautyplusMellow-5.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/BeautyplusMellow-5.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/ByW7g4bbf:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/ByW7g4bbf \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/ByYo3If:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/ByYo3If \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/BycYf7WWz:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/BycYf7WWz \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Cold.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Cold.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/DL_D_G4.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/DL_D_G4.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/DL_L_B6.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/DL_L_B6.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Delta400.3dl.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Delta400.3dl.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Emerald.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Emerald.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/EyxRbD2UCe:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/EyxRbD2UCe \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/FaceappGrayscale.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/FaceappGrayscale.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/InsClarendon.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/InsClarendon.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/InsJuno.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/InsJuno.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/InsValencia-2.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/InsValencia-2.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Martin.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Martin.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/OPLUSR0604.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/OPLUSR0604.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/PP1-soft-2.6.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/PP1-soft-2.6.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/PP2-pop-4.1.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/PP2-pop-4.1.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/PP3-mono-3.3.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/PP3-mono-3.3.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Radiance.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Radiance.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/SJ3mbr6ef:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/SJ3mbr6ef \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Serenity.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Serenity.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/SkpZ8ebbz:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/SkpZ8ebbz \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/SnapseedBright.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/SnapseedBright.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/SweetSnapAlice-3.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/SweetSnapAlice-3.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Sy4uLSTgf:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Sy4uLSTgf \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Syt2KeZZf:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Syt2KeZZf \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/Texture-70.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/Texture-70.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/V01-landscape-2.6.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/V01-landscape-2.6.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/V02-portrait-2.5.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/V02-portrait-2.5.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/V03-food-2.0.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/V03-food-2.0.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/V04-night-1.3.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/V04-night-1.3.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/V05-mono-3.3.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/V05-mono-3.3.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/White.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/White.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/YoucamAdorable80.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/YoucamAdorable80.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/b-w-P8.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/b-w-P8.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/black_gold.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/black_gold.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/blackandwhite.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/blackandwhite.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/bowu-2.1.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/bowu-2.1.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/bright_coloured.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/bright_coloured.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/calm-V5.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/calm-V5.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/candy-P7.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/candy-P7.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/cola.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/cola.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/cyberpunk-kitsch-3.1.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/cyberpunk-kitsch-3.1.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/cyberpunk-neoMilitarism-2.4-final.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/cyberpunk-neoMilitarism-2.4-final.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/default:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/default \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/delight-P3.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/delight-P3.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/delight-V1.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/delight-V1.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/drjw1994.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/drjw1994.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/drjw2010.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/drjw2010.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/f_bin_hideaki:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/f_bin_hideaki \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/f_candy_water_weak.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/f_candy_water_weak.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/f_contrast_gray_face_dark:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/f_contrast_gray_face_dark \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/f_fuji_strong.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/f_fuji_strong.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/f_japan_strong.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/f_japan_strong.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/farewell-V7.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/farewell-V7.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/fuji-eterna-v2.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/fuji-eterna-v2.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/fuji.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/fuji.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gourmet.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gourmet.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-24hour-city.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-24hour-city.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-3dcity.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-3dcity.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-after-glow.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-after-glow.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-azure-water.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-azure-water.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-beach.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-beach.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-blue-water.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-blue-water.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-coco-grove.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-coco-grove.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-crisp-fall.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-crisp-fall.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-desert.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-desert.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-earth.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-earth.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-glazed-tile.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-glazed-tile.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-japan.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-japan.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-lake.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-lake.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-mountainous.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-mountainous.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-old-times.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-old-times.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-quietly-ele.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-quietly-ele.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-rosy.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-rosy.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/gt-steaming.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/gt-steaming.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/interstellar_space.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/interstellar_space.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/jiari-2.0.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/jiari-2.0.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/jw_sun.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/jw_sun.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/jw_surprise.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/jw_surprise.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/kodak.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/kodak.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/lvtu-2.0.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/lvtu-2.0.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/meiwei-2.2.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/meiwei-2.2.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/mellow-V3.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/mellow-V3.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/misty-P5.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/misty-P5.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/misty-V4.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/misty-V4.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/mono.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/mono.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/morandi.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/morandi.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/natural-P1.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/natural-P1.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/natural.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/natural.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/neon-2020.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/neon-2020.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus-black-gold.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus-black-gold.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus-cyberpunk.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus-cyberpunk.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus-nightcity.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus-nightcity.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus-r-black-gold-1.1-RGB.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus-r-black-gold-1.1-RGB.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus-r-cyberpunk-RGB.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus-r-cyberpunk-RGB.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus-r-infra-RGB.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus-r-infra-RGB.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus-yellow-blue.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus-yellow-blue.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_SAREK_III.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_SAREK_III.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_VAEROY_III.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_VAEROY_III.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_YLLAAS.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_YLLAAS.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_r4.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_r4.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_r5.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_r5.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_r6.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_r6.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_black_and_white:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_black_and_white \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_highlight:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_highlight \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_ins:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_ins \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_natal:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_natal \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_olympus:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_olympus \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_plain:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_plain \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_show:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_show \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_solar:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_solar \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_strong:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_strong \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oplus_video_filter_west:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oplus_video_filter_west \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_black_and_white:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_black_and_white \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_highlight:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_highlight \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_ins:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_ins \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_natal:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_natal \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_olympus:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_olympus \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_plain:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_plain \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_show:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_show \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_solar:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_solar \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_strong:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_strong \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/oppo_video_filter_west:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/oppo_video_filter_west \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/p4_1.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/p4_1.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/p4_2.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/p4_2.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/p4_3.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/p4_3.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/p4_4.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/p4_4.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/qiuri-2.0.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/qiuri-2.0.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/r1JaFSZZG:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/r1JaFSZZG \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/r1PrfoolG:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/r1PrfoolG \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/rJ5g5vPWG:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/rJ5g5vPWG \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/rJxJtmaez:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/rJxJtmaez \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/red-red.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/red-red.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/rkMhq4ZWf:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/rkMhq4ZWf \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/rkx5u4Zbf:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/rkx5u4Zbf \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/senlin-2.0.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/senlin-2.0.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/serene-P9.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/serene-P9.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/sky-blue.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/sky-blue.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/sweet-P2.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/sweet-P2.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/sweet-V2.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/sweet-V2.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/tree-green.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/tree-green.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/type_fuji_acros:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/type_fuji_acros \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/type_fuji_astia:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/type_fuji_astia \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/type_fuji_chrome:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/type_fuji_chrome \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/type_fuji_provia:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/type_fuji_provia \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/type_fuji_velvia:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/type_fuji_velvia \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/vivid-cool.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/vivid-cool.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/vivid-lut.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/vivid-lut.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/vivid-warm.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/vivid-warm.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_lut/yuanqi-2.2s.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_lut/yuanqi-2.2s.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_res/film_grain_small.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_res/film_grain_small.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_res/lut_all_points.png:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_res/lut_all_points.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/filters_res/overlay_p4_3_weak.png:$(TARGET_COPY_OUT_ODM)/etc/camera/filters_res/overlay_p4_3_weak.png \
+    vendor/realme/ossi/proprietary/odm/etc/camera/fwk_config.json:$(TARGET_COPY_OUT_ODM)/etc/camera/fwk_config.json \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gasryuv_1.2_wp.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gasryuv_1.2_wp.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/modules/tt_hand_box_reg_v12.0.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/modules/tt_hand_box_reg_v12.0.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/modules/tt_hand_det_v11.0.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/modules/tt_hand_det_v11.0.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/modules/tt_hand_gesture_v11.1.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/modules/tt_hand_gesture_v11.1.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/modules/tt_hand_kp_v6.0.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/modules/tt_hand_kp_v6.0.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/modules/tt_hand_lr_v3.0.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/modules/tt_hand_lr_v3.0.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/tt_hand_box_reg_v12.0.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/tt_hand_box_reg_v12.0.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/tt_hand_det_v11.0.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/tt_hand_det_v11.0.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/tt_hand_gesture_v11.1.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/tt_hand_gesture_v11.1.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/tt_hand_kp_v6.0.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/tt_hand_kp_v6.0.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/gesture/tt_hand_lr_v3.0.model:$(TARGET_COPY_OUT_ODM)/etc/camera/gesture/tt_hand_lr_v3.0.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/libiceainr_model.dlc:$(TARGET_COPY_OUT_ODM)/etc/camera/libiceainr_model.dlc \
+    vendor/realme/ossi/proprietary/odm/etc/camera/media_profiles.xml:$(TARGET_COPY_OUT_ODM)/etc/camera/media_profiles.xml \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/ByYo3If:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/ByYo3If \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/Cold.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/Cold.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/DL_A_MoneyBall.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/DL_A_MoneyBall.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/DL_B_Inception.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/DL_B_Inception.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/DL_C_R3_80.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/DL_C_R3_80.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/DL_D_G4.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/DL_D_G4.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/DL_L_B6.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/DL_L_B6.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/Delta400.3dl.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/Delta400.3dl.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/Emerald.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/Emerald.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/Martin.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/Martin.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/OPLUSR0604.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/OPLUSR0604.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/Radiance.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/Radiance.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/Serenity.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/Serenity.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/Texture-70.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/Texture-70.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/White.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/White.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/black_gold.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/black_gold.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/blackandwhite.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/blackandwhite.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/bright_coloured.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/bright_coloured.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/cola.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/cola.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/cyberpunk-kitsch-3.1.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/cyberpunk-kitsch-3.1.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/drjw1994.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/drjw1994.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/drjw2010.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/drjw2010.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/fuji-cc-high.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/fuji-cc-high.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/fuji-cc-low.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/fuji-cc-low.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/fuji-eterna-v2.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/fuji-eterna-v2.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/fuji-nc.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/fuji-nc.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/fuji-proNegHi.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/fuji-proNegHi.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/fuji.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/fuji.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/fuji_cc.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/fuji_cc.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gourmet.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gourmet.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-24hour-city.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-24hour-city.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-3dcity.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-3dcity.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-after-glow.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-after-glow.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-azure-water.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-azure-water.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-beach.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-beach.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-blue-water.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-blue-water.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-coco-grove.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-coco-grove.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-crisp-fall.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-crisp-fall.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-desert.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-desert.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-glazed-tile.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-glazed-tile.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-mountainous.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-mountainous.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-old-times.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-old-times.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-quietly-ele.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-quietly-ele.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/gt-steaming.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/gt-steaming.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/interstellar_space.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/interstellar_space.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/jw_sun.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/jw_sun.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/jw_surprise.CUBE.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/jw_surprise.CUBE.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/kodak.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/kodak.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/meicam.child.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/meicam.child.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/mono.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/mono.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/morandi.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/morandi.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/natural.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/natural.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/neon-2020.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/neon-2020.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/oplus-black-gold.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/oplus-black-gold.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/oplus-cyberpunk.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/oplus-cyberpunk.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/oplus-nightcity.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/oplus-nightcity.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/oplus-yellow-blue.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/oplus-yellow-blue.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/p4_1.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/p4_1.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/p4_3.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/p4_3.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/rJ5g5vPWG:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/rJ5g5vPWG \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/red-red.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/red-red.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/sky-blue.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/sky-blue.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/tone-of-light.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/tone-of-light.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/tree-green.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/tree-green.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/vivid-cool.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/vivid-cool.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/vivid-lut.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/vivid-lut.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/meishe_lut/vivid-warm.cube.rgb.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/meishe_lut/vivid-warm.cube.rgb.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/model/DocDetectV15.xbin:$(TARGET_COPY_OUT_ODM)/etc/camera/model/DocDetectV15.xbin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/model_fdc.data:$(TARGET_COPY_OUT_ODM)/etc/camera/model_fdc.data \
+    vendor/realme/ossi/proprietary/odm/etc/camera/neon_yuv_LUT_64.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/neon_yuv_LUT_64.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/oplus_eis_camera.vcfg:$(TARGET_COPY_OUT_ODM)/etc/camera/oplus_eis_camera.vcfg \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/ColorLut:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/ColorLut \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/CurveLut:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/CurveLut \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut0:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut0 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut1:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut1 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut10:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut10 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut11:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut11 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut12:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut12 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut13:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut13 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut14:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut14 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut15:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut15 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut16:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut16 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut17:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut17 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut18:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut18 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut2:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut2 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut3:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut3 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut4:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut4 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut5:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut5 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut6:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut6 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut7:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut7 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut8:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut8 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/colorLut9:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/colorLut9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut0:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut0 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut1:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut1 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut10:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut10 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut11:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut11 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut12:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut12 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut13:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut13 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut14:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut14 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut15:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut15 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut16:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut16 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut17:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut17 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut18:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut18 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut2:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut2 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut3:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut3 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut4:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut4 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut5:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut5 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut6:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut6 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut7:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut7 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut8:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut8 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/curveLut9:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/curveLut9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/frameSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/frameSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param0.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param0.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param1.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param1.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param10.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param10.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param11.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param11.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param12.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param12.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param13.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param13.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param14.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param14.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param15.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param15.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param16.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param16.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param17.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param17.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param18.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param18.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param2.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param2.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param3.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param3.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param4.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param4.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param5.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param5.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param6.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param6.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param7.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param7.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param8.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param8.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/param9.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/param9.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/photoSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/photoSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/platformSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/platformSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/colormap/sceneList.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/colormap/sceneList.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/ColorLut:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/ColorLut \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/CurveLut:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/CurveLut \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut0:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut0 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut1:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut1 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut10:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut10 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut11:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut11 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut12:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut12 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut13:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut13 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut14:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut14 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut15:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut15 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut16:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut16 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut17:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut17 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut18:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut18 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut2:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut2 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut3:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut3 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut4:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut4 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut5:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut5 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut6:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut6 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut7:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut7 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut8:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut8 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/colorLut9:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/colorLut9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut0:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut0 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut1:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut1 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut10:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut10 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut11:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut11 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut12:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut12 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut13:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut13 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut14:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut14 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut15:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut15 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut16:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut16 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut17:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut17 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut18:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut18 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut2:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut2 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut3:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut3 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut4:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut4 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut5:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut5 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut6:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut6 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut7:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut7 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut8:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut8 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/curveLut9:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/curveLut9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/frameSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/frameSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param0.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param0.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param1.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param1.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param10.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param10.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param11.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param11.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param12.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param12.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param13.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param13.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param14.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param14.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param15.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param15.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param16.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param16.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param17.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param17.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param18.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param18.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param2.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param2.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param3.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param3.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param4.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param4.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param5.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param5.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param6.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param6.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param7.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param7.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param8.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param8.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/param9.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/param9.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/photoSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/photoSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/platformSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/platformSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/normal/sceneList.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/normal/sceneList.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/ColorLut:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/ColorLut \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/CurveLut:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/CurveLut \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut0:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut0 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut1:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut1 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut10:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut10 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut11:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut11 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut12:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut12 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut13:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut13 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut14:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut14 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut15:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut15 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut16:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut16 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut17:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut17 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut18:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut18 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut2:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut2 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut3:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut3 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut4:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut4 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut5:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut5 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut6:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut6 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut7:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut7 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut8:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut8 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/colorLut9:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/colorLut9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut0:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut0 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut1:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut1 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut10:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut10 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut11:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut11 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut12:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut12 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut13:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut13 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut14:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut14 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut15:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut15 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut16:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut16 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut17:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut17 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut18:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut18 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut2:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut2 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut3:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut3 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut4:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut4 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut5:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut5 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut6:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut6 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut7:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut7 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut8:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut8 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/curveLut9:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/curveLut9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/frameSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/frameSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param0.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param0.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param1.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param1.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param10.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param10.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param11.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param11.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param12.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param12.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param13.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param13.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param14.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param14.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param15.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param15.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param16.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param16.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param17.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param17.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param18.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param18.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param2.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param2.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param3.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param3.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param4.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param4.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param5.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param5.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param6.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param6.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param7.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param7.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param8.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param8.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/param9.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/param9.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/photoSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/photoSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/platformSet.ini:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/platformSet.ini \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pf/PerfectColorSet/portrait/sceneList.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/pf/PerfectColorSet/portrait/sceneList.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/BeardSharp.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/BeardSharp.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/BeardSharp.frag:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/BeardSharp.frag \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/BeardSharp.vert:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/BeardSharp.vert \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreAddSRBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreAddSRBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreBilaFilterBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreBilaFilterBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreBilaFilterBinaryV.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreBilaFilterBinaryV.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreBilaFilterMixBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreBilaFilterMixBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreBilaFilterMixByFaceTargetBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreBilaFilterMixByFaceTargetBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreCalVarBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreCalVarBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreCalcSRBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreCalcSRBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreCalculateOutTex.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreCalculateOutTex.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreDepouchBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreDepouchBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreEyeMeanBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreEyeMeanBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreGetHpMaskHor.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreGetHpMaskHor.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreGetHpMaskVer.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreGetHpMaskVer.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreGetInitHpMask.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreGetInitHpMask.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreHighPassBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreHighPassBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreHighPassPreBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreHighPassPreBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreHoriFilterBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreHoriFilterBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreMakeupBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreMakeupBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreMakeupMultiFaceBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreMakeupMultiFaceBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreMakeupSingleFaceBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreMakeupSingleFaceBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreMixImageBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreMixImageBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreMorphBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreMorphBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreOnlywhitenBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreOnlywhitenBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreSaveMaskBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreSaveMaskBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreSkintuneBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreSkintuneBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreSkintuneMRTBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreSkintuneMRTBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreSobelSumTwoBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreSobelSumTwoBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreSobelTwoBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreSobelTwoBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreSobelUpdateTwoBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreSobelUpdateTwoBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreStitchFacesAnd2Cpu.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreStitchFacesAnd2Cpu.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreSurfaceBlurBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreSurfaceBlurBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreVertFilterBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreVertFilterBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/PreVertSurBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/PreVertSurBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinCalcHue.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinCalcHue.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinCalcHue.frag:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinCalcHue.frag \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinCalcHue.vert:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinCalcHue.vert \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinColorBlur.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinColorBlur.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinColorBlur.frag:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinColorBlur.frag \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinColorBlur.vert:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinColorBlur.vert \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinColorUnify.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinColorUnify.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinColorUnify.frag:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinColorUnify.frag \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinColorUnify.vert:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinColorUnify.vert \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinHueUnify.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinHueUnify.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinHueUnify.frag:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinHueUnify.frag \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/SkinHueUnify.vert:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/SkinHueUnify.vert \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/ThirdPartyPreHoriFilterBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/ThirdPartyPreHoriFilterBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/ThirdPartyPreMorphBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/ThirdPartyPreMorphBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/ThirdPartyPreOnlywhitenBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/ThirdPartyPreOnlywhitenBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/ThirdPartyPreSkintuneBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/ThirdPartyPreSkintuneBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/ThirdPartyPreSkintuneMRTBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/ThirdPartyPreSkintuneMRTBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/ThirdPartyPreVertFilterBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/ThirdPartyPreVertFilterBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/ThirdPartyPreVertSurBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/ThirdPartyPreVertSurBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapAdjustProgramBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapAdjustProgramBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapBoxFilterBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapBoxFilterBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapCalcSumProgramBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapCalcSumProgramBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapContrastProgramBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapContrastProgramBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapDodgeBurnBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapDodgeBurnBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapEYESMASKBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapEYESMASKBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapEyeYUV2RGBBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapEyeYUV2RGBBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapEyesTuneBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapEyesTuneBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapFSMixBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapFSMixBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapFSNormBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapFSNormBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapFSVarBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapFSVarBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapGuidedFilterBBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapGuidedFilterBBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapGuidedFilterCorrBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapGuidedFilterCorrBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapGuidedFilterQBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapGuidedFilterQBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapHW2TexBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapHW2TexBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapHighPassBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapHighPassBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapLUTsFilterBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapLUTsFilterBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapMakeupEditionTwoBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapMakeupEditionTwoBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapMakeupMultiFaceBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapMakeupMultiFaceBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapMakeupSingleFaceBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapMakeupSingleFaceBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapMeanFilterBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapMeanFilterBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapMorphBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapMorphBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapProgramABinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapProgramABinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapProgram_blurBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapProgram_blurBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapProgram_bwBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapProgram_bwBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapRGB2YUV420spBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapRGB2YUV420spBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapSaveMaskBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapSaveMaskBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapSurfaceBlurBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapSurfaceBlurBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapTex2HWBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapTex2HWBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapYUV420sp2RGBBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapYUV420sp2RGBBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/pfb_bin/snapseparateYUV2RGBBinary.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/pfb_bin/snapseparateYUV2RGBBinary.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/selfbokehParam.json:$(TARGET_COPY_OUT_ODM)/etc/camera/selfbokehParam.json \
+    vendor/realme/ossi/proprietary/odm/etc/camera/selfbokehmodel.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/selfbokehmodel.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/settings_fdc.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/settings_fdc.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/settings_fdc_lite.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/settings_fdc_lite.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/singleblur/personseg.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/singleblur/personseg.bin \
+    vendor/realme/ossi/proprietary/odm/etc/camera/singleblur/preview_seg.json:$(TARGET_COPY_OUT_ODM)/etc/camera/singleblur/preview_seg.json \
+    vendor/realme/ossi/proprietary/odm/etc/camera/spectrum_test_data_golden:$(TARGET_COPY_OUT_ODM)/etc/camera/spectrum_test_data_golden \
+    vendor/realme/ossi/proprietary/odm/etc/camera/sticker/M_SenseME_Action_5.2.12.model:$(TARGET_COPY_OUT_ODM)/etc/camera/sticker/M_SenseME_Action_5.2.12.model \
+    vendor/realme/ossi/proprietary/odm/etc/camera/sticker/material/animoji/data.zip:$(TARGET_COPY_OUT_ODM)/etc/camera/sticker/material/animoji/data.zip \
+    vendor/realme/ossi/proprietary/odm/etc/camera/sticker/material/animoji/snowleopard_v_0_0_0_9.zip:$(TARGET_COPY_OUT_ODM)/etc/camera/sticker/material/animoji/snowleopard_v_0_0_0_9.zip \
+    vendor/realme/ossi/proprietary/odm/etc/camera/text_enhance_yuv_v1.tflite:$(TARGET_COPY_OUT_ODM)/etc/camera/text_enhance_yuv_v1.tflite \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_0:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_0 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_1:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_1 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_10:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_10 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_2:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_2 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_3:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_3 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_4:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_4 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_5:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_5 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_6:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_6 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_7:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_7 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_8:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_8 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/curve_lut_9:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/curve_lut_9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/list.txt:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/list.txt \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/s_curve_lut:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/s_curve_lut \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_0:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_0 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_1:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_1 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_10:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_10 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_2:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_2 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_3:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_3 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_4:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_4 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_5:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_5 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_6:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_6 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_7:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_7 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_8:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_8 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/tonemap/tonemap_lut_9:$(TARGET_COPY_OUT_ODM)/etc/camera/tonemap/tonemap_lut_9 \
+    vendor/realme/ossi/proprietary/odm/etc/camera/wide.bin:$(TARGET_COPY_OUT_ODM)/etc/camera/wide.bin \
     vendor/realme/ossi/proprietary/odm/etc/charge.cfg:$(TARGET_COPY_OUT_ODM)/etc/charge.cfg \
     vendor/realme/ossi/proprietary/odm/etc/init/android.hardware.power.stats-service.oplus.rc:$(TARGET_COPY_OUT_ODM)/etc/init/android.hardware.power.stats-service.oplus.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/commcenterd.rc:$(TARGET_COPY_OUT_ODM)/etc/init/commcenterd.rc \
@@ -14,7 +767,10 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/odm/etc/init/hw/init.oplus.display.rc:$(TARGET_COPY_OUT_ODM)/etc/init/hw/init.oplus.display.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/hw/init.oplus.video.rc:$(TARGET_COPY_OUT_ODM)/etc/init/hw/init.oplus.video.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/hw/init.oplus.wifi.rc:$(TARGET_COPY_OUT_ODM)/etc/init/hw/init.oplus.wifi.rc \
+    vendor/realme/ossi/proprietary/odm/etc/init/init.camera_process.rc:$(TARGET_COPY_OUT_ODM)/etc/init/init.camera_process.rc \
+    vendor/realme/ossi/proprietary/odm/etc/init/init.camera_upate.rc:$(TARGET_COPY_OUT_ODM)/etc/init/init.camera_upate.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/init.network.rc:$(TARGET_COPY_OUT_ODM)/etc/init/init.network.rc \
+    vendor/realme/ossi/proprietary/odm/etc/init/init.odm.camera.provider.override.rc:$(TARGET_COPY_OUT_ODM)/etc/init/init.odm.camera.provider.override.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/init.oplus.location.rc:$(TARGET_COPY_OUT_ODM)/etc/init/init.oplus.location.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/init.oplus.sensor.rc:$(TARGET_COPY_OUT_ODM)/etc/init/init.oplus.sensor.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/init.oplus.storage.io_metrics.rc:$(TARGET_COPY_OUT_ODM)/etc/init/init.oplus.storage.io_metrics.rc \
@@ -26,7 +782,6 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor-oplus-hardware-engineer-V1-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor-oplus-hardware-engineer-V1-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor-oplus-hardware-misc-V1-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor-oplus-hardware-misc-V1-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor-oplus-hardware-oplusSensor-V1-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor-oplus-hardware-oplusSensor-V1-service.rc \
-    vendor/realme/ossi/proprietary/odm/etc/init/vendor-oplus-hardware-performance-V1-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor-oplus-hardware-performance-V1-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor-oplus-hardware-power-powermonitor-V1-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor-oplus-hardware-power-powermonitor-V1-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor-oplus-hardware-touch-V2-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor-oplus-hardware-touch-V2-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor-oplus-hardware-transfer@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor-oplus-hardware-transfer@1.0-service.rc \
@@ -54,9 +809,64 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.urcc-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.urcc-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.wifi-aidl-service-qcom.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.wifi-aidl-service-qcom.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.media.c2-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.media.c2-service.rc \
+    vendor/realme/ossi/proprietary/odm/etc/init/vendor.pixelworks.hardware.feature.irisfeature-service-lazy.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.pixelworks.hardware.feature.irisfeature-service-lazy.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.qti.esepowermanager@1.1-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.qti.esepowermanager@1.1-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.qti.secure_element@1.2-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.qti.secure_element@1.2-service.rc \
+    vendor/realme/ossi/proprietary/odm/etc/iris_configs.xml:$(TARGET_COPY_OUT_ODM)/etc/iris_configs.xml \
     vendor/realme/ossi/proprietary/odm/etc/izat.conf:$(TARGET_COPY_OUT_ODM)/etc/izat.conf \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Calibration360_2mic.dat:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Calibration360_2mic.dat \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Configuration.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Configuration.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID10_MIC_VR.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID10_MIC_VR.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID11_HE.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID11_HE.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID12_HE_APP1.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID12_HE_APP1.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID13_HE_APP2.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID13_HE_APP2.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID14_HE_Cam.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID14_HE_Cam.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID15_HE_Conference.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID15_HE_Conference.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID16_HE_Fast.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID16_HE_Fast.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID17_HE_Interview.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID17_HE_Interview.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID18_HE_Unprocess.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID18_HE_Unprocess.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID19_HE_Voice.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID19_HE_Voice.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID1_MIC_Normal.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID1_MIC_Normal.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID20_HE_VR.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID20_HE_VR.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID21_USB_Normal.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID21_USB_Normal.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID22_USB_APP1.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID22_USB_APP1.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID23_BT_Normal.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID23_BT_Normal.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID24_BT_APP1.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID24_BT_APP1.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID25_2mic_zoom.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID25_2mic_zoom.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID2_MIC_APP1.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID2_MIC_APP1.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID3_MIC_APP2.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID3_MIC_APP2.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID4_MIC_Cam.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID4_MIC_Cam.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID5_MIC_Conference.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID5_MIC_Conference.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID6_MIC_Fast.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID6_MIC_Fast.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID7_MIC_Interview.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID7_MIC_Interview.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID8_MIC_Unprocess.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID8_MIC_Unprocess.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/LVACFS_Parameter_ID9_MIC_Voice.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/LVACFS_Parameter_ID9_MIC_Voice.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_1.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_1.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_10.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_10.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_11.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_11.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_12.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_12.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_13.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_13.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_14.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_14.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_15.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_15.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_16.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_16.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_17.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_17.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_18.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_18.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_19.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_19.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_2.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_2.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_20.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_20.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_21.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_21.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_22.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_22.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_23.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_23.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_24.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_24.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_25.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_25.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_3.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_3.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_4.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_4.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_5.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_5.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_6.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_6.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_7.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_7.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_8.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_8.txt \
+    vendor/realme/ossi/proprietary/odm/etc/lvacfs_params/2mic/audiozoom_9.txt:$(TARGET_COPY_OUT_ODM)/etc/lvacfs_params/2mic/audiozoom_9.txt \
+    vendor/realme/ossi/proprietary/odm/etc/mixer_paths.xml:$(TARGET_COPY_OUT_ODM)/etc/mixer_paths.xml \
     vendor/realme/ossi/proprietary/odm/etc/permissions/com.oplus.features_power.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/com.oplus.features_power.xml \
     vendor/realme/ossi/proprietary/odm/etc/permissions/com.oplus.nfc_feature.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/com.oplus.nfc_feature.xml \
     vendor/realme/ossi/proprietary/odm/etc/permissions/oplus.fingerprint.unlock_without_icon.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/oplus.fingerprint.unlock_without_icon.xml \
@@ -77,7 +887,51 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/odm/etc/permissions/vendor-oplus-hardware-transmessage.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/vendor-oplus-hardware-transmessage.xml \
     vendor/realme/ossi/proprietary/odm/etc/permissions/vendor.oplus.hardware.rpmh-V1.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/vendor.oplus.hardware.rpmh-V1.xml \
     vendor/realme/ossi/proprietary/odm/etc/plugin_config.xml:$(TARGET_COPY_OUT_ODM)/etc/plugin_config.xml \
+    vendor/realme/ossi/proprietary/odm/etc/resourcemanager.xml:$(TARGET_COPY_OUT_ODM)/etc/resourcemanager.xml \
     vendor/realme/ossi/proprietary/odm/etc/sap.conf:$(TARGET_COPY_OUT_ODM)/etc/sap.conf \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_ak0991x.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_ak0991x.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_alsps.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_alsps.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_alsps_hw_tcs3701.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_alsps_hw_tcs3701.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_bmi26x.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_bmi26x.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_bmp380.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_bmp380.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_cct_rear.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_cct_rear.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_icm4x6xx.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_icm4x6xx.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_mmc56x3x.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_mmc56x3x.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_oplus_flight_detect.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_oplus_flight_detect.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_pocket.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_pocket.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_sx933x_0.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_sx933x_0.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/kailua_mtp_sx933x_down_0.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/kailua_mtp_sx933x_down_0.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/config/lux_aod.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/config/lux_aod.json \
+    vendor/realme/ossi/proprietary/odm/etc/sensor/sensor_config.json:$(TARGET_COPY_OUT_ODM)/etc/sensor/sensor_config.json \
+    vendor/realme/ossi/proprietary/odm/etc/usecaseKvManager.xml:$(TARGET_COPY_OUT_ODM)/etc/usecaseKvManager.xml \
+    vendor/realme/ossi/proprietary/odm/etc/wifi/kiwi/bdwlan.elf:$(TARGET_COPY_OUT_ODM)/etc/wifi/kiwi/bdwlan.elf \
+    vendor/realme/ossi/proprietary/odm/etc/wifi/kiwi/regdb.bin:$(TARGET_COPY_OUT_ODM)/etc/wifi/kiwi/regdb.bin \
+    vendor/realme/ossi/proprietary/odm/firmware/fastchg/smart_chg_config_table.txt:$(TARGET_COPY_OUT_ODM)/firmware/fastchg/smart_chg_config_table.txt \
+    vendor/realme/ossi/proprietary/odm/firmware/tfa98xx.cnt:$(TARGET_COPY_OUT_ODM)/firmware/tfa98xx.cnt \
+    vendor/realme/ossi/proprietary/odm/firmware/ufs/SAMSUNG-KLUDG4UHDC-B0E1.bin:$(TARGET_COPY_OUT_ODM)/firmware/ufs/SAMSUNG-KLUDG4UHDC-B0E1.bin \
+    vendor/realme/ossi/proprietary/odm/firmware/ufs/SAMSUNG-KLUEG4RHHD-B0G1.bin:$(TARGET_COPY_OUT_ODM)/firmware/ufs/SAMSUNG-KLUEG4RHHD-B0G1.bin \
+    vendor/realme/ossi/proprietary/odm/firmware/ufs/SAMSUNG-KLUEG8UHDC-B0E1.bin:$(TARGET_COPY_OUT_ODM)/firmware/ufs/SAMSUNG-KLUEG8UHDC-B0E1.bin \
+    vendor/realme/ossi/proprietary/odm/firmware/ufs/SAMSUNG-KLUFG8RHDB-B0E1.bin:$(TARGET_COPY_OUT_ODM)/firmware/ufs/SAMSUNG-KLUFG8RHDB-B0E1.bin \
+    vendor/realme/ossi/proprietary/odm/firmware/ufs/SAMSUNG-KLUFG8RHHD-B0G1.bin:$(TARGET_COPY_OUT_ODM)/firmware/ufs/SAMSUNG-KLUFG8RHHD-B0G1.bin \
+    vendor/realme/ossi/proprietary/odm/firmware/ufs/move_target_ufs_fw_to_oplusreserve1.sh:$(TARGET_COPY_OUT_ODM)/firmware/ufs/move_target_ufs_fw_to_oplusreserve1.sh \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/com.qti.sensormodule.qtech_imx890.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/com.qti.sensormodule.qtech_imx890.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/com.qti.sensormodule.sunny_s5k3p9.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/com.qti.sensormodule.sunny_s5k3p9.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/com.qti.tuned.qtech_imx890.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/com.qti.tuned.qtech_imx890.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/com.qti.tuned.sunny_s5k3p9.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/com.qti.tuned.sunny_s5k3p9.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/fdconfigpreview.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/fdconfigpreview.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/fdconfigpreviewlite.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/fdconfigpreviewlite.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/fdconfigvideo.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/fdconfigvideo.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/fdconfigvideolite.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/fdconfigvideolite.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/libaecCustomParam_Cam0.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/libaecCustomParam_Cam0.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/libaecCustomParam_Cam1.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/libaecCustomParam_Cam1.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/libaecCustomParam_Cam2.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/libaecCustomParam_Cam2.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/libaecCustomParam_Cam3.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/libaecCustomParam_Cam3.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/libafCustomParamFrontMain.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/libafCustomParamFrontMain.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/libafCustomParamMain.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/libafCustomParamMain.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/libafCustomParamTele.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/libafCustomParamTele.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/libafCustomParamWide.bin:$(TARGET_COPY_OUT_ODM)/lib64/camera/libafCustomParamWide.bin \
+    vendor/realme/ossi/proprietary/odm/lib64/camera/revision.txt:$(TARGET_COPY_OUT_ODM)/lib64/camera/revision.txt \
+    vendor/realme/ossi/proprietary/odm/vendor/etc/wifi/WCNSS_qcom_cfg.ini:$(TARGET_COPY_OUT_ODM)/vendor/etc/wifi/WCNSS_qcom_cfg.ini \
     vendor/realme/ossi/proprietary/odm/vendor/firmware/alipay.b00:$(TARGET_COPY_OUT_ODM)/vendor/firmware/alipay.b00 \
     vendor/realme/ossi/proprietary/odm/vendor/firmware/alipay.b01:$(TARGET_COPY_OUT_ODM)/vendor/firmware/alipay.b01 \
     vendor/realme/ossi/proprietary/odm/vendor/firmware/alipay.b02:$(TARGET_COPY_OUT_ODM)/vendor/firmware/alipay.b02 \
@@ -88,7 +942,28 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/odm/vendor/firmware/alipay.b07:$(TARGET_COPY_OUT_ODM)/vendor/firmware/alipay.b07 \
     vendor/realme/ossi/proprietary/odm/vendor/firmware/alipay.b08:$(TARGET_COPY_OUT_ODM)/vendor/firmware/alipay.b08 \
     vendor/realme/ossi/proprietary/odm/vendor/firmware/alipay.mdt:$(TARGET_COPY_OUT_ODM)/vendor/firmware/alipay.mdt \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b00:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b00 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b01:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b01 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b02:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b02 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b03:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b03 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b04:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b04 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b05:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b05 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b06:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b06 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b07:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b07 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.b08:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.b08 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_gx.mdt:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_gx.mdt \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b00:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b00 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b01:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b01 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b02:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b02 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b03:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b03 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b04:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b04 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b05:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b05 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b06:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b06 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b07:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b07 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.b08:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.b08 \
+    vendor/realme/ossi/proprietary/odm/vendor/firmware/uff_spi.mdt:$(TARGET_COPY_OUT_ODM)/vendor/firmware/uff_spi.mdt \
     vendor/realme/ossi/proprietary/product/etc/permissions/UimService.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/UimService.xml \
+    vendor/realme/ossi/proprietary/system/etc/sysconfig/qti_whitelist.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/sysconfig/qti_whitelist.xml \
     vendor/realme/ossi/proprietary/system_ext/etc/dpm/dpm.conf:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/dpm/dpm.conf \
     vendor/realme/ossi/proprietary/system_ext/etc/horae/horae.conf:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/horae/horae.conf \
     vendor/realme/ossi/proprietary/system_ext/etc/horae/horae_SM8550.conf:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/horae/horae_SM8550.conf \
@@ -104,7 +979,7 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/system_ext/etc/permissions/qti_libpermissions.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/qti_libpermissions.xml \
     vendor/realme/ossi/proprietary/system_ext/etc/permissions/qti_permissions.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/qti_permissions.xml \
     vendor/realme/ossi/proprietary/system_ext/etc/permissions/telephony_system-ext_privapp-permissions-qti.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/telephony_system-ext_privapp-permissions-qti.xml \
-    vendor/realme/ossi/proprietary/system_ext/etc/permissions/vendor.qti.imsdatachannel.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/vendor.qti.imsdatachannel.xml \
+    vendor/realme/ossi/proprietary/system_ext/etc/permissions/vendor.qti.ims.rcsservice.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/vendor.qti.ims.rcsservice.xml \
     vendor/realme/ossi/proprietary/system_ext/etc/permissions/wfd-system-ext-privapp-permissions-qti.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/wfd-system-ext-privapp-permissions-qti.xml \
     vendor/realme/ossi/proprietary/system_ext/etc/seccomp_policy/tcmd.policy:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/seccomp_policy/tcmd.policy \
     vendor/realme/ossi/proprietary/system_ext/etc/seccomp_policy/wfdservice64.policy:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/seccomp_policy/wfdservice64.policy \
@@ -163,6 +1038,10 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/vendor/etc/display/DPU960.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display/DPU960.xml \
     vendor/realme/ossi/proprietary/vendor/etc/display/DPU9__.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display/DPU9__.xml \
     vendor/realme/ossi/proprietary/vendor/etc/display/advanced_sf_offsets.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display/advanced_sf_offsets.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/display/qdcm_calib_data_samsung_AMB670YF07_CS_dsc_cmd_mode_panel.json:$(TARGET_COPY_OUT_VENDOR)/etc/display/qdcm_calib_data_samsung_AMB670YF07_CS_dsc_cmd_mode_panel.json \
+    vendor/realme/ossi/proprietary/vendor/etc/display/qdcm_calib_data_samsung_AMB670YF07_FS_dsc_cmd_mode_panel.json:$(TARGET_COPY_OUT_VENDOR)/etc/display/qdcm_calib_data_samsung_AMB670YF07_FS_dsc_cmd_mode_panel.json \
+    vendor/realme/ossi/proprietary/vendor/etc/display/qdcm_calib_data_samsung_AMB670YF08_CS_dsc_cmd_mode_panel.json:$(TARGET_COPY_OUT_VENDOR)/etc/display/qdcm_calib_data_samsung_AMB670YF08_CS_dsc_cmd_mode_panel.json \
+    vendor/realme/ossi/proprietary/vendor/etc/display/qdcm_calib_data_samsung_AMB670YF08_FS_dsc_cmd_mode_panel.json:$(TARGET_COPY_OUT_VENDOR)/etc/display/qdcm_calib_data_samsung_AMB670YF08_FS_dsc_cmd_mode_panel.json \
     vendor/realme/ossi/proprietary/vendor/etc/display/thermallevel_to_fps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display/thermallevel_to_fps.xml \
     vendor/realme/ossi/proprietary/vendor/etc/dpm_vndr/vendor.dpm.conf:$(TARGET_COPY_OUT_VENDOR)/etc/dpm_vndr/vendor.dpm.conf \
     vendor/realme/ossi/proprietary/vendor/etc/eva/facedetection/model3.dat:$(TARGET_COPY_OUT_VENDOR)/etc/eva/facedetection/model3.dat \
@@ -196,8 +1075,10 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/vendor/etc/init/loc-launcher.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/loc-launcher.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/netmgrd.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/netmgrd.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/port-bridge.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/port-bridge.rc \
+    vendor/realme/ossi/proprietary/vendor/etc/init/poweropt-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/poweropt-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/qcrilNrd.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/qcrilNrd.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/qdcmss.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/qdcmss.rc \
+    vendor/realme/ossi/proprietary/vendor/etc/init/qesdk-manager.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/qesdk-manager.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/qmipriod.debug.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/qmipriod.debug.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/qmipriod.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/qmipriod.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/qms.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/qms.rc \
@@ -208,16 +1089,19 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.display.color@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.display.color@1.0-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.dpmd.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.dpmd.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.adsprpc-guestos-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.adsprpc-guestos-service.rc \
+    vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.camera.provider-service_64.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.camera.provider-service_64.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.cdsprpc-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.cdsprpc-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.diag.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.diag.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.alarm@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.alarm@1.0-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.capabilityconfigstore@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.capabilityconfigstore@1.0-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.dsp@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.dsp@1.0-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.factory@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.factory@1.0-service.rc \
+    vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.iop@2.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.iop@2.0-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.limits-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.limits-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.perf-hal-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.perf-hal-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.qseecom@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.qseecom@1.0-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.sensorscalibrate@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.sensorscalibrate@1.0-service.rc \
+    vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.servicetracker@1.2-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.servicetracker@1.2-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.hardware.soter@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.hardware.soter@1.0-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.media.c2@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.media.c2@1.0-service.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.qti.media.c2audio@1.0-service.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.qti.media.c2audio@1.0-service.rc \
@@ -228,7 +1112,25 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/vendor/etc/init/vendor.sensors.sscrpcd.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/vendor.sensors.sscrpcd.rc \
     vendor/realme/ossi/proprietary/vendor/etc/init/wfdvndservice.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/wfdvndservice.rc \
     vendor/realme/ossi/proprietary/vendor/etc/izat.conf:$(TARGET_COPY_OUT_VENDOR)/etc/izat.conf \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/AdaptLaunchFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/AdaptLaunchFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/AppClassifierFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/AppClassifierFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/LightningLaunchesFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/LightningLaunchesFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/PreKillFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/PreKillFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/PrefAppsFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/PrefAppsFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/ProCompFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/ProCompFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/QAPE.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/QAPE.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/QGPE.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/QGPE.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/QGPEActionMap.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/QGPEActionMap.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/SilkyScrollsFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/SilkyScrollsFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/prekill/prekill_2GB.data:$(TARGET_COPY_OUT_VENDOR)/etc/lm/prekill/prekill_2GB.data \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/prekill/prekill_4GB.data:$(TARGET_COPY_OUT_VENDOR)/etc/lm/prekill/prekill_4GB.data \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/prekill/prekill_6GB.data:$(TARGET_COPY_OUT_VENDOR)/etc/lm/prekill/prekill_6GB.data \
+    vendor/realme/ossi/proprietary/vendor/etc/lm/sPLHFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/lm/sPLHFeature.xml \
     vendor/realme/ossi/proprietary/vendor/etc/lowi.conf:$(TARGET_COPY_OUT_VENDOR)/etc/lowi.conf \
+    vendor/realme/ossi/proprietary/vendor/etc/ltm_config_samsung_AMB670YF07_CS_dsc_cmd_mode_panel.xml:$(TARGET_COPY_OUT_VENDOR)/etc/ltm_config_samsung_AMB670YF07_CS_dsc_cmd_mode_panel.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/ltm_config_samsung_AMB670YF07_FS_dsc_cmd_mode_panel.xml:$(TARGET_COPY_OUT_VENDOR)/etc/ltm_config_samsung_AMB670YF07_FS_dsc_cmd_mode_panel.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/ltm_config_samsung_AMB670YF08_CS_dsc_cmd_mode_panel.xml:$(TARGET_COPY_OUT_VENDOR)/etc/ltm_config_samsung_AMB670YF08_CS_dsc_cmd_mode_panel.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/ltm_config_samsung_AMB670YF08_FS_dsc_cmd_mode_panel.xml:$(TARGET_COPY_OUT_VENDOR)/etc/ltm_config_samsung_AMB670YF08_FS_dsc_cmd_mode_panel.xml \
     vendor/realme/ossi/proprietary/vendor/etc/media_codecs_kalama.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_kalama.xml \
     vendor/realme/ossi/proprietary/vendor/etc/media_codecs_performance_kalama.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance_kalama.xml \
     vendor/realme/ossi/proprietary/vendor/etc/media_kalama/video_system_specs.json:$(TARGET_COPY_OUT_VENDOR)/etc/media_kalama/video_system_specs.json \
@@ -241,16 +1143,26 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/vendor/etc/models/acd/speech.eai:$(TARGET_COPY_OUT_VENDOR)/etc/models/acd/speech.eai \
     vendor/realme/ossi/proprietary/vendor/etc/msm_irqbalance.conf:$(TARGET_COPY_OUT_VENDOR)/etc/msm_irqbalance.conf \
     vendor/realme/ossi/proprietary/vendor/etc/oplus_Widevine_licenses.pfm:$(TARGET_COPY_OUT_VENDOR)/etc/oplus_Widevine_licenses.pfm \
+    vendor/realme/ossi/proprietary/vendor/etc/perf/avcsysnodesconfigs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/avcsysnodesconfigs.xml \
     vendor/realme/ossi/proprietary/vendor/etc/perf/commonresourceconfigs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/commonresourceconfigs.xml \
     vendor/realme/ossi/proprietary/vendor/etc/perf/commonsysnodesconfigs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/commonsysnodesconfigs.xml \
     vendor/realme/ossi/proprietary/vendor/etc/perf/perfboostsconfig.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/perfboostsconfig.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/perf/perfconfigstore.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/perfconfigstore.xml \
     vendor/realme/ossi/proprietary/vendor/etc/perf/powerhint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/powerhint.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/perf/targetavcsysnodesconfigs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/targetavcsysnodesconfigs.xml \
     vendor/realme/ossi/proprietary/vendor/etc/perf/targetconfig.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/targetconfig.xml \
     vendor/realme/ossi/proprietary/vendor/etc/perf/targetresourceconfigs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/targetresourceconfigs.xml \
     vendor/realme/ossi/proprietary/vendor/etc/perf/targetsysnodesconfigs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/targetsysnodesconfigs.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/perf/testcommonresourceconfigs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/testcommonresourceconfigs.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/perf/testtargetresourceconfigs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/perf/testtargetresourceconfigs.xml \
     vendor/realme/ossi/proprietary/vendor/etc/permissions/vendor-qti-hardware-sensorscalibrate.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/vendor-qti-hardware-sensorscalibrate.xml \
     vendor/realme/ossi/proprietary/vendor/etc/permissions/vendor.qti.hardware.factory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/vendor.qti.hardware.factory.xml \
     vendor/realme/ossi/proprietary/vendor/etc/public.libraries.txt:$(TARGET_COPY_OUT_VENDOR)/etc/public.libraries.txt \
+    vendor/realme/ossi/proprietary/vendor/etc/pwr/AODPowerOptFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/pwr/AODPowerOptFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/pwr/PSMPowerOptFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/pwr/PSMPowerOptFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/pwr/PowerFeatureConfig.xml:$(TARGET_COPY_OUT_VENDOR)/etc/pwr/PowerFeatureConfig.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/pwr/StandbyFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/pwr/StandbyFeature.xml \
+    vendor/realme/ossi/proprietary/vendor/etc/pwr/VideoPowerOptFeature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/pwr/VideoPowerOptFeature.xml \
     vendor/realme/ossi/proprietary/vendor/etc/qcril_database/qcrilNr.db:$(TARGET_COPY_OUT_VENDOR)/etc/qcril_database/qcrilNr.db \
     vendor/realme/ossi/proprietary/vendor/etc/qcril_database/upgrade/config/10.0_config.sql:$(TARGET_COPY_OUT_VENDOR)/etc/qcril_database/upgrade/config/10.0_config.sql \
     vendor/realme/ossi/proprietary/vendor/etc/qcril_database/upgrade/config/11.0_config.sql:$(TARGET_COPY_OUT_VENDOR)/etc/qcril_database/upgrade/config/11.0_config.sql \
@@ -285,6 +1197,7 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/vendor/etc/seccomp_policy/gnss@2.0-xtwifi-client.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/gnss@2.0-xtwifi-client.policy \
     vendor/realme/ossi/proprietary/vendor/etc/seccomp_policy/imsrtp.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/imsrtp.policy \
     vendor/realme/ossi/proprietary/vendor/etc/seccomp_policy/qcrilnr@2.0.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/qcrilnr@2.0.policy \
+    vendor/realme/ossi/proprietary/vendor/etc/seccomp_policy/qesdk.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/qesdk.policy \
     vendor/realme/ossi/proprietary/vendor/etc/seccomp_policy/qms.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/qms.policy \
     vendor/realme/ossi/proprietary/vendor/etc/seccomp_policy/qspm.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/qspm.policy \
     vendor/realme/ossi/proprietary/vendor/etc/seccomp_policy/qti-systemd.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/qti-systemd.policy \
@@ -443,29 +1356,139 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/vendor/firmware/vpu33_4v_unsigned.mbn:$(TARGET_COPY_OUT_VENDOR)/firmware/vpu33_4v_unsigned.mbn \
     vendor/realme/ossi/proprietary/vendor/gpu/kbc/sequence_manifest.bin:$(TARGET_COPY_OUT_VENDOR)/gpu/kbc/sequence_manifest.bin \
     vendor/realme/ossi/proprietary/vendor/gpu/kbc/unified_kbcs_64.bin:$(TARGET_COPY_OUT_VENDOR)/gpu/kbc/unified_kbcs_64.bin \
-    vendor/realme/ossi/proprietary/vendor/gpu/kbc/unified_ksqs.bin:$(TARGET_COPY_OUT_VENDOR)/gpu/kbc/unified_ksqs.bin
+    vendor/realme/ossi/proprietary/vendor/gpu/kbc/unified_ksqs.bin:$(TARGET_COPY_OUT_VENDOR)/gpu/kbc/unified_ksqs.bin \
+    vendor/realme/ossi/proprietary/vendor/lib64/camera/arcsoft_calibration_uw.bin:$(TARGET_COPY_OUT_VENDOR)/lib64/camera/arcsoft_calibration_uw.bin \
+    vendor/realme/ossi/proprietary/vendor/lib64/camera/arcsoft_calibration_wt.bin:$(TARGET_COPY_OUT_VENDOR)/lib64/camera/arcsoft_calibration_wt.bin \
+    vendor/realme/ossi/proprietary/vendor/lib64/camera/arcsoft_dc_calibration_t.bin:$(TARGET_COPY_OUT_VENDOR)/lib64/camera/arcsoft_dc_calibration_t.bin \
+    vendor/realme/ossi/proprietary/vendor/lib64/camera/arcsoft_dc_calibration_u.bin:$(TARGET_COPY_OUT_VENDOR)/lib64/camera/arcsoft_dc_calibration_u.bin \
+    vendor/realme/ossi/proprietary/vendor/lib64/camera/arcsoft_dc_calibration_w.bin:$(TARGET_COPY_OUT_VENDOR)/lib64/camera/arcsoft_dc_calibration_w.bin
 
 PRODUCT_PACKAGES += \
+    vendor.qti.diaghal-V1-ndk \
     vendor.oplus.hardware.appradioaidl-V1-ndk \
-    vendor.oplus.hardware.camera_rfi-V1-ndk \
+    vendor.oplus.hardware.camera_rfi-V1-ndk_vendor \
     vendor.oplus.hardware.cameraextension-V1-ndk \
-    vendor.oplus.hardware.cammidasservice-V1-ndk \
+    vendor.oplus.hardware.cammidasservice-V1-ndk_vendor \
     vendor.oplus.hardware.cammidasservice@1.0 \
     vendor.oplus.hardware.commondcs-V1-ndk_platform \
-    vendor.oplus.hardware.communicationcenter-V2-ndk \
-    vendor.oplus.hardware.cwb@1.0 \
+    vendor.oplus.hardware.communicationcenter-V2-ndk_vendor \
+    vendor.oplus.hardware.cwb@1.0_vendor \
     vendor.oplus.hardware.ims-V1-ndk \
-    vendor.oplus.hardware.osense.client-V1-ndk \
-    vendor.oplus.hardware.performance-V1-ndk \
     vendor.oplus.hardware.radio-V2-ndk_platform \
-    vendor.oplus.hardware.sendextcamcmd-V2-ndk \
+    vendor.oplus.hardware.sendextcamcmd-V2-ndk_vendor \
     vendor.oplus.hardware.stability.oplus_project-V1-ndk \
     btaudio_offload_if \
+    com.qti.eeprom.gt24p128c2csli_imx766 \
+    com.qti.eeprom.gt24p64b_imx688 \
+    com.qti.eeprom.irs2381c_polar \
+    com.qti.eeprom.truly_cmb433 \
+    com.qti.flash.lm3644 \
+    com.qti.sensor.imx766 \
+    com.arcsoft.node.eisv2 \
+    com.arcsoft.node.smooth_transition \
+    com.bots.node.vendortagwrite \
+    com.qti.eisv2 \
+    com.qti.eisv3 \
+    com.qti.hvx.addconstant \
+    com.qti.hvx.binning \
+    com.qti.node.afbfusion \
+    com.qti.node.aon \
+    com.qti.node.customhwnode \
+    com.qti.node.depth \
+    com.qti.node.depthprovider \
+    com.qti.node.dewarp \
+    com.qti.node.dummydepth \
+    com.qti.node.dummyrtb \
+    com.qti.node.dummysat \
+    com.qti.node.eisv2 \
+    com.qti.node.eisv3 \
+    com.qti.node.fcv \
+    com.qti.node.formatconversion \
+    com.qti.node.gme \
+    com.qti.node.gpu \
+    com.qti.node.gyrornn \
+    com.qti.node.hdr10pgen \
+    com.qti.node.hdr10phist \
+    com.qti.node.memcpy \
+    com.qti.node.ml \
+    com.qti.node.muxer \
+    com.qti.node.remosaic \
+    com.qti.node.seg \
+    com.qti.node.stich \
+    com.qti.node.swaidenoiser \
+    com.qti.node.swbestats \
+    com.qti.node.swcac \
+    com.qti.node.swec \
+    com.qti.node.swfusion \
+    com.qti.node.swhme \
+    com.qti.node.swlsc \
+    com.qti.node.swmctf \
+    com.qti.node.swpdpc \
+    com.qti.node.swpreprocess \
+    com.qti.node.swregistration \
+    com.qti.node.swvrt \
+    com.qti.stats.aec \
+    com.qti.stats.aecwrapper \
+    com.qti.stats.aecxcore \
+    com.qti.stats.af \
+    com.qti.stats.afd \
+    com.qti.stats.afwrapper \
+    com.qti.stats.asd \
+    com.qti.stats.awb \
+    com.qti.stats.awbwrapper \
+    com.qti.stats.cnndriver \
+    com.qti.stats.haf \
+    com.qti.stats.hafoverride \
+    com.qti.stats.localhistogram \
+    com.qti.stats.pdlib \
+    com.qti.stats.pdlibsony \
+    com.qti.stats.pdlibwrapper \
+    com.qti.stats.statsgenerator \
+    com.qti.stats.tracker \
+    com.qtistatic.stats.aec \
+    com.qtistatic.stats.af \
+    com.qtistatic.stats.awb \
+    com.qtistatic.stats.pdlib \
+    libdepthmapwrapper_secure \
+    camx.device-impl \
+    camx.provider-impl \
+    com.qti.camx.chiiqutils \
+    com.qti.chiusecaseselector \
+    com.qti.feature2.afbrckt \
+    com.qti.feature2.anchorsync \
+    com.qti.feature2.demux \
+    com.qti.feature2.derivedoffline \
+    com.qti.feature2.frameselect \
+    com.qti.feature2.fusion \
+    com.qti.feature2.generic \
+    com.qti.feature2.gs.sm8550 \
+    com.qti.feature2.hdr \
+    com.qti.feature2.mcreprocrt \
+    com.qti.feature2.memcpy \
+    com.qti.feature2.mfsr \
+    com.qti.feature2.mux \
+    com.qti.feature2.qcfa \
+    com.qti.feature2.rawhdr \
+    com.qti.feature2.realtimeserializer \
+    com.qti.feature2.rt \
+    com.qti.feature2.rtmcx \
+    com.qti.feature2.serializer \
+    com.qti.feature2.swmf \
+    com.qti.qseeaon \
+    com.qti.qseeutils \
+    com.qti.settings.sm8550 \
+    com.qti.stats.common \
+    com.qualcomm.mcx.distortionmapper \
+    com.qualcomm.mcx.linearmapper \
+    com.qualcomm.mcx.nonlinearmapper \
+    com.qualcomm.mcx.policy.mfl \
+    com.qualcomm.mcx.policy.xr \
     com.qualcomm.qti.dpm.api@1.0_vendor \
     com.qualcomm.qti.imscmservice@1.0 \
     com.qualcomm.qti.imscmservice@2.0 \
     com.qualcomm.qti.imscmservice@2.1 \
     com.qualcomm.qti.imscmservice@2.2 \
+    com.qualcomm.qti.mcx.usecase.extension \
     com.qualcomm.qti.uceservice@2.0 \
     com.qualcomm.qti.uceservice@2.1 \
     com.qualcomm.qti.uceservice@2.2 \
@@ -484,7 +1507,10 @@ PRODUCT_PACKAGES += \
     android.hardware.gatekeeper@1.0-impl-qti \
     android.hardware.gnss-aidl-impl-qti \
     audio.primary.kalama \
+    camera.qcom \
     com.dsi.ant@1.0-impl \
+    com.qti.chi.offline \
+    com.qti.chi.override \
     vendor.qti.esepowermanager@1.1-impl_vendor \
     vendor.qti.hardware.alarm@1.0-impl \
     vendor.qti.hardware.bluetooth_audio@2.0-impl \
@@ -497,6 +1523,7 @@ PRODUCT_PACKAGES += \
     vendor.qti.hardware.qccvndhal@1.0-impl \
     vendor.qti.hardware.qseecom@1.0-impl \
     vendor.qti.hardware.sensorscalibrate@1.0-impl \
+    vendor.qti.hardware.servicetracker@1.2-impl \
     vendor.qti.hardware.soter@1.0-impl \
     vulkan.adreno \
     lib-imscommon \
@@ -532,22 +1559,49 @@ PRODUCT_PACKAGES += \
     libQnnHtpV73Stub_vendor \
     libQnnSystem \
     libQtiRilLoadable \
+    libRGBC \
+    libSonyIMX471RmscLibrary \
+    libaacvibrator \
+    libadaptlaunch \
     libadm \
     libadreno_app_profiles \
     libadreno_utils \
     libadsp_default_listener \
     libadsprpc \
     libagm \
+    libaidenoiser \
+    libaidenoiserv2 \
+    libaodoptfeature \
+    libapengine \
+    libappclassifier \
     libar-pal \
     libaudio_log_utils \
     libbacklight-calib \
     libbatching \
+    libbitmlengine \
+    libbitmlenginev2 \
     libbluetooth_audio_session_aidl_qti \
     libbluetooth_audio_session_qti \
     libbluetooth_audio_session_qti_2_1 \
     libbt-hidlclient \
     libbtnv \
     libcacertclient \
+    libcamerapostproc \
+    libcamxcommonutils \
+    libcamxexternalformatutils \
+    libcamxfacialfeatures \
+    libcamxfdalgo \
+    libcamxfdengine \
+    libcamxhwnodecontext \
+    libcamxifestriping \
+    libcamximageformatutils \
+    libcamxjson \
+    libcamxqsatalgo \
+    libcamxsettingsmanager \
+    libcamxstatscore \
+    libcamxswispiqmodule \
+    libcamxswprocessalgo \
+    libcamxtintlessalgo \
     libcapiv2svacnnvendor \
     libcapiv2svarnnvendor \
     libcapiv2udk7vendor \
@@ -556,6 +1610,8 @@ PRODUCT_PACKAGES += \
     libcdfw_remote_api \
     libcdsp_default_listener \
     libcdsprpc \
+    libchifeature2 \
+    libchilog \
     libclstc_algorithm_adapter \
     libclstc_gcp_adapter \
     libclstc_tm \
@@ -563,6 +1619,8 @@ PRODUCT_PACKAGES += \
     libcneapiclient \
     libcneoplookup \
     libcneqmiutils \
+    libcom.qti.chinodeutils \
+    libcommonchiutils \
     libconfigdb \
     libcv_common \
     libcwb_client_vendor \
@@ -571,6 +1629,7 @@ PRODUCT_PACKAGES += \
     libdiag \
     libdigital-dimming \
     libdisp-aba \
+    libdisplayconfig.qti \
     libdisplayqos \
     libdisplayskuutils \
     libdpmqmihal \
@@ -599,26 +1658,39 @@ PRODUCT_PACKAGES += \
     libgpt \
     libgpudataproducer \
     libgsl \
+    libhdr10plus \
     libhdr_backlight_adapter \
+    libhdr_stub \
     libhdr_tm \
     libhdrdynamic \
     libhdrdynamicootf \
+    libhistogram \
+    libhme \
+    libhwconfigurationutil_vendor \
     libidl \
     libintervmipc \
+    libipebpsstriping \
+    libipebpsstriping170 \
+    libipebpsstriping480 \
+    libisphwsetting \
     libizat_client_api \
     libizat_core \
     libjnihelper \
+    libjpege \
     libkcl \
     libkernelmanager \
     libkeymasterdeviceutils \
     libkeymasterprovision \
     libkeymasterutils \
     liblbs_core \
+    liblearningmodule \
+    liblightninglaunches \
     liblistensoundmodel2vendor \
     libllvm-glnext \
     libllvm-qcom \
     libllvm-qgl \
     liblmthermallistner \
+    liblmutils-ns \
     libloadalgo_stub \
     libloc_api_v02 \
     libloc_api_wds \
@@ -634,6 +1706,7 @@ PRODUCT_PACKAGES += \
     liblocation_api_msg \
     liblocation_client_api \
     liblocation_integration_api \
+    liblocation_qesdk \
     liblocationservice \
     liblocationservice_glue \
     liblocdiagiface \
@@ -643,12 +1716,26 @@ PRODUCT_PACKAGES += \
     liblqe \
     libmasc \
     libmcs \
+    libmctfengine_stub \
     libmdmdetect \
     libmdsprpc \
+    libmemperfd \
     libmemutils \
+    libmeters-ns \
+    libmeters \
+    libmfGhostDetection \
+    libmfec \
+    libmidasserviceintf_aidl \
     libminkdescriptor \
     libminksocket_vendor \
+    libmlremosaicsnapshot \
     libmm-hdcpmgr \
+    libmmcamera_bestats \
+    libmmcamera_cac \
+    libmmcamera_lscv35 \
+    libmmcamera_mfnr \
+    libmmcamera_mfnr_t4 \
+    libmmcamera_pdpc \
     libmmosal_vendor \
     libmmrtpdecoder_vendor \
     libmmrtpencoder_vendor \
@@ -666,7 +1753,11 @@ PRODUCT_PACKAGES += \
     libnetmgrportutils \
     libnetmgrxfrmutils \
     libnlnetmgr \
+    libopencv \
+    libopencv3a \
+    libopestriping \
     libops \
+    libos \
     libpal_net_if \
     libpdmapper \
     libpdnotifier \
@@ -674,10 +1765,16 @@ PRODUCT_PACKAGES += \
     libperfgluelayer \
     libperfioctl \
     libperipheral_client \
-    libpwirisfeature_vendor \
+    libpowercore \
+    libprefapps \
+    libprekill \
+    libprocomp \
+    libpsmoptfeature \
+    libpwirisfeature \
     libpwirisfeaturehal \
     libpwirishal \
-    libpwirishalwrapper_vendor \
+    libpwirishalwrapper \
+    libqapesdk \
     libqc2audio_base \
     libqc2audio_basecodec \
     libqc2audio_core \
@@ -727,8 +1824,13 @@ PRODUCT_PACKAGES += \
     libqdi \
     libqdp \
     libqdpr \
+    libqdutils \
     libqesdk2_0 \
+    libqesdk_manager \
     libqisl \
+    libqll \
+    libqll10 \
+    libqllengine \
     libqmi \
     libqmi_cci \
     libqmi_client_helper \
@@ -745,11 +1847,16 @@ PRODUCT_PACKAGES += \
     libqrtr \
     libqrtrclient \
     libqseed3 \
+    libqsegnet \
+    libqshcamera \
     libqsocket \
+    libqti-iopd-client \
+    libqti-iopd \
     libqti-perfd-client \
     libqti-perfd \
     libqti-qesdk-secure \
     libqti-util \
+    libqti-utils \
     libqtigefar \
     libqtikeymaster4 \
     libqtikeymint \
@@ -767,16 +1874,24 @@ PRODUCT_PACKAGES += \
     libscveObjectSegmentation_stub \
     libscveObjectTracker \
     libscveObjectTracker_stub \
+    libsdedrm \
     libsdm-color \
     libsdm-colormgr-algo \
     libsdm-disp-vndapis \
+    libsdmcore \
+    libsdmdal \
     libsdmextension \
+    libsdmutils \
     libsdsprpc \
     libsensorcal \
     libsensorslog \
+    libsfeShiftExtrapolation \
     libshsc \
+    libsilkyscrolls \
+    libskewknob \
     libslimclient \
     libsmemlog \
+    libsn100u_fw \
     libsnapdragoncolor-manager \
     libsnapdragoncolor-qdcm \
     libsns_api \
@@ -791,20 +1906,30 @@ PRODUCT_PACKAGES += \
     libsoc_helper \
     libspcom \
     libspl \
+    libsplh \
     libssc \
     libssc_default_listener \
     libssd \
+    libstandbyfeature \
     libstreamparser \
+    libswregistrationalgo \
     libsynergy_loc_api \
+    libsynx \
     libsys_info_cache \
     libsystem_health_mon \
     libtestutils \
+    libtfestriping \
     libthermalclient \
+    libthreadutils \
     libtime_genoff \
     libtinyxml2_1 \
+    libubifocus \
+    libvideoml \
+    libvideooptfeature \
     libvideotxr \
     libvideoutils \
     libvmfilexfer \
+    libvmmem \
     libvui_dmgr \
     libvui_dmgr_client \
     libwfdcodecv4l2_proprietary \
@@ -855,6 +1980,7 @@ PRODUCT_PACKAGES += \
     libasphere \
     libquasar \
     libshoebox \
+    vendor.aac.hardware.richtap.vibrator-V2-ndk \
     vendor.display.color@1.0 \
     vendor.display.color@1.1 \
     vendor.display.color@1.2 \
@@ -869,10 +1995,16 @@ PRODUCT_PACKAGES += \
     vendor.libdpmframework \
     vendor.libdpmtcm \
     vendor.libmwqemiptablemgr \
-    vendor.oplus.hardware.olc2-V2-ndk \
+    vendor.oplus.hardware.olc2-V2-ndk_vendor \
     vendor.oplus.hardware.oplusvibrator-V1-ndk \
     vendor.oplus.hardware.vibrator-V1-ndk \
     vendor.oplus.hardware.wifi.supplicant-V5-ndk \
+    vendor.pixelworks.hardware.display@1.0_vendor \
+    vendor.pixelworks.hardware.display@1.1_vendor \
+    vendor.pixelworks.hardware.display@1.2_vendor \
+    vendor.pixelworks.hardware.feature-V1-ndk \
+    vendor.pixelworks.hardware.feature@1.0_vendor \
+    vendor.pixelworks.hardware.feature@1.1_vendor \
     vendor.qti.data.factory@2.0 \
     vendor.qti.data.factory@2.1 \
     vendor.qti.data.factory@2.2 \
@@ -893,6 +2025,8 @@ PRODUCT_PACKAGES += \
     vendor.qti.hardware.bluetooth_sar@1.1 \
     vendor.qti.hardware.bttpi-V2-ndk \
     vendor.qti.hardware.cacert@1.0 \
+    vendor.qti.hardware.camera.aon-service-impl \
+    vendor.qti.hardware.camera.postproc@1.0-service-impl \
     vendor.qti.hardware.data.cne.internal.api@1.0 \
     vendor.qti.hardware.data.cne.internal.constants@1.0 \
     vendor.qti.hardware.data.cne.internal.server@1.0 \
@@ -921,11 +2055,14 @@ PRODUCT_PACKAGES += \
     vendor.qti.hardware.factory@1.0 \
     vendor.qti.hardware.factory@1.1 \
     vendor.qti.hardware.fm@1.0 \
+    vendor.qti.hardware.iop@1.0 \
+    vendor.qti.hardware.iop@2.0 \
     vendor.qti.hardware.limits@1.0 \
     vendor.qti.hardware.limits@1.1 \
     vendor.qti.hardware.limits@1.2 \
     vendor.qti.hardware.mwqemadapter@1.0 \
     vendor.qti.hardware.pal@1.0-impl \
+    vendor.qti.hardware.power.powermodule@1.0 \
     vendor.qti.hardware.qccsyshal@1.0_vendor \
     vendor.qti.hardware.qccsyshal@1.1_vendor \
     vendor.qti.hardware.qccsyshal@1.2_vendor \
@@ -1005,6 +2142,13 @@ PRODUCT_PACKAGES += \
     vendor.qti.latency@2.2 \
     vendor.qti.memory.pasrmanager@1.0 \
     vendor.qti.memory.pasrmanager@1.1 \
+    vendor.qti.power.pasrmanager@1.0 \
+    vendor.qti.qesdhal@1.0 \
+    vendor.qti.qesdhal@1.1 \
+    vendor.qti.qesdhal@1.2 \
+    vendor.qti.qesdhal@1.3-impl \
+    vendor.qti.qesdhal@1.3 \
+    vendor.qti.qesdsys-V3-ndk \
     vendor.qti.qspmhal@1.0-impl \
     vendor.qti.qspmhal@1.0 \
     bm3a68v08s11n29 \
@@ -1054,7 +2198,7 @@ PRODUCT_PACKAGES += \
     bm3a73v08s11n51 \
     chre_qsh_shim \
     libQ6MSFR_manager_skel \
-    libQnnHtpV73Skel \
+    libQnnHtpV73Skel_vendor \
     libadsp_jpege_skel \
     libapn_dsp_skel \
     libbitml_nsp_skel \
@@ -1065,7 +2209,7 @@ PRODUCT_PACKAGES += \
     libhme_dsp_skel \
     libmctfengine_skel \
     libosie_skel \
-    nearby \
+    nearby.napp_header \
     nearby \
     com.qualcomm.qti.dpm.api@1.0 \
     lib-imsvideocodec \
@@ -1084,6 +2228,7 @@ PRODUCT_PACKAGES += \
     libmmparser_lite \
     libmmrtpdecoder \
     libmmrtpencoder \
+    libostatslog \
     libqcc \
     libqcc_file_agent_sys \
     libqccdme \
@@ -1105,6 +2250,9 @@ PRODUCT_PACKAGES += \
     libwfduibcsinkinterface \
     libwfduibcsrc \
     libwfduibcsrcinterface \
+    vendor.oplus.hardware.displaypanelfeature-V1-ndk \
+    vendor.oplus.hardware.displaypanelfeature@1.0_system_ext \
+    vendor.qti.ImsRtpService-V1-ndk \
     vendor.qti.diaghal@1.0 \
     vendor.qti.hardware.dpmaidlservice-V1-ndk \
     vendor.qti.hardware.dpmservice@1.0 \
@@ -1124,10 +2272,19 @@ PRODUCT_PACKAGES += \
     com.oplus.stats.awb \
     com.oplus.stats.pdlib \
     vendor.oplus.hardware.binaural_record-impl \
+    lib_geofencing \
+    libbinaural_record_session_aidl \
     libcodec2_oplus \
+    libdpservice \
+    libfido2_factory \
+    libfido_factory \
     libmedia_opluscodecserviceregistrant \
     liboplus-uah-client \
     liboplus_service \
+    libpnscr2 \
+    libpnscr2_aidl \
+    libqsee_keybox_ca \
+    libqsh.utils \
     libtensorflowlite_oplus \
     liboplusupmixeffect \
     vendor.oplus.hardware.appradio@1.0 \
@@ -1200,15 +2357,67 @@ PRODUCT_PACKAGES += \
     libQnnHtpV73Stub.aiboost \
     libQnnSystem.aiboost \
     android.hardware.secure_element@1.0-impl \
+    com.qti.sensor.imx890 \
+    com.qti.sensor.s5k3p9 \
     com.oplus.node.preview \
     com.oplus.node.sstabdefer \
     com.oplus.node.sstabgme \
     com.oplus.node.sstabphoto \
     com.oplus.node.sstabrealt \
     com.oplus.node.videoenhance \
+    camera.oemlayer \
+    vendor.pixelworks.hardware.display@1.0-impl-1.2-i7 \
     vendor.qti.esepowermanager@1.1-impl \
     lib-virtual-modem-protos \
+    lib2DSlender \
+    libAF \
+    libAlgoInterface \
+    libAlgoProcess \
+    libAncFilter \
+    libAncHumVideoBase \
+    libAncSegBaseSdk \
+    libAncSegMultiSdk \
+    libAncSegmentSdk \
+    libBokehPre \
+    libCOppLceTonemapAPI \
+    libCS \
+    libCaptureBokeh \
+    libCipCommon \
+    libCipParamProcess \
+    libCipParameter0 \
+    libCipParameter1 \
+    libCipParameter2 \
+    libCipParameter3 \
+    libCipParameter4 \
+    libCipParameter5 \
+    libCipParameter6 \
+    libCipo_awb \
+    libDeVIS \
+    libEIS \
+    libFDClite \
+    libFaceBeautyCap \
+    libFaceBeautyJni \
+    libFaceBeautyPICap \
+    libFaceBeautyPre \
+    libFaceDistortionCorrection \
+    libFilterWrapper \
     libGaiaClient_vnd \
+    libHIS \
+    libImageWarpMask \
+    libOGLManager \
+    libOPAlgoCamAIBeautyBodyDetection \
+    libOPAlgoCamAiBeautyEyeRetouchCn \
+    libOPAlgoCamAiBeautyFaceRetouchCn \
+    libOPAlgoCamAiUnifySkin \
+    libOPAlgoCamFaceBeautyCap \
+    libOPAlgoCamSinglePortrait \
+    libOPLUS_SCPortrait \
+    libOplusPDCore \
+    libPerfectColor \
+    libPerfectlyClearCruxOpt \
+    libPlatformValidatorShared \
+    libPolarrRender \
+    libPreviewDecisionOld \
     libQnnCpu \
     libQnnGpu \
     libQnnHtp \
@@ -1216,42 +2425,174 @@ PRODUCT_PACKAGES += \
     libQnnHtpV73CalculatorStub \
     libQnnHtpV73Stub \
     libQnnSaver \
+    libRedeyeReduce \
+    libSNPE \
+    libSnpeCpu \
+    libSnpeGpu \
+    libSnpeHtpPrepare \
+    libSnpeHtpV73Stub \
+    libSuperRaw \
+    libSuperTextWrapper \
+    libVDBayerHDR \
+    libVDBlurless \
+    libVDExternal \
+    libVDPostureDetection \
+    libVDSuperPhotoAPI \
+    libVDUpScale \
+    libVideoEnhance \
+    libWaterMark \
+    libXDocProcessSDK \
+    libYTCommon \
     lib_lvacfs \
+    lib_rectify \
+    libaecCustom \
+    libaecCustomParamParser \
+    libafCustomParamParser \
     libaiboost_qnn_sr \
     libaiboost_sr \
     libaiboost_te \
     libaiboost_ubwc \
+    libaideblur \
+    libaisal \
+    libaisd \
+    libaiseg \
+    libaisr \
+    libalCFR \
+    libancbase_rt_fusion \
+    libancbase_segbase \
+    libancbase_segment \
+    libancbase_segmulti \
+    libapsexif \
+    libapsjpeg \
+    libapspng \
+    libapsultrahdr \
+    libapsyuv \
+    libarcsoft_distortion_correction \
+    libarcsoft_dual_sat \
+    libarcsoft_dual_zoomtranslator \
+    libarcsoft_dualcam_bokeh_api \
+    libarcsoft_dualcam_refocus_left \
+    libarcsoft_dualcam_refocus_preview \
+    libarcsoft_dualcam_refocus_uw \
+    libarcsoft_eis_wrapper \
+    libarcsoft_hdr_denoise_api \
+    libarcsoft_high_dynamic_range \
+    libarcsoft_high_dynamic_range_couple_v4 \
+    libarcsoft_high_dynamic_range_v4 \
+    libarcsoft_lensstaindetection \
+    libarcsoft_long_exposure_capture \
+    libarcsoft_long_exposure_preview \
+    libarcsoft_low_light_hdr \
+    libarcsoft_mcxmflpolicy \
+    libarcsoft_merge_hdr_denoise_api \
+    libarcsoft_preview_antibanding \
+    libarcsoft_qnnhtp \
+    libarcsoft_scbokeh_video \
+    libarcsoft_smart_denoise \
+    libarcsoft_smart_denoise_v4 \
+    libarcsoft_triple_sat \
+    libarcsoft_triple_zoomtranslator \
+    libarcsoft_turbo_fusion_raw_portrait_super_night \
+    libarcsoft_turbo_fusion_raw_super_night \
+    libarcsoft_turbo_hdr_raw \
+    libarcsoft_turbo_hdr_raw_front \
+    libarcsoft_turbo_raw \
+    libarcsoft_ultra_high_dynamic_range \
+    libarcsoft_videoautozoom \
     libc++_shared \
+    libcalculator \
+    libcalculator_htp \
     libcommcenterfw \
     libcommcenterutils \
+    libcreatebin \
+    libcustomer_halalgovisual \
+    libcvface_api \
+    libdlrmsc \
     libdmtp-protos-lite \
     libdmtp \
     libdmtpclient \
+    libdualcam_optical_zoom_control \
+    libdualcam_video_optical_zoom \
+    libeffect_custom \
+    libexif-jpeg-aps \
+    libextendfile \
+    libextensionlayer \
+    libhwconfigurationutil \
+    libhyperlapse \
+    libiceainr \
     libifaa_factory \
+    libimgClarityEvaluate \
     liblvacfs_wrapper \
     libmindroid-app \
     libmindroid-framework \
+    libml_util \
+    libmpbase \
+    libmsnativefilter \
+    libnpu \
     libolc_vnd \
     liboplusblur_capture_api \
+    liboptical_zoom_dc \
+    liboptical_zoom_vs \
     libosenseaidlhalclient \
+    liboutils \
+    libpngwrapper \
+    libportrait_repair_ppl3_ocl \
+    libpwirisIoctlWrapper \
+    libpwirisPCS \
+    libpwiriscalibrate \
+    libpwirisfeature_odm \
+    libpwirishalwrapper_odm \
+    libpwirispq \
+    libpwirisservicei7 \
+    libpwirissoft \
+    libpwsoftirisPCS \
     libqti-radio-service \
     libradio-service \
     libradioapis \
+    libremosaic_wrapper \
+    libremosaiclib_s5k3p9 \
+    libremosaiclib_s5kjn1 \
     librfapis \
+    librmsclib1 \
     librpmbengclient \
+    libsaveshaderbin \
+    libsdk_sr \
     libsecurity_event_dcs_vnd \
+    libsharebuffer \
+    libsharebuffer_impl \
+    libsnapdragoncolor-pxlw \
+    libsnpe_loader \
+    libsnpeml \
+    libssd_det \
+    libstface_fd_api \
+    libstfaceunlockocl \
+    libstfd_mobile_api \
     libsubsys-service \
     libsubsys-utils \
     libtfa98xx \
+    libthirdcapability \
+    libtrace \
+    libtriplecam_optical_zoom_control \
+    libtriplecam_video_optical_zoom \
+    libwatermark_photo \
+    libwrapper_te \
+    libyuv2 \
+    libyuvwrapper \
+    libziparchive_odm \
+    vendor.pixelworks.hardware.display@1.0 \
+    vendor.pixelworks.hardware.display@1.1 \
+    vendor.pixelworks.hardware.display@1.2 \
+    vendor.pixelworks.hardware.feature@1.0 \
+    vendor.pixelworks.hardware.feature@1.1 \
     vendor.qti.esepowermanager@1.0 \
     vendor.qti.esepowermanager@1.1 \
-    libQnnHtpV73Skel \
-    libaiboostubwc_skel \
+    libQnnHtpV73Skel.aiboost \
+    libaiboostubwc_skel.aiboost \
     capi_v3_oprec \
     libCalculator_skel \
     libQnnHtpV73 \
     libQnnHtpV73Skel \
-    libQnnSaver \
+    libQnnSaver.rfsa \
     libSnpeHtpV73Skel \
     libSuperRawPost_skel \
     libaisr_skel \
@@ -1266,6 +2607,8 @@ PRODUCT_PACKAGES += \
     libktvpitchshift \
     libktvreverb \
     libktvvolume \
+    libtfadsp_sb4_0_rx \
+    libtfadsp_sb4_0_tx \
     libvdblurless_5.0.2_skel \
     libvdsuperphoto_skel \
     nlc \
@@ -1273,6 +2616,7 @@ PRODUCT_PACKAGES += \
     CneApp \
     IWlanService \
     TimeService \
+    ImsRcsService \
     QCC \
     QtiTelephonyService \
     SoterService \
@@ -1280,6 +2624,7 @@ PRODUCT_PACKAGES += \
     dpmserviceapp \
     ims \
     qcrilmsgtunnel \
+    WfdCommon \
     uimservicelibrary \
     com.qti.dpmframework \
     dpmapi \
@@ -1299,65 +2644,33 @@ PRODUCT_PACKAGES += \
     vendor.qti.ims.rcsuce-V1.1-java \
     vendor.qti.ims.rcsuce-V1.2-java \
     vendor.qti.ims.rcsuceaidlservice-V1-java \
-    vendor.qti.imsdatachannel \
-    android.hardware.atrace@1.0-service.xml \
-    android.hardware.boot@1.2.xml \
-    android.hardware.cas@1.2-service-lazy.xml \
-    android.hardware.drm-service.clearkey.xml \
-    android.hardware.drm-service.xml \
     android.hardware.gnss-aidl-service-qti.xml \
-    android.hardware.graphics.mapper-impl-qti-display.xml \
-    android.hardware.health-service.qti.xml \
     android.hardware.radio.config.xml \
     android.hardware.radio.data.xml \
     android.hardware.security.keymint-service-qti.xml \
-    android.hardware.sensors-multihal.xml \
-    android.hardware.thermal@2.0-service.qti.xml \
-    android.hardware.usb@1.2-service.xml \
-    android.hardware.wifi.hostapd.xml \
-    android.hardware.wifi.supplicant.xml \
-    android.hardware.wifi@1.0-service.xml \
-    bluetooth_audio.xml \
     bttpi-saidl.xml \
     c2_manifest_vendor.xml \
     c2_manifest_vendor_audio.xml \
     deviceinfo-saidl.xml \
     imsdcservice-saidl.xml \
     manifest_android.hardware.drm-service.widevine.xml \
-    manifest_non_qmaa.xml \
-    manifest_non_qmaa_extn.xml \
-    memtrack_qti.xml \
-    power.xml \
     qms-saidl.xml \
-    vendor.aks.gamepad@1.0-service.xml \
     vendor.oplus.hardware.wifi.supplicant.xml \
     vendor.qti.camera.aon-impl-1.3.xml \
     vendor.qti.camera.postproc-impl.xml \
     vendor.qti.camera.provider.xml \
     vendor.qti.diag.hal.service.xml \
     vendor.qti.gnss-service.xml \
-    vendor.qti.hardware.display.allocator-service.xml \
     vendor.qti.hardware.display.composer-service.xml \
-    vendor.qti.hardware.display.demura-service.xml \
-    vendor.qti.hardware.lights.service.xml \
     vendor.qti.hardware.limits-service.xml \
     vendor.qti.hardware.perf.xml \
     vendor.qti.hardware.power.powermodule.xml \
-    vendor.qti.hardware.qxr-service.xml \
     vendor.qti.hardware.radio.qtiradioconfig.xml \
     vendor.qti.hardware.servicetracker@1.2-service.xml \
-    vendor.qti.hardware.vibrator.service.xml \
     vendor.qti.hardware.wifidisplaysession-service.xml \
-    vendor.qti.qspa-service.xml \
-    android.hardware.ir-service.xml \
     android.hardware.power.stats-service.oplus.xml \
-    android.hardware.power.stats.IPowerStats.xml \
-    binaural_record.xml \
     device_manifest_communication_center_aidl.xml \
     device_manifest_subsys.xml \
-    manifest_engineer_aidl.xml \
-    manifest_misc_aidl.xml \
-    manifest_nfc_sn100t.xml \
     manifest_oplusSensor_aidl.xml \
     manifest_oplus_camera_rfi.xml \
     manifest_oplus_cameraextension_aidl.xml \
@@ -1383,23 +2696,13 @@ PRODUCT_PACKAGES += \
     manifest_oplus_stability_project_aidl.xml \
     manifest_oplus_virtualdevice_audio_aidl.xml \
     manifest_oplus_virtualdevice_camera.xml \
-    manifest_performance_aidl.xml \
-    manifest_powermonitor_aidl.xml \
-    manifest_rpmh_aidl.xml \
     manifest_secure_element.xml \
     manifest_touch_aidl.xml \
-    manifest_transfer.xml \
-    manifest_transmessage.xml \
     oplus_aidl_wifi_service_device_manifest.xml \
-    ormsHalService-default.xml \
-    vendor.dolby.hardware.dms.xml \
-    vendor.dolby.media.c2@1.0-service.xml \
-    vendor.dolby.media.dvs-service.xml \
     vendor.oplus.hardware.olc2_aidl.xml \
     vendor.oplus.hardware.urcc-service.xml \
     vendor.pixelworks.hardware.display@1.2.xml \
     vendor.pixelworks.hardware.feature.irisfeature-service.xml \
-    vendor.qti.qegahal-service.xml \
     ATFWD-daemon \
     adpl \
     adsprpcd \
@@ -1421,13 +2724,17 @@ PRODUCT_PACKAGES += \
     android.hardware.security.keymint-service-qti \
     qcrilNrd \
     vendor.display.color@1.0-service \
+    vendor.qti.camera.provider-service_64 \
     vendor.qti.hardware.alarm@1.0-service \
     vendor.qti.hardware.capabilityconfigstore@1.0-service \
+    vendor.qti.hardware.display.composer-service \
     vendor.qti.hardware.factory@1.0-service \
+    vendor.qti.hardware.iop@2.0-service \
     vendor.qti.hardware.limits@1.2-service \
     vendor.qti.hardware.perf-hal-service \
     vendor.qti.hardware.qseecom@1.0-service \
     vendor.qti.hardware.sensorscalibrate@1.0-service \
+    vendor.qti.hardware.servicetracker@1.2-service \
     vendor.qti.hardware.soter@1.0-service \
     vendor.qti.media.c2@1.0-service \
     vendor.qti.media.c2audio@1.0-service \
@@ -1455,9 +2762,11 @@ PRODUCT_PACKAGES += \
     pm-service \
     port-bridge \
     power_off_alarm \
+    poweropt-service \
     ppd \
     qcc-vendor \
     qdcmss \
+    qesdk-manager \
     qmipriod \
     qms \
     qrtr-cfg \
@@ -1498,7 +2807,6 @@ PRODUCT_PACKAGES += \
     vendor-oplus-hardware-engineer-V1-service \
     vendor-oplus-hardware-misc-V1-service \
     vendor-oplus-hardware-oplusSensor-V1-service \
-    vendor-oplus-hardware-performance-V1-service \
     vendor-oplus-hardware-power-powermonitor-V1-service \
     vendor-oplus-hardware-touch-V2-service \
     vendor-oplus-hardware-transfer@1.0-service \
@@ -1526,9 +2834,11 @@ PRODUCT_PACKAGES += \
     vendor.oplus.hardware.stability.oplus_project-V1-service \
     vendor.oplus.hardware.urcc-service \
     vendor.oplus.hardware.wifi-aidl-service \
+    vendor.pixelworks.hardware.feature.irisfeature-service \
     vendor.qti.esepowermanager@1.1-service \
     vendor.qti.secure_element@1.2-service \
     init.subsys \
+    irisConfig \
     oplus_sensor_fb \
     touchDaemon
 
@@ -1539,3 +2849,6 @@ PRODUCT_PACKAGES += \
     vendor_lib64_libEGL_adreno_so \
     vendor_lib64_libGLESv2_adreno_so \
     vendor_lib64_libq3dtools_adreno_so
+
+PRODUCT_BOOT_JARS += \
+    WfdCommon

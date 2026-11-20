@@ -23,27 +23,76 @@ Materialization requires --label (kernel release or ColorOS version) and writes
 .rom-blob-identity.json only after every selected file has been copied.
 """
 import argparse
+from contextlib import ExitStack
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
-from contextlib import ExitStack
 
 from rom_inputs import BASE_PARTITIONS, NAME, extract_fs, stock_payload, require, sha256, verify_stock
 
 # Oplus-specific payload the platform list has no reason to carry.
+# Avoid sweeping generic vendor/etc/vintf/manifest/*.xml or HALs built from source by hardware/oplus
+# (performance / osense.client / commondcs), which would collide with common.mk in VINTF/Ninja.
 EXTRA_PATTERNS = [
     (re.compile(r'^(odm|vendor)/bin/hw/.*oplus'), 'service'),
     (re.compile(r'^(odm|vendor)/lib(64)?/hw/.*oplus'), 'hal library'),
     (re.compile(r'^(odm|vendor)/lib(64)?/.*oplus[^/]*\.so$'), 'library'),
-    (re.compile(r'^(odm|vendor)/etc/vintf/manifest/.*\.xml$'), 'vintf manifest'),
+    (re.compile(r'^(odm|vendor)/etc/vintf/manifest/.*oplus.*\.xml$'), 'vintf manifest'),
     (re.compile(r'^(odm|vendor)/etc/init/.*oplus.*\.rc$'), 'init script'),
     (re.compile(r'^(odm|vendor)/etc/permissions/.*oplus.*\.xml$'), 'permission xml'),
 ]
+
+EXCLUDE_EXTRA_PATTERNS = (
+    re.compile(r'^vendor/lib(64)?/vendor\.oplus\.hardware\.(osense\.client|performance|commondcs)-V\d+-ndk\.so$'),
+    re.compile(r'^odm/bin/hw/vendor-oplus-hardware-(performance|commondcs|osense\.client)-'),
+    re.compile(r'^odm/etc/init/vendor-oplus-hardware-(performance|commondcs|osense\.client)-'),
+    re.compile(r'^odm/etc/vintf/manifest/manifest_(performance|commondcs|osense).*\.xml$'),
+    re.compile(r'^odm/etc/vintf/manifest/manifest_oplus_ifaa\.xml$'),
+)
+
+AOSP_OR_CAF_LIB_PREFIXES = (
+    "android.hardware.",
+    "android.frameworks.",
+    "android.hidl.",
+    "android.system.",
+    "camera.device@",
+    "libprotobuf-cpp-",
+    "libcodec2",
+    "libgralloc",
+    "libqti_vndfwk",
+    "vendor.qti.",
+    "vendor.display.",
+)
+
+AOSP_OR_CAF_EXACT_LIBS = frozenset({
+    "libc.so", "libm.so", "libdl.so", "liblog.so", "libcutils.so", "libutils.so",
+    "libbase.so", "libc++.so", "libstdc++.so", "libstdc++_vendor.so", "libz.so",
+    "libbinder.so", "libbinder_ndk.so", "libhidlbase.so", "libhidltransport.so",
+    "libhwbinder.so", "libhidlmemory.so", "libfmq.so", "libhardware.so",
+    "libui.so", "libgui.so", "libnativewindow.so", "libneuralnetworks.so",
+    "libsqlite.so", "libexpat.so", "libxml2.so", "libpng.so", "libjpeg.so",
+    "libvulkan.so", "libEGL.so", "libGLESv2.so", "libGLESv3.so", "libsync.so",
+    "libion.so", "libdmabufheap.so", "libprocessgroup.so", "libvndksupport.so",
+    "libcamera_metadata.so", "libcamera2ndk_vendor.so", "libdumpstateutil.so",
+    "libsysutils.so", "libyuv.so", "libstagefright_bufferpool@2.0.1.so",
+    "libtinyxml2.so", "libjsoncpp.so", "libjson.so", "liblz4.so", "libzstd.so",
+    "libcrypto.so", "libssl.so", "liblzma.so", "libbacktrace.so", "libunwindstack.so",
+    "libar-acdb.so", "libar-gsl.so", "liblx-osal.so", "libats.so",
+    "libagmclient.so", "libpalclient.so", "libqservice.so",
+    "libdisplaydebug.so", "libdrmutils.so", "libgpu_tonemapper.so",
+    "libqdMetaData.so", "libdisplayconfig.system.qti.so", "libwfdaac_vendor.so",
+    "libwpa_client.so", "libcld80211.so", "librmnetctl.so", "libsensorndkbridge.so",
+    "libtinycompress.so", "libtinyalsa.so", "libaudioroute.so",
+    "vendor.oplus.hardware.osense.client-V1-ndk.so",
+    "vendor.oplus.hardware.performance-V1-ndk.so",
+    "vendor.oplus.hardware.commondcs-V1-ndk.so",
+})
 
 
 def run(cmd, **kw):
@@ -67,6 +116,201 @@ def parse_entry(line):
     return path, raw
 
 
+def split_entry(raw):
+    """Split `<spec>[|hash1|hash2]` into (prefix_without_hashes, hash_suffix)."""
+    if "|" in raw:
+        head, tail = raw.split("|", 1)
+        return head, "|" + tail
+    return raw, ""
+
+
+def entry_target(raw):
+    """Return effective destination path (`dst` in `src:dst;...`) without prefix or args."""
+    head, _ = split_entry(raw)
+    body = head.lstrip("-+ ")
+    spec = body.split(";", 1)[0].strip()
+    return spec.split(":", 1)[-1].strip()
+
+
+def soong_module_identity(raw):
+    """Return (merge_group, base_name, current_suffix, partition, rel_dir, ext) for Soong naming."""
+    dst = entry_target(raw)
+    parts = PurePosixPath(dst).parts
+    part = parts[0]
+    head, _ = split_entry(raw)
+    args = head.split(";")[1:]
+    suffix = ""
+    explicit_mod = None
+    for arg in args:
+        if arg.startswith("MODULE_SUFFIX="):
+            suffix = arg.split("=", 1)[1]
+        elif arg.startswith("MODULE="):
+            explicit_mod = arg.split("=", 1)[1]
+
+    basename = parts[-1]
+    root, ext = os.path.splitext(basename)
+    # Match extract_utils/makefiles.py write_product_packages dispatch
+    if len(parts) >= 4 and parts[1] == "lib" and parts[2] == "rfsa":
+        sub = "/".join(parts[3:-1])
+        group = ("rfsa", part, sub, basename)
+        base_name = explicit_mod or root
+        return group, base_name, suffix, part, sub, ext
+    if len(parts) >= 3 and parts[1] in ("lib", "lib64"):
+        sub = "/".join(parts[2:-1])
+        group = ("lib", part, sub, root)
+        base_name = explicit_mod or root
+        return group, base_name, suffix, part, sub, ext
+    if len(parts) >= 3 and parts[1] in ("bin", "etc"):
+        kind = parts[1]
+        sub = "/".join(parts[2:-1])
+        group = (kind, part, sub, basename)
+        base_name = explicit_mod or basename
+        return group, base_name, suffix, part, sub, ext
+    sub = "/".join(parts[1:-1])
+    group = ("other", part, sub, basename)
+    base_name = explicit_mod or root
+    return group, base_name, suffix, part, sub, ext
+
+
+def append_module_suffix(raw, suffix):
+    head, hashes = split_entry(raw)
+    return f"{head};MODULE_SUFFIX={suffix}{hashes}"
+
+
+def dedup_soong_entries(lines):
+    """Assign deterministic `;MODULE_SUFFIX=` so zero Soong module names collide."""
+    parsed = [soong_module_identity(line) for line in lines]
+    # Group lines by Soong merge_group (e.g. lib/ + lib64/ of same partition+subdir merge)
+    group_names = {}
+    for line, (group, base, suffix, part, sub, ext) in zip(lines, parsed):
+        mod_name = base + suffix
+        group_names.setdefault(group, []).append((mod_name, suffix, part, sub, ext))
+
+    # Count how many distinct Soong merge_groups claim each module name
+    name_to_groups = {}
+    for group, items in group_names.items():
+        # Prefer explicit suffix if any bitness variant already carried one
+        chosen_suffix = next((s for _, s, *_ in items if s), "")
+        base = group[3] if group[0] in ("lib", "rfsa") else items[0][0]
+        # Recompute base without suffix cleanly from first item
+        for i_line, info in zip(lines, parsed):
+            if info[0] == group:
+                base = info[1]
+                break
+        effective = base + chosen_suffix
+        name_to_groups.setdefault(effective, []).append(group)
+
+    # Compute required suffix overrides for colliding groups
+    group_override = {}
+    used_names = {name for name, groups in name_to_groups.items() if len(groups) == 1}
+    for name, groups in name_to_groups.items():
+        if len(groups) <= 1:
+            continue
+        # Keep the first primary group (prefer odm / system_ext / lib64 over vendor / rfsa) unsuffixed
+        def priority(g):
+            kind, part, sub, _ = g
+            return (1 if kind == "rfsa" else 0, 0 if part == "odm" else 1 if part == "system_ext" else 2, 0 if not sub else 1, part, sub)
+
+        ordered = sorted(groups, key=priority)
+        keep_first = ordered[0]
+        used_names.add(name)
+        for group in ordered[1:]:
+            kind, part, sub, _ = group
+            # Grab metadata from matching line
+            ext = next(info[5] for info in parsed if info[0] == group)
+            base = next(info[1] for info in parsed if info[0] == group)
+            cands = []
+            if kind == "rfsa":
+                if ext and ext != ".so":
+                    cands.append(ext)
+                if sub and sub != "adsp":
+                    cands.append("." + sub.replace("adsp/", "").replace("/", "_"))
+                if part != "odm":
+                    cands.append(f"_{part}")
+                cands.append(".rfsa")
+            else:
+                if sub:
+                    cands.append("." + sub.replace("/", "_"))
+                cands.append(f"_{part}")
+                if sub:
+                    cands.append(f"_{part}_{sub.replace('/', '_')}")
+            chosen = next((c for c in cands if (base + c) not in used_names), None)
+            if chosen is None:
+                idx = 2
+                while f"{base}_{part}_{idx}" in used_names:
+                    idx += 1
+                chosen = f"_{part}_{idx}"
+            used_names.add(base + chosen)
+            group_override[group] = chosen
+
+    result = []
+    for line, (group, base, suffix, _part, _sub, _ext) in zip(lines, parsed):
+        override = group_override.get(group)
+        if override and not suffix:
+            result.append(append_module_suffix(line, override))
+        else:
+            # Propagate suffix across 32/64 pair if one variant already carried it
+            if not suffix:
+                existing = next((info[2] for info in parsed if info[0] == group and info[2]), "")
+                if existing:
+                    line = append_module_suffix(line, existing)
+            result.append(line)
+    return result
+
+
+def elf_needed(path):
+    """Read DT_NEEDED library names directly from an ELF32/ELF64 binary without subprocesses."""
+    try:
+        with open(path, "rb") as stream:
+            data = stream.read()
+    except OSError:
+        return []
+    if len(data) < 64 or data[:4] != b"\x7fELF" or data[5] != 1:
+        return []
+    ei_class = data[4]
+    if ei_class == 2:
+        e_shoff, = struct.unpack_from("<Q", data, 40)
+        e_shentsize, e_shnum = struct.unpack_from("<HH", data, 58)
+        sh_off_pos, sh_size_pos, sh_link_pos, sh_fmt = 24, 32, 40, "<QQ"
+        dyn_fmt, dyn_step = "<qQ", 16
+    elif ei_class == 1:
+        e_shoff, = struct.unpack_from("<I", data, 32)
+        e_shentsize, e_shnum = struct.unpack_from("<HH", data, 46)
+        sh_off_pos, sh_size_pos, sh_link_pos, sh_fmt = 16, 20, 24, "<II"
+        dyn_fmt, dyn_step = "<iI", 8
+    else:
+        return []
+    if not e_shoff or e_shoff + e_shentsize * e_shnum > len(data):
+        return []
+    dyn_off = dyn_size = link_idx = 0
+    for i in range(e_shnum):
+        o = e_shoff + i * e_shentsize
+        if struct.unpack_from("<I", data, o + 4)[0] == 6:  # SHT_DYNAMIC
+            dyn_off, dyn_size = struct.unpack_from(sh_fmt, data, o + sh_off_pos)
+            link_idx, = struct.unpack_from("<I", data, o + sh_link_pos)
+            break
+    if not dyn_off or link_idx >= e_shnum or dyn_off + dyn_size > len(data):
+        return []
+    lo = e_shoff + link_idx * e_shentsize
+    str_off, str_size = struct.unpack_from(sh_fmt, data, lo + sh_off_pos)
+    if str_off + str_size > len(data):
+        return []
+    strtab = data[str_off:str_off + str_size]
+    out = []
+    for off in range(dyn_off, dyn_off + dyn_size, dyn_step):
+        tag, val = struct.unpack_from(dyn_fmt, data, off)
+        if tag == 0:
+            break
+        if tag == 1 and val < len(strtab):  # DT_NEEDED
+            end = strtab.find(b"\0", val)
+            out.append(strtab[val:None if end == -1 else end].decode("utf-8", "replace"))
+    return out
+
+
+def is_excluded_extra(path):
+    return any(pat.match(path) for pat in EXCLUDE_EXTRA_PATTERNS)
+
+
 class Mounts:
     def __init__(self, image_dir, mnt, sudo=True):
         self.image_dir = image_dir
@@ -75,6 +319,7 @@ class Mounts:
         self.mounted = None
         self.mounted_via_kernel = False
         self.extracted = {}
+        self.erofs_images = {}
 
     def _mount(self, image):
         cmd = [*self.sudo, "mount", "-o", "loop,ro", image, self.mnt]
@@ -130,18 +375,52 @@ class Mounts:
         self._mount(image)
         if not self.mounted_via_kernel:
             dest = os.path.join(self.mnt, f".extracted_{partition}")
-            extract_fs(image, dest)
+            try:
+                extract_fs(image, dest)
+            except subprocess.CalledProcessError:
+                # Some Oplus OEM EROFS images (e.g. my_product) contain vendor-custom
+                # compressed APKs that fail bulk fsck.erofs extraction; fall back
+                # to verified per-path EROFS inspection + extraction.
+                if not shutil.which("dump.erofs") or run(["dump.erofs", "-s", image]).returncode != 0:
+                    raise
+                shutil.rmtree(dest, ignore_errors=True)
+                os.makedirs(dest, exist_ok=True)
+                self.erofs_images[partition] = image
             self.extracted[partition] = dest
         self.mounted = partition
 
+    def _resolve(self, partition, rel):
+        self.open(partition)
+        root = Path(self._root(partition))
+        if partition == "system" and (root / "system").is_dir():
+            sar = root / "system" / rel
+            if sar.is_file() or sar.is_symlink():
+                return sar
+        return root / rel
+
     def exists(self, partition, rel):
         self.open(partition)
-        return os.path.isfile(os.path.join(self._root(partition), rel))
+        if partition in self.erofs_images:
+            res = run(["dump.erofs", f"--path=/{rel}", self.erofs_images[partition]])
+            return res.returncode == 0 and "regular file" in res.stdout
+        return self._resolve(partition, rel).is_file()
 
     def path_for(self, partition, rel):
         self.open(partition)
+        if partition in self.erofs_images:
+            root = Path(self._root(partition)).resolve()
+            dest = (root / rel).resolve()
+            require(dest.is_relative_to(root), f"{partition}/{rel}: invalid path")
+            if not dest.is_file():
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                subprocess.run(
+                    ["fsck.erofs", f"--path=/{rel}", f"--extract={dest}", self.erofs_images[partition]],
+                    check=True, capture_output=True, text=True,
+                )
+            return dest
+        cand = self._resolve(partition, rel)
         root = Path(self._root(partition)).resolve()
-        source = (root / rel).resolve(strict=True)
+        source = cand.resolve(strict=True)
         require(source.is_relative_to(root), f"{partition}/{rel}: blob symlink leaves the stock filesystem")
         return source
 
@@ -165,6 +444,8 @@ class Mounts:
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--base-list", required=True)
+    ap.add_argument("--extra-list", action="append", default=[],
+                    help="additional blob list(s) to merge after --base-list")
     ap.add_argument("--images", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--report")
@@ -179,8 +460,15 @@ def main(argv):
 
 
 def select(a, cleanup):
-    sources = [parsed for line in Path(a.base_list).read_text().splitlines()
-               if (parsed := parse_entry(line))]
+    list_paths = [a.base_list, *(getattr(a, "extra_list", None) or [])]
+    sources = []
+    seen_sources = set()
+    for list_path in list_paths:
+        for line in Path(list_path).read_text().splitlines():
+            parsed = parse_entry(line)
+            if parsed and parsed[0] not in seen_sources:
+                seen_sources.add(parsed[0])
+                sources.append(parsed)
     dump = None
     if a.materialize:
         if not a.label:
@@ -219,16 +507,58 @@ def select(a, cleanup):
 
         extras = []
         if not a.no_extras:
+            stock_lib_index = {}
             for part in ("odm", "vendor"):
                 for rel in mounts.walk(part):
                     path = f"{part}/{rel}"
-                    if path in seen:
+                    if re.match(rf"^{part}/lib(64)?/[^/]+\.so$", path):
+                        stock_lib_index.setdefault(os.path.basename(path), []).append(path)
+                    if path in seen or is_excluded_extra(path):
                         continue
                     for pattern, why in EXTRA_PATTERNS:
                         if pattern.match(path):
                             extras.append((path, why))
                             seen.add(path)
                             break
+
+            # Resolve non-AOSP DT_NEEDED helper libraries inside odm/vendor for extra Oplus ELFs.
+            system_libs = set(AOSP_OR_CAF_EXACT_LIBS)
+            if os.path.isfile(os.path.join(mounts.image_dir, "system.img")):
+                for rel in mounts.walk("system"):
+                    if rel.endswith(".so") and ("/lib/" in f"/{rel}" or "/lib64/" in f"/{rel}"):
+                        system_libs.add(os.path.basename(rel))
+            known_basenames = {PurePosixPath(entry_target(line)).name for line in kept}
+            known_basenames.update(PurePosixPath(p).name for p, _ in extras)
+            extra_seeds = [
+                p for line in kept
+                if (p := parse_entry(line)[0]).startswith(("odm/", "vendor/"))
+                and re.search(r'(oplus|arcsoft|OPAlgo)', p)
+            ]
+            queue = [p for p, _ in extras] + extra_seeds
+            while queue:
+                cur = queue.pop(0)
+                if not (cur.endswith(".so") or "/bin/" in cur):
+                    continue
+                cur_part, cur_rel = cur.split("/", 1)
+                try:
+                    real_path = mounts.path_for(cur_part, cur_rel)
+                except (FileNotFoundError, ValueError):
+                    continue
+                for lib in elf_needed(real_path):
+                    if (lib in system_libs or lib.startswith(AOSP_OR_CAF_LIB_PREFIXES)
+                            or lib in known_basenames):
+                        continue
+                    cands = stock_lib_index.get(lib, [])
+                    same_part = [c for c in cands if c.startswith(f"{cur_part}/")]
+                    chosen = same_part or [c for c in cands if c.startswith("odm/")] or cands
+                    for c in chosen:
+                        if c not in seen and not is_excluded_extra(c):
+                            seen.add(c)
+                            extras.append((c, "oplus dependency"))
+                            queue.append(c)
+                    if chosen:
+                        known_basenames.add(lib)
+
             extras.sort()
 
         if dump:
@@ -244,6 +574,10 @@ def select(a, cleanup):
                 paths[src] = sha256(dest)
             require(paths, "stock blob selection is empty")
 
+    deduped = dedup_soong_entries(kept + [p for p, _ in extras])
+    kept = deduped[:len(kept)]
+    extra_lines = deduped[len(kept):]
+
     header = [
         "## Generated by scripts/rom-select-blobs.py — every line below was stat()ed",
         "## inside this branch's own OTA images; nothing is hand-invented.",
@@ -256,11 +590,9 @@ def select(a, cleanup):
     with open(a.out, "w") as f:
         f.write("\n".join(header) + "\n")
         f.write("\n".join(kept) + "\n")
-        if extras:
+        if extra_lines:
             f.write("\n# ---- Oplus HAL payload present on this device (auto-included) ----\n")
-            for path, _why in extras:
-                # No trailing comment: extract-utils would treat it as part of the path.
-                f.write(path + "\n")
+            f.write("\n".join(extra_lines) + "\n")
 
     report = {
         "label": a.label,

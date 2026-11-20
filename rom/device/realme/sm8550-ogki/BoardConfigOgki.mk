@@ -96,9 +96,21 @@ BOARD_PRODUCTIMAGE_MINIMAL_PARTITION_RESERVED_SIZE := false
 
 ifeq ($(OGKI_BUILD_MODE),inline)
   TARGET_KERNEL_SOURCE := kernel/oneplus/sm8550
-  TARGET_KERNEL_CONFIG := gki_defconfig
+  TARGET_KERNEL_CONFIG := \
+      gki_defconfig \
+      vendor/kalama_GKI.config \
+      vendor/oplus/kalama_GKI.config \
+      vendor/debugfs.config
   TARGET_KERNEL_CLANG_COMPILE := true
   TARGET_KERNEL_ADDITIONAL_FLAGS := CONFIG_OPLUS_DEVICE_DTBS=y
+  BOARD_SYSTEM_KERNEL_MODULES_LOAD := $(strip $(shell cat $(OGKI_COMMON_PATH)/modules.load.system_dlkm))
+  BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := $(TARGET_KERNEL_SOURCE)/modules.vendor_blocklist.msm.kalama
+  BOARD_VENDOR_KERNEL_MODULES_LOAD := $(strip $(shell cat $(OGKI_COMMON_PATH)/modules.load))
+  BOARD_VENDOR_RAMDISK_KERNEL_MODULES_BLOCKLIST_FILE := $(BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE)
+  BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD := $(strip $(shell cat $(OGKI_COMMON_PATH)/modules.load.first_stage))
+  BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(strip $(shell cat $(OGKI_COMMON_PATH)/modules.load.first_stage $(OGKI_COMMON_PATH)/modules.load.recovery))
+  BOOT_KERNEL_MODULES := $(strip $(shell cat $(OGKI_COMMON_PATH)/modules.include.vendor_ramdisk $(OGKI_COMMON_PATH)/modules.load.first_stage $(OGKI_COMMON_PATH)/modules.load.recovery))
+  SYSTEM_KERNEL_MODULES := $(strip $(shell cat $(OGKI_COMMON_PATH)/modules.include.system_dlkm))
   TARGET_KERNEL_EXT_MODULE_ROOT := kernel/oneplus/sm8550-modules
   TARGET_KERNEL_EXT_MODULES := \
       qcom/opensource/mmrm-driver \

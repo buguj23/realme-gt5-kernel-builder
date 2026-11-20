@@ -25,8 +25,16 @@ PRODUCT_COPY_FILES += \
 
 DEVICE_PACKAGE_OVERLAYS += $(DEVICE_PATH)/overlay
 
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.consumerir.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/android.hardware.consumerir.xml
+
 PRODUCT_PACKAGES += \
-    android.hardware.vibrator.service.oplus-richtap
+    android.hardware.ir-service.oplus \
+    android.hardware.vibrator.service.oplus-richtap \
+    sensors.oplus
+
+$(call soong_config_set,surfaceflinger,udfps_lib,//hardware/oplus:libudfps_extension.oplus)
+$(call soong_config_set,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_AF,true)
 
 PRODUCT_SOONG_NAMESPACES += \
     $(DEVICE_PATH) \
