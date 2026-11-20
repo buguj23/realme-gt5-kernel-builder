@@ -123,12 +123,6 @@ jobs:
     runs-on: ${{ inputs.runner || 'self-hosted' }}
     env:
       REPO_DIR: ${{ github.workspace }}
-      WORK: ${{ runner.environment == 'github-hosted' && format('{0}/kernel_workspace', github.workspace) || format('{0}/gt5_kernel_5_15_149', env.HOME) }}
-      KP_DIR: ${{ runner.environment == 'github-hosted' && format('{0}/kernel_workspace/kernel_platform', github.workspace) || format('{0}/gt5_kernel_5_15_149/kernel_platform', env.HOME) }}
-      CCACHE_DIR: ${{ runner.environment == 'github-hosted' && format('{0}/kernel_workspace/.ccache', github.workspace) || format('{0}/.cache/gt5-kernel-5.15.149/ccache', env.HOME) }}
-      THINLTO_CACHE_DIR: ${{ inputs.BUILD_NOCACHE && '' || (runner.environment == 'github-hosted' && format('{0}/kernel_workspace/.thinlto-cache', github.workspace) || format('{0}/.cache/gt5-kernel-5.15.149/thinlto', env.HOME)) }}
-      STOCK_CACHE_DIR: ${{ runner.environment == 'github-hosted' && format('{0}/kernel_workspace/.stock-15.0.0.320', github.workspace) || format('{0}/.cache/gt5-stock/15.0.0.320', env.HOME) }}
-      MIRROR_MODE: ${{ runner.environment == 'github-hosted' && 'direct' || 'cn' }}
       USE_CCACHE: ${{ inputs.BUILD_NOCACHE && '0' || '1' }}
       FILE: realme_gt5_v
       DYNAMIC_REPO: ${{ inputs.DYNAMIC_REPO }}
@@ -155,6 +149,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - name: Configure runner paths and mirror mode
+        run: |
+          if [ "${RUNNER_ENVIRONMENT:-}" = "github-hosted" ]; then
+            echo "MIRROR_MODE=direct" >> "$GITHUB_ENV"
+            echo "WORK=$GITHUB_WORKSPACE/kernel_workspace" >> "$GITHUB_ENV"
+            echo "KP_DIR=$GITHUB_WORKSPACE/kernel_workspace/kernel_platform" >> "$GITHUB_ENV"
+            echo "CCACHE_DIR=$GITHUB_WORKSPACE/kernel_workspace/.ccache" >> "$GITHUB_ENV"
+            echo "STOCK_CACHE_DIR=$GITHUB_WORKSPACE/kernel_workspace/.stock-15.0.0.320" >> "$GITHUB_ENV"
+            if [ "${{ inputs.BUILD_NOCACHE }}" != "true" ]; then
+              echo "THINLTO_CACHE_DIR=$GITHUB_WORKSPACE/kernel_workspace/.thinlto-cache" >> "$GITHUB_ENV"
+            else
+              echo "THINLTO_CACHE_DIR=" >> "$GITHUB_ENV"
+            fi
+          else
+            echo "MIRROR_MODE=cn" >> "$GITHUB_ENV"
+            echo "WORK=$HOME/gt5_kernel_5_15_149" >> "$GITHUB_ENV"
+            echo "KP_DIR=$HOME/gt5_kernel_5_15_149/kernel_platform" >> "$GITHUB_ENV"
+            echo "CCACHE_DIR=$HOME/.cache/gt5-kernel-5.15.149/ccache" >> "$GITHUB_ENV"
+            echo "STOCK_CACHE_DIR=$HOME/.cache/gt5-stock/15.0.0.320" >> "$GITHUB_ENV"
+            if [ "${{ inputs.BUILD_NOCACHE }}" != "true" ]; then
+              echo "THINLTO_CACHE_DIR=$HOME/.cache/gt5-kernel-5.15.149/thinlto" >> "$GITHUB_ENV"
+            else
+              echo "THINLTO_CACHE_DIR=" >> "$GITHUB_ENV"
+            fi
+          fi
 
       - name: Run unit tests
         run: python3 -m unittest discover -s tests -v

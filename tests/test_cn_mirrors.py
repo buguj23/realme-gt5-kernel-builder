@@ -202,6 +202,12 @@ class ChinaMirrorTests(unittest.TestCase):
             wf_path = ROOT / ".github" / "workflows" / wf_name
             data = yaml.safe_load(wf_path.read_text(encoding="utf-8"))
             self.assertIn("jobs", data)
+            for job_name, job_cfg in data["jobs"].items():
+                job_env = job_cfg.get("env") or {}
+                for k, v in job_env.items():
+                    text_val = str(v)
+                    self.assertNotIn("runner.", text_val, f"{wf_name}:{job_name}.env.{k} must not use runner context")
+                    self.assertNotIn("env.", text_val, f"{wf_name}:{job_name}.env.{k} must not use env context")
             text = wf_path.read_text(encoding="utf-8")
             self.assertNotIn("storage.googleapis.com/git-repo-downloads/repo", text)
         kernel_wf = (ROOT / ".github" / "workflows" / "build-kernel-gt5.yml").read_text(encoding="utf-8")
