@@ -45,22 +45,21 @@ KNOWN_GITHUB_PROXY_PREFIXES = (
 )
 
 DEFAULT_AOSP_MIRRORS = (
-    "https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/",
     "https://mirrors.bfsu.edu.cn/git/AOSP/",
+    "https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/",
     "https://mirrors.ustc.edu.cn/aosp/",
     "https://android.googlesource.com/",
 )
 
 DEFAULT_LINEAGE_MIRRORS = (
-    "https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/",
     "https://mirrors.bfsu.edu.cn/git/lineageOS/",
+    "https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/",
 )
 
 DEFAULT_REPO_GIT_MIRRORS = (
-    "https://mirrors.tuna.tsinghua.edu.cn/git/git-repo",
     "https://mirrors.bfsu.edu.cn/git/git-repo",
-    "https://mirrors.ustc.edu.cn/aosp/git-repo.git",
     "https://mirror.nju.edu.cn/git/git-repo",
+    "https://mirrors.tuna.tsinghua.edu.cn/git/git-repo",
     "https://gerrit.googlesource.com/git-repo",
 )
 
@@ -384,8 +383,9 @@ def rewrite_manifest_text(
     lineage_mirror: str | None = None,
     github_prefix: str | None = None,
     clo_mirror: str | None = None,
+    lfs_mirror: str | None = None,
 ) -> str:
-    """Rewrite <remote fetch=...> attributes idempotently across AOSP, LineageOS, GitHub, and CLO."""
+    """Rewrite <remote fetch=...> attributes idempotently across AOSP, LineageOS, GitHub, CLO, and Gitea LFS."""
     if aosp_mirror:
         aosp = aosp_mirror.rstrip("/") + "/"
         text = re.sub(
@@ -432,6 +432,19 @@ def rewrite_manifest_text(
         for candidate in DEFAULT_CLO_MIRRORS:
             text = text.replace(f'fetch="{candidate}"', f'fetch="{clo}"')
             text = text.replace(f'fetch="{candidate}/"', f'fetch="{clo}"')
+
+    if lfs_mirror:
+        lfs = lfs_mirror.rstrip("/")
+        text = re.sub(
+            r'(<remote[^>]*name="lfs"[^>]*fetch=")([^"]+)(")',
+            lambda m: f"{m.group(1)}{lfs}{m.group(3)}",
+            text,
+        )
+        text = re.sub(
+            r'fetch="https://gitea\.com/projectInfinity-x/?"',
+            lambda _: f'fetch="{lfs}"',
+            text,
+        )
 
     return text
 
@@ -625,6 +638,17 @@ def cmd_probe_git_base(urls: tuple[str, ...], timeout: float) -> int:
     return 0
 
 
+def _pick_first_live(urls: list[str], *, timeout: float = 6.0, is_git: bool = True, reject_html: bool = True) -> str | None:
+    """Return highest-priority candidate URL that responds cleanly (avoids /info/refs ping races vs queued mirrors)."""
+    if not urls:
+        return None
+    live = {u for u, _ in rank_urls(urls, timeout=timeout, is_git=is_git, reject_html=reject_html)}
+    for u in urls:
+        if u in live:
+            return u
+    return None
+
+
 def cmd_probe_aosp(args: argparse.Namespace) -> int:
     mode = detect_mirror_mode(getattr(args, "mode", "auto"))
     base_list = list(_split_csv_env("AOSP_MIRRORS", DEFAULT_AOSP_MIRRORS))
@@ -634,14 +658,14 @@ def cmd_probe_aosp(args: argparse.Namespace) -> int:
     domestic = [m for m in base_list if is_domestic_url(m)]
     probe_list = domestic or base_list
     probes = [m.rstrip("/") + "/platform/manifest.git" for m in probe_list]
-    ranked = rank_urls(probes, timeout=args.timeout, is_git=True, reject_html=True)
-    if ranked:
-        print(ranked[0][0].removesuffix("platform/manifest.git"))
+    picked = _pick_first_live(probes, timeout=args.timeout, is_git=True, reject_html=True)
+    if picked:
+        print(picked.removesuffix("platform/manifest.git"))
         return 0
     fallback_probes = [m.rstrip("/") + "/platform/manifest.git" for m in base_list if m not in probe_list]
-    ranked_fb = rank_urls(fallback_probes, timeout=args.timeout, is_git=True, reject_html=True)
-    if ranked_fb:
-        print(ranked_fb[0][0].removesuffix("platform/manifest.git"))
+    picked_fb = _pick_first_live(fallback_probes, timeout=args.timeout, is_git=True, reject_html=True)
+    if picked_fb:
+        print(picked_fb.removesuffix("platform/manifest.git"))
         return 0
     print(base_list[0])
     return 0
@@ -650,9 +674,9 @@ def cmd_probe_aosp(args: argparse.Namespace) -> int:
 def cmd_probe_lineage(args: argparse.Namespace) -> int:
     base_list = list(_split_csv_env("LINEAGE_MIRRORS", DEFAULT_LINEAGE_MIRRORS))
     probes = [m.rstrip("/") + "/LineageOS/android.git" for m in base_list]
-    ranked = rank_urls(probes, timeout=args.timeout, is_git=True, reject_html=True)
-    if ranked:
-        print(ranked[0][0].removesuffix("LineageOS/android.git"))
+    picked = _pick_first_live(probes, timeout=args.timeout, is_git=True, reject_html=True)
+    if picked:
+        print(picked.removesuffix("LineageOS/android.git"))
     else:
         print(base_list[0])
     return 0
@@ -666,13 +690,13 @@ def cmd_probe_repo_url(args: argparse.Namespace) -> int:
         return 0
     domestic = [m for m in base_list if is_domestic_url(m)]
     probe_list = domestic or base_list
-    ranked = rank_urls(probe_list, timeout=args.timeout, is_git=True, reject_html=True)
-    if ranked:
-        print(ranked[0][0])
+    picked = _pick_first_live(probe_list, timeout=args.timeout, is_git=True, reject_html=True)
+    if picked:
+        print(picked)
         return 0
     fallback = [m for m in base_list if m not in probe_list]
-    ranked_fb = rank_urls(fallback, timeout=args.timeout, is_git=True, reject_html=True)
-    print(ranked_fb[0][0] if ranked_fb else base_list[0])
+    picked_fb = _pick_first_live(fallback, timeout=args.timeout, is_git=True, reject_html=True)
+    print(picked_fb if picked_fb else base_list[0])
     return 0
 
 
@@ -685,6 +709,7 @@ def cmd_rewrite_manifest(args: argparse.Namespace) -> int:
         lineage_mirror=args.lineage_mirror,
         github_prefix=args.github_prefix,
         clo_mirror=args.clo_mirror,
+        lfs_mirror=args.lfs_mirror,
     )
     dst = Path(args.output) if args.output else src
     dst.parent.mkdir(parents=True, exist_ok=True)
@@ -816,6 +841,7 @@ def main(argv: list[str] | None = None) -> int:
     p_rw.add_argument("--lineage-mirror", default=None)
     p_rw.add_argument("--github-prefix", default=None)
     p_rw.add_argument("--clo-mirror", default=None)
+    p_rw.add_argument("--lfs-mirror", default=None)
     p_rw.set_defaults(func=cmd_rewrite_manifest)
 
     p_capt = sub.add_parser("configure-apt", help="Switch Ubuntu APT sources to fastest live domestic mirror")

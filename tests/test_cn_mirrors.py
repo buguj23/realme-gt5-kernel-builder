@@ -122,6 +122,27 @@ class ChinaMirrorTests(unittest.TestCase):
         pass3 = mirror_helper.rewrite_manifest_text(pass2, github_prefix="")
         self.assertIn('fetch="https://github.com/realme-kernel-opensource"', pass3)
 
+        # Rewrite Gitea LFS remote to local file seed cleanly and idempotently.
+        lfs_xml = '<manifest>\n  <remote name="lfs" fetch="https://gitea.com/projectInfinity-x" revision="15" />\n</manifest>\n'
+        seeded = mirror_helper.rewrite_manifest_text(lfs_xml, lfs_mirror="file:///data/builder/.cache/gt5-rom-seed/15")
+        self.assertIn('fetch="file:///data/builder/.cache/gt5-rom-seed/15"', seeded)
+
+    def test_rom_check_inputs_accepts_proxied_official_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifests = Path(tmp) / ".repo" / "manifests"
+            manifests.mkdir(parents=True)
+            subprocess.run(["git", "init", "-q", str(manifests)], check=True)
+            subprocess.run(["git", "-C", str(manifests), "commit", "--allow-empty", "-q", "-m", "init"], check=True)
+            subprocess.run(["git", "-C", str(manifests), "branch", "-M", "default"], check=True)
+            subprocess.run(["git", "-C", str(manifests), "config", "--local", "remote.origin.url",
+                            "https://cdn.gh-proxy.org/https://github.com/ProjectInfinity-X/manifest.git"], check=True)
+            subprocess.run(["git", "-C", str(manifests), "config", "--local", "branch.default.merge", "refs/heads/15"], check=True)
+            res = subprocess.run(
+                [sys.executable, str(SCRIPTS / "rom-check-inputs.py"), "source", "--src", tmp, "--branch", "5.15.149"],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+
     def test_ubuntu_apt_deb822_and_legacy_rewrite(self):
         deb822 = (
             "Types: deb\n"

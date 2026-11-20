@@ -165,9 +165,11 @@ jobs:
 
       - name: Checkout repository (GitHub-hosted)
         if: runner.environment == 'github-hosted'
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+        run: |
+          rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
+          git clone --depth=1 --branch "${{ github.ref_name }}" "https://github.com/${{ github.repository }}.git" "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" fetch --depth=1 origin "${{ github.sha }}"
+          git -C "$GITHUB_WORKSPACE" checkout -f FETCH_HEAD
 
       - name: Configure runner paths and mirror mode
         run: |
@@ -208,9 +210,12 @@ jobs:
 
       - name: Re-checkout after storage resize
         if: runner.environment == 'github-hosted'
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+        run: |
+          if [ ! -d "$GITHUB_WORKSPACE/.git" ]; then
+            git clone --depth=1 --branch "${{ github.ref_name }}" "https://github.com/${{ github.repository }}.git" "$GITHUB_WORKSPACE"
+            git -C "$GITHUB_WORKSPACE" fetch --depth=1 origin "${{ github.sha }}"
+            git -C "$GITHUB_WORKSPACE" checkout -f FETCH_HEAD
+          fi
 
       - name: Configure Git and clean stale preemptible locks
         run: |
@@ -222,17 +227,6 @@ jobs:
           repo_clean_locks "$WORK"
           git config --global user.name "gt5-builder"
           git config --global user.email "builder@users.noreply.github.com"
-
-      - name: Restore ccache and ThinLTO caches (GitHub-hosted only)
-        if: ${{ !inputs.BUILD_NOCACHE && runner.environment == 'github-hosted' }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.CCACHE_DIR }}
-            ${{ env.THINLTO_CACHE_DIR }}
-          key: gt5-5.15.149-${{ inputs.LTO }}-${{ inputs.FAST_BUILD }}-${{ github.run_id }}
-          restore-keys: |
-            gt5-5.15.149-${{ inputs.LTO }}-${{ inputs.FAST_BUILD }}-
 
       - name: Install build dependencies (CN mirror aware)
         env:

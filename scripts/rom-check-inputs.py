@@ -8,6 +8,7 @@ import subprocess
 import sys
 from urllib.parse import urlsplit
 
+from mirror_helper import strip_github_proxy
 from rom_inputs import baseline, require, sha256, stock_payload, verify_stock
 
 
@@ -19,7 +20,7 @@ def manifest_source(source, manifest, branch):
             ["git", "-C", manifests, "config", "--local", "--get", key],
             text=True, stderr=subprocess.DEVNULL).strip()
 
-    got, expected = map(urlsplit, (config("remote.origin.url"), manifest))
+    got, expected = map(urlsplit, (strip_github_proxy(config("remote.origin.url")), manifest))
     matching_origin = (got.hostname == expected.hostname and
                        got.path.rstrip("/").removesuffix(".git").lower() ==
                        expected.path.rstrip("/").removesuffix(".git").lower())

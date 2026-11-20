@@ -189,7 +189,21 @@ if [ ! -f "$TOOLS/extract_utils/main.py" ]; then
     git init -q "$TOOLS"
   fi
   if ! git -C "$TOOLS" cat-file -e "$REV^{commit}" 2>/dev/null; then
-    git_fetch_resilient "$TOOLS" "https://github.com/LineageOS/android_tools_extract-utils.git" "$REV" --depth=1
+    fetched_tools=0
+    if [ "$(resolve_mirror_mode)" = "cn" ]; then
+      for lin_url in \
+        "https://mirrors.bfsu.edu.cn/git/lineageOS/LineageOS/android_tools_extract-utils.git" \
+        "https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS/android_tools_extract-utils.git"; do
+        git_resilient_args "$lin_url"
+        if GIT_TERMINAL_PROMPT=0 git -C "$TOOLS" "${GIT_RESILIENT_ARGS[@]}" fetch --depth=1 "$lin_url" "$REV" 2>/dev/null; then
+          fetched_tools=1
+          break
+        fi
+      done
+    fi
+    if [ "$fetched_tools" != 1 ]; then
+      git_fetch_resilient "$TOOLS" "https://github.com/LineageOS/android_tools_extract-utils.git" "$REV" --depth=1
+    fi
   fi
   git -C "$TOOLS" checkout --quiet --detach "$REV"
 fi

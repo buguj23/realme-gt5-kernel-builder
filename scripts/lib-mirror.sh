@@ -216,7 +216,7 @@ repo_sync_resilient() {
     if (
       cd "$work_dir"
       export GIT_TERMINAL_PROMPT=0
-      export GIT_CONFIG_COUNT=4
+      export GIT_CONFIG_COUNT=5
       export GIT_CONFIG_KEY_0="http.version"
       export GIT_CONFIG_VALUE_0="HTTP/1.1"
       export GIT_CONFIG_KEY_1="http.postBuffer"
@@ -224,7 +224,9 @@ repo_sync_resilient() {
       export GIT_CONFIG_KEY_2="http.lowSpeedLimit"
       export GIT_CONFIG_VALUE_2="${GIT_HTTP_LOW_SPEED_LIMIT:-1024}"
       export GIT_CONFIG_KEY_3="http.lowSpeedTime"
-      export GIT_CONFIG_VALUE_3="${GIT_HTTP_LOW_SPEED_TIME:-30}"
+      export GIT_CONFIG_VALUE_3="${GIT_HTTP_LOW_SPEED_TIME:-45}"
+      export GIT_CONFIG_KEY_4="protocol.file.allow"
+      export GIT_CONFIG_VALUE_4="always"
       repo sync -c -j"$jobs" --no-clone-bundle --no-tags --force-sync "${extra_sync_args[@]}"
     ); then
       return 0

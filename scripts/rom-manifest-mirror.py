@@ -29,8 +29,8 @@ if HERE not in sys.path:
 import mirror_helper  # noqa: E402
 
 DEFAULTS = {
-    "aosp": "https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/",
-    "lineage": "https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/",
+    "aosp": "https://mirrors.bfsu.edu.cn/git/AOSP/",
+    "lineage": "https://mirrors.bfsu.edu.cn/git/lineageOS/",
 }
 
 
@@ -42,24 +42,26 @@ def main(argv):
     ap.add_argument("--lineage", default=DEFAULTS["lineage"],
                     help="LineageOS mirror base URL or 'auto' to probe fastest live mirror")
     ap.add_argument("--github-proxy", default="",
-                    help="prefix for github.com remotes, e.g. https://ghfast.top/, 'auto', or 'direct'")
+                    help="prefix for github.com remotes, e.g. https://cdn.gh-proxy.org/, 'auto', or 'direct'")
     ap.add_argument("--clo", default=None,
                     help="optional CodeLinaro mirror override")
+    ap.add_argument("--lfs", default=None,
+                    help="optional local/mirror base URL for remote 'lfs' (e.g. file:///path/to/seed)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
 
     if a.aosp == "auto":
-        ranked_aosp = mirror_helper.rank_urls(
+        picked_aosp = mirror_helper._pick_first_live(
             [m.rstrip("/") + "/platform/manifest.git" for m in mirror_helper.DEFAULT_AOSP_MIRRORS if mirror_helper.is_domestic_url(m)],
             is_git=True,
         )
-        a.aosp = ranked_aosp[0][0].removesuffix("platform/manifest.git") if ranked_aosp else DEFAULTS["aosp"]
+        a.aosp = picked_aosp.removesuffix("platform/manifest.git") if picked_aosp else DEFAULTS["aosp"]
     if a.lineage == "auto":
-        ranked_lin = mirror_helper.rank_urls(
+        picked_lin = mirror_helper._pick_first_live(
             [m.rstrip("/") + "/LineageOS/android.git" for m in mirror_helper.DEFAULT_LINEAGE_MIRRORS],
             is_git=True,
         )
-        a.lineage = ranked_lin[0][0].removesuffix("LineageOS/android.git") if ranked_lin else DEFAULTS["lineage"]
+        a.lineage = picked_lin.removesuffix("LineageOS/android.git") if picked_lin else DEFAULTS["lineage"]
     if a.github_proxy == "auto":
         ranked_gh = mirror_helper.rank_github_urls("https://github.com/ProjectInfinity-X/manifest.git", mode="cn", is_git=True)
         chosen = ranked_gh[0] if ranked_gh else ""
@@ -92,6 +94,7 @@ def main(argv):
             lineage_mirror=a.lineage,
             github_prefix=gh_prefix,
             clo_mirror=a.clo,
+            lfs_mirror=a.lfs,
         )
         text = text.replace('fetch=".."', f'fetch="{a.lineage}"')
         if text != orig:

@@ -1,0 +1,96 @@
+name: Seed Gitea/LFS Mirrors for CN ROM Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "ProjectInfinity-X manifest branch (e.g. 15)"
+        type: string
+        required: true
+        default: "15"
+      release_tag:
+        description: "GitHub Release tag to publish compressed bare seed archives"
+        type: string
+        required: true
+        default: "infinity-15-gitea-seed"
+
+permissions:
+  contents: write
+
+jobs:
+  seed:
+    name: Seed Gitea LFS repos (${{ inputs.branch }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install zstd and git-lfs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends git-lfs zstd python3
+          git lfs install --skip-repo
+
+      - name: Shallow-clone Gitea/LFS repos from Infinity-X manifest
+        env:
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+          SEED_WORK="$RUNNER_TEMP/seed"
+          OUT_STAGE="$RUNNER_TEMP/out"
+          mkdir -p "$SEED_WORK" "$OUT_STAGE"
+          git clone --depth=1 --branch "$BRANCH" https://github.com/ProjectInfinity-X/manifest.git "$RUNNER_TEMP/manifest"
+          python3 - "$RUNNER_TEMP/manifest/snippets/infinity.xml" "$BRANCH" > "$SEED_WORK/targets.tsv" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          xml_path, default_branch = sys.argv[1], sys.argv[2]
+          root = ET.parse(xml_path).getroot()
+          remotes = {r.attrib["name"]: r.attrib for r in root.findall("remote")}
+          lfs_remote = remotes.get("lfs", {})
+          fetch_base = lfs_remote.get("fetch", "").rstrip("/")
+          remote_rev = lfs_remote.get("revision", default_branch)
+          for p in root.findall("project"):
+              if p.attrib.get("remote") == "lfs":
+                  name = p.attrib["name"]
+                  path = p.attrib["path"]
+                  rev = p.attrib.get("revision", remote_rev)
+                  print(f"{path}\t{name}\t{fetch_base}/{name}.git\t{rev}")
+          PY
+          cat "$SEED_WORK/targets.tsv"
+          : > "$SEED_WORK/seed-paths.tsv"
+          while IFS=$'\t' read -r proj_path repo_name repo_url rev; do
+            echo "Cloning $repo_name ($rev) for $proj_path ..."
+            git clone --bare --depth=1 --branch "$rev" "$repo_url" "$SEED_WORK/${repo_name}.git"
+            git -C "$SEED_WORK/${repo_name}.git" branch -f "$rev" HEAD
+            if git -C "$SEED_WORK/${repo_name}.git" lfs ls-files "$rev" 2>/dev/null | grep -q .; then
+              echo "Fetching Git LFS objects for $repo_name ..."
+              git -C "$SEED_WORK/${repo_name}.git" lfs fetch origin "$rev"
+            fi
+            du -sh "$SEED_WORK/${repo_name}.git"
+            printf '%s\t%s\n' "$proj_path" "$repo_name" >> "$SEED_WORK/seed-paths.tsv"
+          done < "$SEED_WORK/targets.tsv"
+          rm -f "$SEED_WORK/targets.tsv"
+          tar -C "$SEED_WORK" -cf - . | zstd -T0 -6 | split -b 1800M -d -a 2 - "$OUT_STAGE/infinity-${BRANCH}-gitea-seed.tar.zst.part-"
+          # Rename single piece cleanly or keep numbered parts consistently
+          (
+            cd "$OUT_STAGE"
+            sha256sum infinity-*.tar.zst.part-* > SHA256SUMS.txt
+          )
+          ls -lh "$OUT_STAGE"
+
+      - name: Publish Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+          OUT_STAGE="$RUNNER_TEMP/out"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --cleanup-tag --yes || true
+          fi
+          gh release create "$TAG" "$OUT_STAGE"/* \
+            --title "Infinity-X ${BRANCH} Gitea/LFS Mirror Seed" \
+            --notes "Automated shallow bare+LFS snapshot of gitea.com/projectInfinity-x repositories for fast domestic CN runner downloads."
