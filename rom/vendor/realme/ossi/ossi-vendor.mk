@@ -35,7 +35,7 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.biometrics.fingerprint@2.1-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.biometrics.fingerprint@2.1-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.biometrics.fingerprintpay@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.biometrics.fingerprintpay@1.0-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.cammidasservice-V1-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.cammidasservice-V1-service.rc \
-    vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.charger-V10-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.charger-V10-service.rc \
+    vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.charger-V5-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.charger-V5-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.cryptoeng@1.0-service_FDE.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.cryptoeng@1.0-service_FDE.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.displaypanelfeature@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.displaypanelfeature@1.0-service.rc \
     vendor/realme/ossi/proprietary/odm/etc/init/vendor.oplus.hardware.eid@1.0-service.rc:$(TARGET_COPY_OUT_ODM)/etc/init/vendor.oplus.hardware.eid@1.0-service.rc \
@@ -94,7 +94,6 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/system_ext/etc/horae/horae_SM8550.conf:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/horae/horae_SM8550.conf \
     vendor/realme/ossi/proprietary/system_ext/etc/init/dpmd.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/dpmd.rc \
     vendor/realme/ossi/proprietary/system_ext/etc/init/horae.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/horae.rc \
-    vendor/realme/ossi/proprietary/system_ext/etc/init/qspa_system.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/qspa_system.rc \
     vendor/realme/ossi/proprietary/system_ext/etc/init/tcmd.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/tcmd.rc \
     vendor/realme/ossi/proprietary/system_ext/etc/init/vendor.qti.hardware.qccsyshal@1.2-service.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/vendor.qti.hardware.qccsyshal@1.2-service.rc \
     vendor/realme/ossi/proprietary/system_ext/etc/init/wfdservice.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/wfdservice.rc \
@@ -107,7 +106,6 @@ PRODUCT_COPY_FILES += \
     vendor/realme/ossi/proprietary/system_ext/etc/permissions/telephony_system-ext_privapp-permissions-qti.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/telephony_system-ext_privapp-permissions-qti.xml \
     vendor/realme/ossi/proprietary/system_ext/etc/permissions/vendor.qti.imsdatachannel.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/vendor.qti.imsdatachannel.xml \
     vendor/realme/ossi/proprietary/system_ext/etc/permissions/wfd-system-ext-privapp-permissions-qti.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/wfd-system-ext-privapp-permissions-qti.xml \
-    vendor/realme/ossi/proprietary/system_ext/etc/qspa/qspa_default.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/qspa/qspa_default.rc \
     vendor/realme/ossi/proprietary/system_ext/etc/seccomp_policy/tcmd.policy:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/seccomp_policy/tcmd.policy \
     vendor/realme/ossi/proprietary/system_ext/etc/seccomp_policy/wfdservice64.policy:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/seccomp_policy/wfdservice64.policy \
     vendor/realme/ossi/proprietary/system_ext/etc/sysconfig/qti_telephony_system_packages_config.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/sysconfig/qti_telephony_system_packages_config.xml \
@@ -457,10 +455,9 @@ PRODUCT_PACKAGES += \
     vendor.oplus.hardware.communicationcenter-V2-ndk \
     vendor.oplus.hardware.cwb@1.0 \
     vendor.oplus.hardware.ims-V1-ndk \
-    vendor.oplus.hardware.olc2-V2-ndk \
     vendor.oplus.hardware.osense.client-V1-ndk \
     vendor.oplus.hardware.performance-V1-ndk \
-    vendor.oplus.hardware.radio-V2-ndk \
+    vendor.oplus.hardware.radio-V2-ndk_platform \
     vendor.oplus.hardware.sendextcamcmd-V2-ndk \
     vendor.oplus.hardware.stability.oplus_project-V1-ndk \
     btaudio_offload_if \
@@ -872,6 +869,7 @@ PRODUCT_PACKAGES += \
     vendor.libdpmframework \
     vendor.libdpmtcm \
     vendor.libmwqemiptablemgr \
+    vendor.oplus.hardware.olc2-V2-ndk \
     vendor.oplus.hardware.oplusvibrator-V1-ndk \
     vendor.oplus.hardware.vibrator-V1-ndk \
     vendor.oplus.hardware.wifi.supplicant-V5-ndk \
@@ -1009,66 +1007,66 @@ PRODUCT_PACKAGES += \
     vendor.qti.memory.pasrmanager@1.1 \
     vendor.qti.qspmhal@1.0-impl \
     vendor.qti.qspmhal@1.0 \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n29_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n30_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n35_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n36_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n37_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n38_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n39_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n40_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n46_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n47_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n48_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n49_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n52_bin \
-    vendor_lib_rfsa_adsp_bm3a68v08s11n53_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n02_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n03_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n04_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n06_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n07_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n08_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n09_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n12_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n13_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n14_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n15_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n16_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n17_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n18_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n19_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n20_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n21_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n22_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n23_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n24_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n25_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n26_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n27_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n28_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n41_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n42_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n43_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n44_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n45_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n50_bin \
-    vendor_lib_rfsa_adsp_bm3a73v08s11n51_bin \
-    vendor_lib_rfsa_adsp_chre_qsh_shim_so \
-    vendor_lib_rfsa_adsp_libQ6MSFR_manager_skel_so \
-    vendor_lib_rfsa_adsp_libQnnHtpV73Skel_so \
-    vendor_lib_rfsa_adsp_libadsp_jpege_skel_so \
-    vendor_lib_rfsa_adsp_libapn_dsp_skel_so \
-    vendor_lib_rfsa_adsp_libbitml_nsp_skel_so \
-    vendor_lib_rfsa_adsp_libbitml_nsp_v2_skel_so \
-    vendor_lib_rfsa_adsp_libdsp_streamer_binning_so \
-    vendor_lib_rfsa_adsp_libevadsp_3_0_so \
-    vendor_lib_rfsa_adsp_libhdr_skel_so \
-    vendor_lib_rfsa_adsp_libhme_dsp_skel_so \
-    vendor_lib_rfsa_adsp_libmctfengine_skel_so \
-    vendor_lib_rfsa_adsp_libosie_skel_so \
-    vendor_lib_rfsa_adsp_nearby_napp_header \
-    vendor_lib_rfsa_adsp_nearby_so \
+    bm3a68v08s11n29 \
+    bm3a68v08s11n30 \
+    bm3a68v08s11n35 \
+    bm3a68v08s11n36 \
+    bm3a68v08s11n37 \
+    bm3a68v08s11n38 \
+    bm3a68v08s11n39 \
+    bm3a68v08s11n40 \
+    bm3a68v08s11n46 \
+    bm3a68v08s11n47 \
+    bm3a68v08s11n48 \
+    bm3a68v08s11n49 \
+    bm3a68v08s11n52 \
+    bm3a68v08s11n53 \
+    bm3a73v08s11n02 \
+    bm3a73v08s11n03 \
+    bm3a73v08s11n04 \
+    bm3a73v08s11n06 \
+    bm3a73v08s11n07 \
+    bm3a73v08s11n08 \
+    bm3a73v08s11n09 \
+    bm3a73v08s11n12 \
+    bm3a73v08s11n13 \
+    bm3a73v08s11n14 \
+    bm3a73v08s11n15 \
+    bm3a73v08s11n16 \
+    bm3a73v08s11n17 \
+    bm3a73v08s11n18 \
+    bm3a73v08s11n19 \
+    bm3a73v08s11n20 \
+    bm3a73v08s11n21 \
+    bm3a73v08s11n22 \
+    bm3a73v08s11n23 \
+    bm3a73v08s11n24 \
+    bm3a73v08s11n25 \
+    bm3a73v08s11n26 \
+    bm3a73v08s11n27 \
+    bm3a73v08s11n28 \
+    bm3a73v08s11n41 \
+    bm3a73v08s11n42 \
+    bm3a73v08s11n43 \
+    bm3a73v08s11n44 \
+    bm3a73v08s11n45 \
+    bm3a73v08s11n50 \
+    bm3a73v08s11n51 \
+    chre_qsh_shim \
+    libQ6MSFR_manager_skel \
+    libQnnHtpV73Skel \
+    libadsp_jpege_skel \
+    libapn_dsp_skel \
+    libbitml_nsp_skel \
+    libbitml_nsp_v2_skel \
+    libdsp_streamer_binning \
+    libevadsp_3_0 \
+    libhdr_skel \
+    libhme_dsp_skel \
+    libmctfengine_skel \
+    libosie_skel \
+    nearby \
+    nearby \
     com.qualcomm.qti.dpm.api@1.0 \
     lib-imsvideocodec \
     lib-imsvt \
@@ -1107,7 +1105,6 @@ PRODUCT_PACKAGES += \
     libwfduibcsinkinterface \
     libwfduibcsrc \
     libwfduibcsrcinterface \
-    vendor.qti.ImsRtpService-V2-ndk \
     vendor.qti.diaghal@1.0 \
     vendor.qti.hardware.dpmaidlservice-V1-ndk \
     vendor.qti.hardware.dpmservice@1.0 \
@@ -1118,7 +1115,6 @@ PRODUCT_PACKAGES += \
     vendor.qti.hardware.qccvndhal@1.0 \
     vendor.qti.hardware.wifidisplaysession@1.0 \
     vendor.qti.hardware.wifidisplaysession_aidl-V1-ndk \
-    vendor.qti.ims.datachannelservice-V3-ndk \
     vendor.qti.imsrtpservice@3.0 \
     vendor.qti.imsrtpservice@3.1 \
     vendor.qti.qccsyshal_aidl-V1-ndk \
@@ -1142,8 +1138,7 @@ PRODUCT_PACKAGES += \
     vendor.oplus.hardware.camera_rfi-V1-service-impl \
     vendor.oplus.hardware.cameraextension-V1-service-impl \
     vendor.oplus.hardware.cammidasservice-V1-ndk \
-    vendor.oplus.hardware.charger-V10-ndk \
-    vendor.oplus.hardware.charger-V9-ndk \
+    vendor.oplus.hardware.charger-V5-ndk \
     vendor.oplus.hardware.charger@1.0 \
     vendor.oplus.hardware.commondcs-V1-ndk \
     vendor.oplus.hardware.communicationcenter-V1-ndk \
@@ -1184,8 +1179,8 @@ PRODUCT_PACKAGES += \
     vendor.oplus.hardware.sendextcamcmd-V1-service-impl \
     vendor.oplus.hardware.sendextcamcmd-V2-ndk \
     vendor.oplus.hardware.stability.oplus_project-V2-ndk \
-    vendor.oplus.hardware.subsys-V5-ndk \
-    vendor.oplus.hardware.subsys_radio-V8-ndk \
+    vendor.oplus.hardware.subsys-V3-ndk \
+    vendor.oplus.hardware.subsys_radio-V4-ndk \
     vendor.oplus.hardware.touch-V1-ndk \
     vendor.oplus.hardware.touch-V2-ndk \
     vendor.oplus.hardware.transfer-V1-ndk \
@@ -1204,15 +1199,6 @@ PRODUCT_PACKAGES += \
     libQnnHtpPrepare.aiboost \
     libQnnHtpV73Stub.aiboost \
     libQnnSystem.aiboost \
-    libQnnHtpV73Skel.aiframe_signed \
-    libQnnHtpV73Skel.aiframe_unsigned \
-    libQnnHtp.aiframe \
-    libQnnHtpPrepare.aiframe \
-    libQnnHtpV73Stub.aiframe \
-    libQnnSystem.aiframe \
-    libaiboost_qnn_external_delegate \
-    libqcom_llm \
-    libtransformer_lite \
     android.hardware.secure_element@1.0-impl \
     com.oplus.node.preview \
     com.oplus.node.sstabdefer \
@@ -1231,8 +1217,6 @@ PRODUCT_PACKAGES += \
     libQnnHtpV73Stub \
     libQnnSaver \
     lib_lvacfs \
-    libaiboost \
-    libaiboost_llm \
     libaiboost_qnn_sr \
     libaiboost_sr \
     libaiboost_te \
@@ -1259,33 +1243,32 @@ PRODUCT_PACKAGES += \
     libsubsys-service \
     libsubsys-utils \
     libtfa98xx \
-    libvasapi \
     vendor.qti.esepowermanager@1.0 \
     vendor.qti.esepowermanager@1.1 \
-    odm_lib_rfsa_adsp_aiboost_libQnnHtpV73Skel_so \
-    odm_lib_rfsa_adsp_aiboost_libaiboostubwc_skel_so \
-    odm_lib_rfsa_adsp_capi_v3_oprec_so \
-    odm_lib_rfsa_adsp_libCalculator_skel_so \
-    odm_lib_rfsa_adsp_libQnnHtpV73_so \
-    odm_lib_rfsa_adsp_libQnnHtpV73Skel_so \
-    odm_lib_rfsa_adsp_libQnnSaver_so \
-    odm_lib_rfsa_adsp_libSnpeHtpV73Skel_so \
-    odm_lib_rfsa_adsp_libSuperRawPost_skel_so \
-    odm_lib_rfsa_adsp_libaisr_skel_so \
-    odm_lib_rfsa_adsp_libarc_gk_pt_hvx_skel_so \
-    odm_lib_rfsa_adsp_libarc_htp_driver_skel_so \
-    odm_lib_rfsa_adsp_libcalculator_skel_so \
-    odm_lib_rfsa_adsp_libhvxFaceBeautyPre_skel_so \
-    odm_lib_rfsa_adsp_libktvdrc_so \
-    odm_lib_rfsa_adsp_libktveffect_so \
-    odm_lib_rfsa_adsp_libktveq_so \
-    odm_lib_rfsa_adsp_libktvns_so \
-    odm_lib_rfsa_adsp_libktvpitchshift_so \
-    odm_lib_rfsa_adsp_libktvreverb_so \
-    odm_lib_rfsa_adsp_libktvvolume_so \
-    odm_lib_rfsa_adsp_libvdblurless_5_0_2_skel_so \
-    odm_lib_rfsa_adsp_libvdsuperphoto_skel_so \
-    odm_lib_rfsa_adsp_nlc_so \
+    libQnnHtpV73Skel \
+    libaiboostubwc_skel \
+    capi_v3_oprec \
+    libCalculator_skel \
+    libQnnHtpV73 \
+    libQnnHtpV73Skel \
+    libQnnSaver \
+    libSnpeHtpV73Skel \
+    libSuperRawPost_skel \
+    libaisr_skel \
+    libarc_gk_pt_hvx_skel \
+    libarc_htp_driver_skel \
+    libcalculator_skel \
+    libhvxFaceBeautyPre_skel \
+    libktvdrc \
+    libktveffect \
+    libktveq \
+    libktvns \
+    libktvpitchshift \
+    libktvreverb \
+    libktvvolume \
+    libvdblurless_5.0.2_skel \
+    libvdsuperphoto_skel \
+    nlc \
     CACertService \
     CneApp \
     IWlanService \
@@ -1302,10 +1285,8 @@ PRODUCT_PACKAGES += \
     dpmapi \
     oplus-ims-ext \
     qcrilhook \
-    vendor.qti.hardware.c2pa-V1-java \
     vendor.qti.ims.connection-V1.0-java \
     vendor.qti.ims.connectionaidlservice-V1-java \
-    vendor.qti.ims.datachannelservice-V3-java \
     vendor.qti.ims.factory-V2.0-java \
     vendor.qti.ims.factory-V2.1-java \
     vendor.qti.ims.factory-V2.2-java \
@@ -1362,6 +1343,7 @@ PRODUCT_PACKAGES += \
     vendor.qti.hardware.limits-service.xml \
     vendor.qti.hardware.perf.xml \
     vendor.qti.hardware.power.powermodule.xml \
+    vendor.qti.hardware.qxr-service.xml \
     vendor.qti.hardware.radio.qtiradioconfig.xml \
     vendor.qti.hardware.servicetracker@1.2-service.xml \
     vendor.qti.hardware.vibrator.service.xml \
@@ -1512,7 +1494,6 @@ PRODUCT_PACKAGES += \
     wfdservice64 \
     commcenterd \
     android.hardware.power.stats-impl.oplus \
-    gauged \
     subsys_daemon \
     vendor-oplus-hardware-engineer-V1-service \
     vendor-oplus-hardware-misc-V1-service \
@@ -1526,7 +1507,7 @@ PRODUCT_PACKAGES += \
     vendor.oplus.hardware.biometrics.fingerprint@2.1-service_uff \
     vendor.oplus.hardware.biometrics.fingerprintpay@1.0-service \
     vendor.oplus.hardware.cammidasservice-V1-service \
-    vendor.oplus.hardware.charger-V10-service \
+    vendor.oplus.hardware.charger-V5-service \
     vendor.oplus.hardware.cryptoeng@1.0-service \
     vendor.oplus.hardware.displaypanelfeature@1.0-service \
     vendor.oplus.hardware.eid@1.0-service \

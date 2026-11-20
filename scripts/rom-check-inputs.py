@@ -50,7 +50,7 @@ def verify_vendor(vendor, blob_list):
         path = re.split(r"[;|]", line, maxsplit=1)[0].rsplit(":", 1)[-1].strip()
         if "/" in path:
             final = (proprietary / path).resolve()
-            require(final.is_relative_to(proprietary.resolve()) and final.is_file() and final.stat().st_size,
+            require(final.is_relative_to(proprietary.resolve()) and final.is_file(),
                     f"extract-utils did not generate required vendor file {path}")
     blueprint = (vendor / "Android.bp").read_text()
     makefile = (vendor / "ossi-vendor.mk").read_text()

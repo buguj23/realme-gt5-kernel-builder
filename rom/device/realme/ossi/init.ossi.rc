@@ -1,11 +1,2 @@
 on early-init
     write /proc/sys/kernel/sched_tunable_scaling 0
-
-on post-fs-data
-    mkdir /data/adb 0700 system system
-    mkdir /data/adb/ksu 0700 system system
-    # YukiSU LKM (CONFIG_KSU=m) is loaded by ksud late-load, which looks for
-    # <kmi>_kernelsu.ko in its embedded assets, then /data/adb/ksu/kernelsu.ko,
-    # /data/adb/ksu/bin/kernelsu.ko, /data/local/tmp/kernelsu.ko (late_load.cpp).
-    # AnyKernel3 drops it at /data/adb/ksu/. init does not load it: modules.load
-    # lives in the vendor_boot ramdisk and lists only system_dlkm zram/zsmalloc.

@@ -307,7 +307,7 @@ class RomInputTests(unittest.TestCase):
                          "requires Android mkbootimg and clang")
     def test_vendor_boot_must_preserve_order_and_recovery(self):
         module = self.root / "valid.ko"
-        asm = (b'.section .modinfo,"a"\n.asciz "vermagic=5.15.180-test SMP modversions aarch64"\n'
+        asm = (b'.section .modinfo,"a"\n.asciz "vermagic=5.15.149-test SMP modversions aarch64"\n'
                b'.section __versions,"a"\n.quad 0x12345678\n.asciz "module_layout"\n.zero 42\n')
         subprocess.run(["clang", "--target=aarch64-linux-gnu", "-c", "-x", "assembler", "-",
                         "-o", module], input=asm, capture_output=True, check=True)
@@ -424,6 +424,54 @@ class RomInputTests(unittest.TestCase):
         self.assertEqual(report["rollback_indices"], indices | {"vbmeta": 0})
         with self.assertRaisesRegex(ValueError, "vbmeta_system: AVB rollback index"):
             DELIVERY["check_avb"](self.root, key, self.root, boot_patch, "2026-10-05")
+
+    @unittest.skipUnless(all(shutil.which(t) for t in ("mkfs.ext4", "debugfs")), "requires ext4 host tools")
+    def test_rootless_blob_selection_and_zero_byte_firmware_segments(self):
+        image_dir = self.root / "images"
+        image_dir.mkdir()
+        vendor_tree = self.root / "vendor_src"
+        (vendor_tree / "firmware").mkdir(parents=True)
+        (vendor_tree / "lib64").mkdir(parents=True)
+        (vendor_tree / "firmware/CAMERA_ICP.b10").write_bytes(b"")
+        (vendor_tree / "lib64/libtest.so").write_bytes(b"ELF")
+        subprocess.run(["mkfs.ext4", "-q", "-F", "-d", vendor_tree, image_dir / "vendor.img", "2048"],
+                       check=True, capture_output=True)
+        odm_tree = self.root / "odm_src"
+        (odm_tree / "bin/hw").mkdir(parents=True)
+        (odm_tree / "bin/hw/vendor.oplus.hardware.charger-V5-service").write_bytes(b"bin")
+        subprocess.run(["mkfs.ext4", "-q", "-F", "-d", odm_tree, image_dir / "odm.img", "2048"],
+                       check=True, capture_output=True)
+        base_list = self.root / "base.txt"
+        base_list.write_text("vendor/firmware/CAMERA_ICP.b10\nvendor/lib64/libtest.so\nvendor/lib64/absent.so\n")
+        selected = self.root / "proprietary-files.txt"
+        with patch.dict("os.environ", {"SUDO_MOUNT": "0"}):
+            with self.subTest("select_blobs"):
+                from contextlib import ExitStack
+                args = SimpleNamespace(
+                    base_list=str(base_list), images=str(image_dir), out=str(selected),
+                    report=None, mount=None, no_extras=False, materialize=None,
+                    label="5.15.149", payload_metadata=None,
+                )
+                with ExitStack() as cleanup:
+                    self.assertEqual(BLOBS["select"](args, cleanup), 0)
+        text = selected.read_text()
+        self.assertIn("vendor/firmware/CAMERA_ICP.b10", text)
+        self.assertIn("odm/bin/hw/vendor.oplus.hardware.charger-V5-service", text)
+        self.assertNotIn("vendor/lib64/absent.so", text)
+
+        checker = runpy.run_path(str(SCRIPTS / "rom-check-inputs.py"))
+        vendor_out = self.root / "vendor_out"
+        prop = vendor_out / "proprietary"
+        (prop / "vendor/firmware").mkdir(parents=True)
+        (prop / "vendor/firmware/CAMERA_ICP.b10").write_bytes(b"")
+        (prop / "vendor/lib64").mkdir(parents=True)
+        (prop / "vendor/lib64/libtest.so").write_bytes(b"ELF")
+        (prop / "odm/bin/hw").mkdir(parents=True)
+        (prop / "odm/bin/hw/vendor.oplus.hardware.charger-V5-service").write_bytes(b"bin")
+        (vendor_out / "Android.bp").write_text('"proprietary/vendor/lib64/libtest.so"\n')
+        (vendor_out / "ossi-vendor.mk").write_text(
+            "PRODUCT_COPY_FILES += vendor/realme/ossi/proprietary/vendor/firmware/CAMERA_ICP.b10:vendor/firmware/CAMERA_ICP.b10\n")
+        checker["verify_vendor"](vendor_out, selected)
 
 
 if __name__ == "__main__":

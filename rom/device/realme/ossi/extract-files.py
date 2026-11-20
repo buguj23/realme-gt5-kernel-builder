@@ -20,7 +20,7 @@ from extract_utils.main import (
     ExtractUtilsModule,
 )
 
-platform_sdk = int(os.environ.get('OSSI_PLATFORM_SDK', '36'))
+platform_sdk = int(os.environ.get('OSSI_PLATFORM_SDK', '35'))
 if platform_sdk not in (34, 35, 36):
     raise ValueError(f'Unsupported ossi platform SDK: {platform_sdk}')
 
@@ -90,8 +90,6 @@ else:
     blob_fixups.update({
         'odm/bin/hw/vendor.oplus.hardware.biometrics.fingerprint@2.1-service_uff': fingerprint
             .add_needed('libshims_aidl_fingerprint_v2.oplus.so'),
-        'odm/bin/hw/vendor.oplus.hardware.charger-V11-service': blob_fixup()
-            .add_needed('libbase_shim.so'),
         'odm/etc/init/init.network.rc': blob_fixup()
             .regex_replace(r'/\* (Huo\.Chen@SYSTEM\.RF, 2024/09/06, Add for ICC) \*/', r'# \1'),
         'vendor/lib64/libqcodec2_core.so': blob_fixup()
@@ -101,6 +99,8 @@ else:
     })
 if platform_sdk == 35:
     blob_fixups.update({
+        'odm/bin/hw/vendor.oplus.hardware.charger-V5-service': blob_fixup()
+            .add_needed('libbase_shim.so'),
         'system_ext/lib64/libwfdservice.so': blob_fixup()
             .add_needed('libwfdservice_shim.so'),
         'system_ext/lib64/libwfdnative.so': blob_fixup()
@@ -108,6 +108,8 @@ if platform_sdk == 35:
     })
 if platform_sdk == 36:
     blob_fixups.update({
+        'odm/bin/hw/vendor.oplus.hardware.charger-V11-service': blob_fixup()
+            .add_needed('libbase_shim.so'),
         ('odm/bin/touchDaemon', 'vendor/lib64/libdpps.so',
          'vendor/lib64/libsnapdragoncolor-manager.so'): blob_fixup()
             .replace_needed('libtinyxml2.so', 'libtinyxml2-v34.so'),

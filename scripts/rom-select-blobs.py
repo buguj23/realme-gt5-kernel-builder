@@ -33,7 +33,7 @@ import sys
 import tempfile
 from contextlib import ExitStack
 
-from rom_inputs import BASE_PARTITIONS, NAME, stock_payload, require, sha256, verify_stock
+from rom_inputs import BASE_PARTITIONS, NAME, extract_fs, stock_payload, require, sha256, verify_stock
 
 # Oplus-specific payload the platform list has no reason to carry.
 EXTRA_PATTERNS = [
@@ -73,18 +73,29 @@ class Mounts:
         self.mnt = mnt
         self.sudo = ["sudo", "-n"] if sudo else []
         self.mounted = None
+        self.mounted_via_kernel = False
+        self.extracted = {}
 
     def _mount(self, image):
         cmd = [*self.sudo, "mount", "-o", "loop,ro", image, self.mnt]
         res = run(cmd)
         if res.returncode != 0:
             res = run([*self.sudo, "mount", "-o", "loop,ro", "-t", "ext4", image, self.mnt])
-        if res.returncode != 0:
-            raise RuntimeError(f"failed to mount {image}: {res.stderr.strip()}")
+        if res.returncode == 0:
+            self.mounted_via_kernel = True
+            return
+        # Fallback to rootless EROFS/ext4 extraction when loop mount is unavailable.
+        self.mounted_via_kernel = False
 
     def _umount(self):
-        run([*self.sudo, "umount", self.mnt], check=True)
+        if self.mounted_via_kernel:
+            run([*self.sudo, "umount", self.mnt], check=True)
+            self.mounted_via_kernel = False
         self.mounted = None
+
+    def _root(self, partition=None):
+        part = partition or self.mounted
+        return self.extracted.get(part, self.mnt)
 
     def __enter__(self):
         return self
@@ -92,25 +103,51 @@ class Mounts:
     def __exit__(self, *a):
         if self.mounted:
             self._umount()
+        for path in self.extracted.values():
+            for root_dir, dirs, _ in os.walk(path):
+                try:
+                    os.chmod(root_dir, 0o700)
+                except OSError:
+                    pass
+                for d in dirs:
+                    try:
+                        os.chmod(os.path.join(root_dir, d), 0o700)
+                    except OSError:
+                        pass
+            shutil.rmtree(path, ignore_errors=True)
 
     def open(self, partition):
         if self.mounted == partition:
             return
         if self.mounted:
             self._umount()
+        if partition in self.extracted:
+            self.mounted = partition
+            return
         image = os.path.join(self.image_dir, f"{partition}.img")
         if not os.path.isfile(image):
             raise FileNotFoundError(f"partition image not found: {image}")
         self._mount(image)
+        if not self.mounted_via_kernel:
+            dest = os.path.join(self.mnt, f".extracted_{partition}")
+            extract_fs(image, dest)
+            self.extracted[partition] = dest
         self.mounted = partition
 
     def exists(self, partition, rel):
         self.open(partition)
-        return os.path.isfile(os.path.join(self.mnt, rel))
+        return os.path.isfile(os.path.join(self._root(partition), rel))
+
+    def path_for(self, partition, rel):
+        self.open(partition)
+        root = Path(self._root(partition)).resolve()
+        source = (root / rel).resolve(strict=True)
+        require(source.is_relative_to(root), f"{partition}/{rel}: blob symlink leaves the stock filesystem")
+        return source
 
     def walk(self, partition):
         self.open(partition)
-        root = self.mnt
+        root = self._root(partition)
         out = []
         for dirpath, _dirs, files in os.walk(root):
             rel_dir = os.path.relpath(dirpath, root)
@@ -200,9 +237,7 @@ def select(a, cleanup):
             paths = {}
             for src in sorted(set(targets)):
                 part, rel = src.split("/", 1)
-                mounts.open(part)
-                source = (Path(mnt) / rel).resolve(strict=True)
-                require(source.is_relative_to(Path(mnt).resolve()), f"{src}: blob symlink leaves the stock filesystem")
+                source = mounts.path_for(part, rel)
                 dest = dump / src
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, dest)

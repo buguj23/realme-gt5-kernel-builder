@@ -11,7 +11,7 @@ import sys
 import tempfile
 
 import kmi
-from rom_inputs import raw_image, require, sha256, stock_payload, verify_stock
+from rom_inputs import extract_fs, raw_image, require, sha256, stock_payload, verify_stock
 
 MODULE = re.compile(r"[A-Za-z0-9_.+-]+\.ko")
 LIST_FILES = ("modules.load", "modules.load.recovery", "modules.dep",
@@ -161,27 +161,7 @@ def dtb_for_ramdisk_fstab(data):
 
 def modules_from_fs(image, dest):
     """Extract only with read-only filesystem tools and keep each partition distinct."""
-    dest.mkdir(parents=True)
-    with raw_image(image) as raw:
-        with Path(raw).open("rb") as stream:
-            stream.seek(1024)
-            sb = stream.read(1024)
-        require(len(sb) == 1024, f"{image}: truncated filesystem superblock")
-        if sb[:4] == b"\xe2\xe1\xf5\xe0":
-            subprocess.run(["fsck.erofs", f"--extract={dest}", "--path=/lib/modules", raw],
-                           check=True, stdout=subprocess.DEVNULL)
-            fs = "erofs"
-        elif sb[56:58] == b"\x53\xef":
-            # debugfs' rdump may return zero on errors. Inspect its output and
-            # require the expected files after extracting.
-            result = subprocess.run(["debugfs", "-R", f'rdump /lib/modules "{dest}"', raw],
-                                    check=True, capture_output=True, text=True)
-            errors = [line for line in result.stderr.splitlines() if not line.startswith("debugfs ")]
-            require(not errors, f"{image}: extraction error: {' '.join(errors[:2])}")
-            fs = "ext4"
-        else:
-            raise ValueError(f"{image}: expected ext4 or EROFS")
-    return fs
+    return extract_fs(image, dest, "lib/modules")
 
 
 def inventory(directory):

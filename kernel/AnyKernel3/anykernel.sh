@@ -1,11 +1,10 @@
 ### AnyKernel3 Ramdisk Mod Script
-## Realme GT5 (SM8550) YukiSU + Kasumi Stealth Kernel
-## osm0sis @ xda-developers & Antigravity Engineering
+## Realme GT5 (SM8550 / RMX3820) — 5.15.149 OEM OGKI
+## osm0sis @ xda-developers
 
 ### AnyKernel setup
-# global properties
 properties() { '
-kernel.string=Realme GT5 (SM8550) Action-Build OGKI 5.15 + YukiSU LKM
+kernel.string=Realme GT5 (SM8550) 5.15.149 OEM OGKI
 do.devicecheck=1
 do.modules=0
 do.systemless=0
@@ -14,28 +13,25 @@ do.cleanuponabort=0
 device.name1=ossi
 device.name2=RMX3820
 device.name3=RE5C33
-device.name4=ossi
-device.name5=RMX3820
-'; } # end properties
+device.name4=kalama
+device.name5=
+'; }
 
 ### AnyKernel install
-## boot shell variables
 BLOCK=boot
 IS_SLOT_DEVICE=auto
 RAMDISK_COMPRESSION=auto
 PATCH_VBMETA_FLAG=auto
 NO_MAGISK_CHECK=1
 
-# import functions/variables and setup patching - see for reference (DO NOT REMOVE)
 . tools/ak3-core.sh
 
 sync
-chmod -R 755 $AKHOME/tools
+chmod -R 755 "$AKHOME/tools"
 
 ui_print "=========================================="
-ui_print " Realme GT5 (SM8550) Action-Build OGKI 5.15"
-ui_print " YukiSU LKM + Kasumi (CONFIG_KSU=m, no Google GKI)"
-ui_print " Analogue: OnePlus Ace2 Pro / OnePlus 11 kalama"
+ui_print " Realme GT5 (RMX3820) 5.15.149 OEM OGKI"
+ui_print " Source: realme_gt5_v (android13-5.15 gen 8)"
 ui_print "=========================================="
 
 split_boot
@@ -46,33 +42,20 @@ else
     flash_boot
 fi
 
-# =============
-# YukiSU & Kasumi LKM 部署
-# =============
-ui_print "------------------------------------------"
-ui_print " 正在部署 YukiSU LKM 与 Kasumi VFS 隐匿环境..."
-
-# 确保尝试挂载 /data
-mount /data 2>/dev/null || true
-
 if [ -f "$AKHOME/kernelsu.ko" ]; then
-    mkdir -p /data/adb/ksu/ 2>/dev/null
+    ui_print "------------------------------------------"
+    ui_print " Staging YukiSU LKM (kernelsu.ko)..."
+    mount /data 2>/dev/null || true
+    mkdir -p /data/adb/ksu 2>/dev/null || true
     cp -f "$AKHOME/kernelsu.ko" /data/adb/ksu/kernelsu.ko 2>/dev/null || true
-    cp -f "$AKHOME/kernelsu.ko" /data/adb/kernelsu.ko 2>/dev/null || true
     chmod 644 /data/adb/ksu/kernelsu.ko 2>/dev/null || true
-    chmod 644 /data/adb/kernelsu.ko 2>/dev/null || true
-    ui_print "  [+] kernelsu.ko (YukiSU + Kasumi) 部署成功"
-fi
-
-if [ -f "$AKHOME/ksud" ]; then
-    mkdir -p /data/adb/ 2>/dev/null
-    cp -f "$AKHOME/ksud" /data/adb/ksud 2>/dev/null || true
-    chmod 755 /data/adb/ksud 2>/dev/null || true
-    ui_print "  [+] ksud (YukiSU Native Daemon) 部署成功"
+    ui_print "  [+] /data/adb/ksu/kernelsu.ko staged"
+    ui_print "  [i] Flash patched init_boot.img via YukiSU Manager to activate LKM on GKI 2.0."
+else
+    ui_print "  [i] Pure-OGKI kernel flashed cleanly (use official YukiSU LKM or custom init_boot)."
 fi
 
 sync
 ui_print "=========================================="
-ui_print " 内核及隐匿运行库刷写完毕！"
-ui_print " Flashing complete successfully!"
+ui_print " Flashing completed successfully!"
 ui_print "=========================================="

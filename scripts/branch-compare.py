@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""branch-compare.py — diff one branch's deliverable against that branch's OTA.
+"""branch-compare.py — diff one deliverable or kernel package against the stock OTA.
 
-The four 5.15.* branches are not interchangeable: first-stage module counts
-(134 on 14.0.0.1120 vs 146 on 16.0.3.500), security patch levels and module sets
-all move. This compares against the facts branch-facts.py measured for the exact
-OTA the ROM targets.
+First-stage module counts (145 entries / 144 unique on RMX3820_15.0.0.320), security
+patch levels and module sets must align with the target OTA measured by branch-facts.py.
 
 Two modes:
   --deliver DIR   full ROM images (boot/vendor_boot/vendor_dlkm/system_dlkm)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Consumer-visible module ABI and boot-phase dependency regressions."""
+import json
 from pathlib import Path
+import re
 import runpy
 import shutil
 import subprocess
@@ -8,13 +10,15 @@ import sys
 import tempfile
 import unittest
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 import kmi
-from rom_kernel_package import assemble, kernel_release, verify_package
+from rom_inputs import baseline
+from rom_kernel_package import VARIANTS, assemble, kernel_release, verify_package
 
 STAGER = runpy.run_path(str(SCRIPTS / "rom-stage-kernel.py"))
-RELEASE_TEXT = "5.15.180-fixture"
+RELEASE_TEXT = "5.15.149-fixture"
 
 
 class ModuleDeliveryTests(unittest.TestCase):
@@ -138,17 +142,48 @@ class ModuleDeliveryTests(unittest.TestCase):
         self.module("one", {"module_layout": 0x12345678}, directory=source)
         self.module("stale", {"module_layout": 0x12345678}, directory=source)
         (source / "modules.order").write_text("one.ko\n")
-        archive = self.root / "archive"
-        assemble(source, archive, "5.15.180", "local", "a" * 40)
-        package = self.root / "pkg"
-        package.mkdir()
-        subprocess.run(["tar", "--zstd", "-xf", archive / "kernel-package.tar.zst", "-C", package], check=True)
-        self.assertEqual(set(verify_package(package, "5.15.180")["files"]),
-                         {"Image", "Module.symvers", "modules/one.ko"})
-        with (package / "modules/one.ko").open("ab") as stream:
-            stream.write(b"changed")
-        with self.assertRaisesRegex(ValueError, "SHA-256"):
-            verify_package(package, "5.15.180")
+        for variant in VARIANTS:
+            archive = self.root / f"archive-{variant}"
+            assemble(source, archive, "5.15.149", variant, "a" * 40)
+            package = self.root / f"pkg-{variant}"
+            package.mkdir()
+            subprocess.run(["tar", "--zstd", "-xf", archive / "kernel-package.tar.zst", "-C", package], check=True)
+            info = verify_package(package, "5.15.149", variant=variant)
+            self.assertEqual(set(info["files"]), {"Image", "Module.symvers", "modules/one.ko"})
+            with (package / "modules/one.ko").open("ab") as stream:
+                stream.write(b"changed")
+            with self.assertRaisesRegex(ValueError, "SHA-256"):
+                verify_package(package, "5.15.149")
+
+    def test_single_5_15_149_baseline_and_yukisu_lkm_contracts(self):
+        kernels = json.loads((ROOT / "official/kernels.json").read_text())
+        self.assertEqual(list(kernels.keys()), ["149"])
+        spec = baseline("5.15.149")
+        self.assertEqual(spec["file"], "realme_gt5_v")
+        self.assertEqual(spec["module_layout"], "0x0222dd63")
+        self.assertEqual(spec["security_patch"], "2024-11-05")
+        self.assertEqual(spec["metadata_fs"], "f2fs")
+        self.assertEqual(spec["api"], 35)
+        kmeta = json.loads((ROOT / "kernel.json").read_text())
+        self.assertEqual(kmeta["branch"], "5.15.149")
+        self.assertEqual(kmeta["file"], "realme_gt5_v")
+        self.assertFalse(kmeta["susfs"])
+        self.assertFalse(kmeta["kpm"])
+        self.assertFalse(kmeta["fake_config"])
+        xml = ROOT / "manifests/realme-sm8550/realme_gt5_v.xml"
+        self.assertTrue(xml.is_file())
+        self.assertIn("realme_GT5-AndroidV-common-source", xml.read_text())
+        features = (ROOT / "configs/features.config").read_text()
+        for required in ("CONFIG_MODULES=y", "CONFIG_MODVERSIONS=y", "CONFIG_KPROBES=y",
+                         "CONFIG_KRETPROBES=y", "CONFIG_KALLSYMS_ALL=y", "CONFIG_OVERLAY_FS=y",
+                         "CONFIG_CGROUP_BPF=y", "CONFIG_COMPAT=y"):
+            self.assertIn(required, features)
+        self.assertFalse(re.search(r"^CONFIG_KSU=y|^CONFIG_KPM=y|^CONFIG_KSU_SUSFS=y", features, re.M))
+        board_ogki = (ROOT / "rom/device/realme/sm8550-ogki/BoardConfigOgki.mk").read_text()
+        self.assertNotIn("CONFIG_KSU=", board_ogki)
+        self.assertNotIn("BakaSU", "".join(VARIANTS))
+        self.assertIn("Pure-OGKI", VARIANTS)
+        self.assertIn("YukiSU-LKM", VARIANTS)
 
 
 if __name__ == "__main__":

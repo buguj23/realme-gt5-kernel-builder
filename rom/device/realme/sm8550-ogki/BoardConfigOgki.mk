@@ -78,11 +78,11 @@ BOARD_BOOTCONFIG := \
 
 BOARD_KERNEL_CMDLINE := video=vfb:640x400,bpp=32,memsize=3072000 nosoftlockup
 
-# Source = Action-Build OGKI common (scripts/00-fetch.sh)
-TARGET_KERNEL_SOURCE := kernel/oneplus/sm8550
-TARGET_KERNEL_CONFIG := gki_defconfig
-TARGET_KERNEL_CLANG_COMPILE := true
-TARGET_KERNEL_ADDITIONAL_FLAGS := CONFIG_OPLUS_DEVICE_DTBS=y CONFIG_KSU=m
+# Kernel & module delivery mode:
+#   prebuilt (default): staged via scripts/rom-stage-kernel.py (Pure-OGKI package + stock DTBs)
+#   inline: compile OEM OGKI source + 25 out-of-tree DLKM groups directly inside ROM tree
+# Notice: zero CONFIG_KSU in ROM builds; YukiSU LKM is built out-of-tree against Module.symvers.
+OGKI_BUILD_MODE ?= prebuilt
 
 # Platform properties and filesystem labels come with the same-SoC common tree.
 OGKI_COMMON_PATH := device/oneplus/sm8550-common
@@ -94,43 +94,48 @@ TARGET_FS_CONFIG_GEN := $(OGKI_COMMON_PATH)/config.fs
 BOARD_PRODUCTIMAGE_MINIMAL_PARTITION_RESERVED_SIZE := false
 -include vendor/lineage/config/BoardConfigReservedSize.mk
 
-# Prebuilt kernel + modules, staged by scripts/rom-stage-kernel.py from one
-# kernel package (Image + every .ko + Module.symvers of the same build).
-# The generated file also sets BOARD_VENDOR_RAMDISK_KERNEL_MODULES[_LOAD],
-# BOARD_VENDOR_KERNEL_MODULES[_LOAD] and BOARD_SYSTEM_KERNEL_MODULES[_LOAD].
-$(foreach f,Image dtb/ossi.dtb dtbo.img kernel-modules.mk,$(if $(wildcard $(DEVICE_PATH)/prebuilt/$(f)),,$(error Incomplete OGKI staging, missing $(f))))
-include $(DEVICE_PATH)/prebuilt/kernel-modules.mk
+ifeq ($(OGKI_BUILD_MODE),inline)
+  TARGET_KERNEL_SOURCE := kernel/oneplus/sm8550
+  TARGET_KERNEL_CONFIG := gki_defconfig
+  TARGET_KERNEL_CLANG_COMPILE := true
+  TARGET_KERNEL_ADDITIONAL_FLAGS := CONFIG_OPLUS_DEVICE_DTBS=y
+  TARGET_KERNEL_EXT_MODULE_ROOT := kernel/oneplus/sm8550-modules
+  TARGET_KERNEL_EXT_MODULES := \
+      qcom/opensource/mmrm-driver \
+      qcom/opensource/mm-drivers/hw_fence \
+      qcom/opensource/mm-drivers/msm_ext_display \
+      qcom/opensource/mm-drivers/sync_fence \
+      qcom/opensource/audio-kernel \
+      qcom/opensource/camera-kernel \
+      qcom/opensource/dataipa/drivers/platform/msm \
+      qcom/opensource/datarmnet/core \
+      qcom/opensource/datarmnet-ext/aps \
+      qcom/opensource/datarmnet-ext/offload \
+      qcom/opensource/datarmnet-ext/shs \
+      qcom/opensource/datarmnet-ext/perf \
+      qcom/opensource/datarmnet-ext/perf_tether \
+      qcom/opensource/datarmnet-ext/sch \
+      qcom/opensource/datarmnet-ext/wlan \
+      qcom/opensource/securemsm-kernel \
+      qcom/opensource/display-drivers/msm \
+      qcom/opensource/eva-kernel \
+      qcom/opensource/video-driver \
+      qcom/opensource/graphics-kernel \
+      qcom/opensource/wlan/platform \
+      qcom/opensource/wlan/qcacld-3.0/.kiwi_v2 \
+      qcom/opensource/bt-kernel \
+      nxp/opensource/driver \
+      oplus/kernel/explorer
+else
+  # Prebuilt kernel + modules, staged by scripts/rom-stage-kernel.py from one
+  # kernel package (Image + every .ko + Module.symvers of the same build).
+  # The generated file also sets BOARD_VENDOR_RAMDISK_KERNEL_MODULES[_LOAD],
+  # BOARD_VENDOR_KERNEL_MODULES[_LOAD] and BOARD_SYSTEM_KERNEL_MODULES[_LOAD].
+  $(foreach f,Image dtb/ossi.dtb dtbo.img kernel-modules.mk,$(if $(wildcard $(DEVICE_PATH)/prebuilt/$(f)),,$(error Incomplete OGKI staging, missing $(f))))
+  include $(DEVICE_PATH)/prebuilt/kernel-modules.mk
+endif
 
-TARGET_KERNEL_EXT_MODULE_ROOT := kernel/oneplus/sm8550-modules
-TARGET_KERNEL_EXT_MODULES := \
-    qcom/opensource/mmrm-driver \
-    qcom/opensource/mm-drivers/hw_fence \
-    qcom/opensource/mm-drivers/msm_ext_display \
-    qcom/opensource/mm-drivers/sync_fence \
-    qcom/opensource/audio-kernel \
-    qcom/opensource/camera-kernel \
-    qcom/opensource/dataipa/drivers/platform/msm \
-    qcom/opensource/datarmnet/core \
-    qcom/opensource/datarmnet-ext/aps \
-    qcom/opensource/datarmnet-ext/offload \
-    qcom/opensource/datarmnet-ext/shs \
-    qcom/opensource/datarmnet-ext/perf \
-    qcom/opensource/datarmnet-ext/perf_tether \
-    qcom/opensource/datarmnet-ext/sch \
-    qcom/opensource/datarmnet-ext/wlan \
-    qcom/opensource/securemsm-kernel \
-    qcom/opensource/display-drivers/msm \
-    qcom/opensource/eva-kernel \
-    qcom/opensource/video-driver \
-    qcom/opensource/graphics-kernel \
-    qcom/opensource/wlan/platform \
-    qcom/opensource/wlan/qcacld-3.0/.kiwi_v2 \
-    qcom/opensource/bt-kernel \
-    nxp/opensource/driver \
-    oplus/kernel/explorer
-
-# Metadata: stock 16.0.3.500 vendor_boot fstab mounts /metadata as f2fs
-# (verified with unpack_bootimg on stock_firmware_1603500/vendor_boot.img).
+# Metadata: stock RMX3820_15.0.0.320 (5.15.149) vendor_boot fstab mounts /metadata as f2fs.
 BOARD_USES_METADATA_PARTITION := true
 BOARD_USES_QCOM_FBE_DECRYPTION := true
 BOARD_USES_SYSTEM_DLKMIMAGE := true

@@ -6,12 +6,12 @@ soong_namespace {
     imports: [
         "device/realme/ossi",
         "hardware/oplus",
-        "hardware/pixelworks/interfaces",
         "hardware/qcom-caf/sm8550",
         "hardware/qcom-caf/wlan",
         "vendor/qcom/opensource/commonsys/display",
         "vendor/qcom/opensource/commonsys-intf/display",
         "vendor/qcom/opensource/dataservices",
+        "hardware/pixelworks/interfaces",
     ],
 }
 
@@ -361,43 +361,6 @@ cc_prebuilt_library_shared {
 }
 
 cc_prebuilt_library_shared {
-    name: "vendor.oplus.hardware.olc2-V2-ndk",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm: {
-            srcs: [
-                "proprietary/vendor/lib/vendor.oplus.hardware.olc2-V2-ndk.so",
-            ],
-            shared_libs: [
-                "libbinder_ndk",
-                "libc++",
-                "libc",
-                "libm",
-                "libdl",
-            ],
-        },
-        android_arm64: {
-            srcs: [
-                "proprietary/vendor/lib64/vendor.oplus.hardware.olc2-V2-ndk.so",
-            ],
-            shared_libs: [
-                "libbinder_ndk",
-                "libc++",
-                "libc",
-                "libm",
-                "libdl",
-            ],
-        },
-    },
-    compile_multilib: "both",
-    prefer: true,
-    soc_specific: true,
-}
-
-cc_prebuilt_library_shared {
     name: "vendor.oplus.hardware.osense.client-V1-ndk",
     owner: "realme",
     strip: {
@@ -472,7 +435,7 @@ cc_prebuilt_library_shared {
 }
 
 cc_prebuilt_library_shared {
-    name: "vendor.oplus.hardware.radio-V2-ndk",
+    name: "vendor.oplus.hardware.radio-V2-ndk_platform",
     owner: "realme",
     strip: {
         none: true,
@@ -480,7 +443,7 @@ cc_prebuilt_library_shared {
     target: {
         android_arm: {
             srcs: [
-                "proprietary/vendor/lib/vendor.oplus.hardware.radio-V2-ndk.so",
+                "proprietary/vendor/lib/vendor.oplus.hardware.radio-V2-ndk_platform.so",
             ],
             shared_libs: [
                 "libbinder_ndk",
@@ -492,7 +455,7 @@ cc_prebuilt_library_shared {
         },
         android_arm64: {
             srcs: [
-                "proprietary/vendor/lib64/vendor.oplus.hardware.radio-V2-ndk.so",
+                "proprietary/vendor/lib64/vendor.oplus.hardware.radio-V2-ndk_platform.so",
             ],
             shared_libs: [
                 "libbinder_ndk",
@@ -4154,7 +4117,7 @@ cc_prebuilt_library_shared {
                 "liblog",
                 "libbinder",
                 "libdrm",
-                "libtinyxml2-v34",
+                "libtinyxml2",
                 "libdisplaydebug",
                 "libhidlbase",
                 "android.frameworks.sensorservice@1.0",
@@ -8176,12 +8139,7 @@ cc_prebuilt_library_shared {
             shared_libs: [
                 "vendor.oplus.hardware.appradioaidl-V1-ndk",
                 "vendor.oplus.hardware.ims-V1-ndk",
-                "vendor.oplus.hardware.radio-V2-ndk",
-                "librilqmimiscservices",
-                "libqmiservices",
-                "libril-db",
-                "qtiril-utils",
-                "libsqlite",
+                "vendor.oplus.hardware.radio-V2-ndk_platform",
                 "libcommcenterutils",
                 "libcommcenterfw",
                 "libutils",
@@ -8216,8 +8174,11 @@ cc_prebuilt_library_shared {
                 "libqmi_client_qmux",
                 "libdiag",
                 "libhardware_legacy",
+                "libqmiservices",
+                "librilqmimiscservices",
                 "libqmi_client_helper",
                 "libidl",
+                "libsqlite",
                 "libbinder",
                 "libmdmdetect",
                 "libperipheral_client",
@@ -8231,7 +8192,9 @@ cc_prebuilt_library_shared {
                 "libxml",
                 "libqcrilNrQtiBus",
                 "qtiwakelock",
+                "qtiril-utils",
                 "qcrilMarshal",
+                "libril-db",
                 "libril-legacy",
                 "qcrilNrQmiModule",
                 "libQtiRilLoadable",
@@ -10331,7 +10294,7 @@ cc_prebuilt_library_shared {
                 "libdisplaydebug",
                 "libsdm-color",
                 "libbinder",
-                "libtinyxml2-v34",
+                "libtinyxml2",
                 "libsdmutils",
                 "libdrm",
                 "libdigital-dimming",
@@ -13116,6 +13079,31 @@ cc_prebuilt_library_shared {
                 "com.qualcomm.qti.dpm.api@1.0_vendor",
                 "vendor.qti.hardware.dpmservice@1.0_vendor",
                 "vendor.qti.hardware.mwqemadapter@1.0",
+                "libc++",
+                "libc",
+                "libm",
+                "libdl",
+            ],
+        },
+    },
+    compile_multilib: "64",
+    prefer: true,
+    soc_specific: true,
+}
+
+cc_prebuilt_library_shared {
+    name: "vendor.oplus.hardware.olc2-V2-ndk",
+    owner: "realme",
+    strip: {
+        none: true,
+    },
+    target: {
+        android_arm64: {
+            srcs: [
+                "proprietary/vendor/lib64/vendor.oplus.hardware.olc2-V2-ndk.so",
+            ],
+            shared_libs: [
+                "libbinder_ndk",
                 "libc++",
                 "libc",
                 "libm",
@@ -17267,7 +17255,7 @@ cc_prebuilt_library_shared {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n29_bin",
+    name: "bm3a68v08s11n29",
     filename: "bm3a68v08s11n29.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n29.bin",
@@ -17276,7 +17264,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n30_bin",
+    name: "bm3a68v08s11n30",
     filename: "bm3a68v08s11n30.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n30.bin",
@@ -17285,7 +17273,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n35_bin",
+    name: "bm3a68v08s11n35",
     filename: "bm3a68v08s11n35.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n35.bin",
@@ -17294,7 +17282,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n36_bin",
+    name: "bm3a68v08s11n36",
     filename: "bm3a68v08s11n36.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n36.bin",
@@ -17303,7 +17291,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n37_bin",
+    name: "bm3a68v08s11n37",
     filename: "bm3a68v08s11n37.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n37.bin",
@@ -17312,7 +17300,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n38_bin",
+    name: "bm3a68v08s11n38",
     filename: "bm3a68v08s11n38.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n38.bin",
@@ -17321,7 +17309,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n39_bin",
+    name: "bm3a68v08s11n39",
     filename: "bm3a68v08s11n39.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n39.bin",
@@ -17330,7 +17318,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n40_bin",
+    name: "bm3a68v08s11n40",
     filename: "bm3a68v08s11n40.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n40.bin",
@@ -17339,7 +17327,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n46_bin",
+    name: "bm3a68v08s11n46",
     filename: "bm3a68v08s11n46.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n46.bin",
@@ -17348,7 +17336,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n47_bin",
+    name: "bm3a68v08s11n47",
     filename: "bm3a68v08s11n47.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n47.bin",
@@ -17357,7 +17345,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n48_bin",
+    name: "bm3a68v08s11n48",
     filename: "bm3a68v08s11n48.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n48.bin",
@@ -17366,7 +17354,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n49_bin",
+    name: "bm3a68v08s11n49",
     filename: "bm3a68v08s11n49.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n49.bin",
@@ -17375,7 +17363,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n52_bin",
+    name: "bm3a68v08s11n52",
     filename: "bm3a68v08s11n52.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n52.bin",
@@ -17384,7 +17372,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a68v08s11n53_bin",
+    name: "bm3a68v08s11n53",
     filename: "bm3a68v08s11n53.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a68v08s11n53.bin",
@@ -17393,7 +17381,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n02_bin",
+    name: "bm3a73v08s11n02",
     filename: "bm3a73v08s11n02.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n02.bin",
@@ -17402,7 +17390,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n03_bin",
+    name: "bm3a73v08s11n03",
     filename: "bm3a73v08s11n03.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n03.bin",
@@ -17411,7 +17399,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n04_bin",
+    name: "bm3a73v08s11n04",
     filename: "bm3a73v08s11n04.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n04.bin",
@@ -17420,7 +17408,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n06_bin",
+    name: "bm3a73v08s11n06",
     filename: "bm3a73v08s11n06.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n06.bin",
@@ -17429,7 +17417,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n07_bin",
+    name: "bm3a73v08s11n07",
     filename: "bm3a73v08s11n07.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n07.bin",
@@ -17438,7 +17426,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n08_bin",
+    name: "bm3a73v08s11n08",
     filename: "bm3a73v08s11n08.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n08.bin",
@@ -17447,7 +17435,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n09_bin",
+    name: "bm3a73v08s11n09",
     filename: "bm3a73v08s11n09.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n09.bin",
@@ -17456,7 +17444,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n12_bin",
+    name: "bm3a73v08s11n12",
     filename: "bm3a73v08s11n12.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n12.bin",
@@ -17465,7 +17453,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n13_bin",
+    name: "bm3a73v08s11n13",
     filename: "bm3a73v08s11n13.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n13.bin",
@@ -17474,7 +17462,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n14_bin",
+    name: "bm3a73v08s11n14",
     filename: "bm3a73v08s11n14.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n14.bin",
@@ -17483,7 +17471,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n15_bin",
+    name: "bm3a73v08s11n15",
     filename: "bm3a73v08s11n15.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n15.bin",
@@ -17492,7 +17480,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n16_bin",
+    name: "bm3a73v08s11n16",
     filename: "bm3a73v08s11n16.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n16.bin",
@@ -17501,7 +17489,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n17_bin",
+    name: "bm3a73v08s11n17",
     filename: "bm3a73v08s11n17.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n17.bin",
@@ -17510,7 +17498,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n18_bin",
+    name: "bm3a73v08s11n18",
     filename: "bm3a73v08s11n18.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n18.bin",
@@ -17519,7 +17507,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n19_bin",
+    name: "bm3a73v08s11n19",
     filename: "bm3a73v08s11n19.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n19.bin",
@@ -17528,7 +17516,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n20_bin",
+    name: "bm3a73v08s11n20",
     filename: "bm3a73v08s11n20.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n20.bin",
@@ -17537,7 +17525,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n21_bin",
+    name: "bm3a73v08s11n21",
     filename: "bm3a73v08s11n21.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n21.bin",
@@ -17546,7 +17534,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n22_bin",
+    name: "bm3a73v08s11n22",
     filename: "bm3a73v08s11n22.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n22.bin",
@@ -17555,7 +17543,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n23_bin",
+    name: "bm3a73v08s11n23",
     filename: "bm3a73v08s11n23.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n23.bin",
@@ -17564,7 +17552,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n24_bin",
+    name: "bm3a73v08s11n24",
     filename: "bm3a73v08s11n24.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n24.bin",
@@ -17573,7 +17561,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n25_bin",
+    name: "bm3a73v08s11n25",
     filename: "bm3a73v08s11n25.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n25.bin",
@@ -17582,7 +17570,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n26_bin",
+    name: "bm3a73v08s11n26",
     filename: "bm3a73v08s11n26.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n26.bin",
@@ -17591,7 +17579,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n27_bin",
+    name: "bm3a73v08s11n27",
     filename: "bm3a73v08s11n27.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n27.bin",
@@ -17600,7 +17588,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n28_bin",
+    name: "bm3a73v08s11n28",
     filename: "bm3a73v08s11n28.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n28.bin",
@@ -17609,7 +17597,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n41_bin",
+    name: "bm3a73v08s11n41",
     filename: "bm3a73v08s11n41.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n41.bin",
@@ -17618,7 +17606,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n42_bin",
+    name: "bm3a73v08s11n42",
     filename: "bm3a73v08s11n42.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n42.bin",
@@ -17627,7 +17615,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n43_bin",
+    name: "bm3a73v08s11n43",
     filename: "bm3a73v08s11n43.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n43.bin",
@@ -17636,7 +17624,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n44_bin",
+    name: "bm3a73v08s11n44",
     filename: "bm3a73v08s11n44.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n44.bin",
@@ -17645,7 +17633,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n45_bin",
+    name: "bm3a73v08s11n45",
     filename: "bm3a73v08s11n45.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n45.bin",
@@ -17654,7 +17642,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n50_bin",
+    name: "bm3a73v08s11n50",
     filename: "bm3a73v08s11n50.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n50.bin",
@@ -17663,7 +17651,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_bm3a73v08s11n51_bin",
+    name: "bm3a73v08s11n51",
     filename: "bm3a73v08s11n51.bin",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/bm3a73v08s11n51.bin",
@@ -17672,7 +17660,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_chre_qsh_shim_so",
+    name: "chre_qsh_shim",
     filename: "chre_qsh_shim.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/chre_qsh_shim.so",
@@ -17681,7 +17669,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libQ6MSFR_manager_skel_so",
+    name: "libQ6MSFR_manager_skel",
     filename: "libQ6MSFR_manager_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libQ6MSFR_manager_skel.so",
@@ -17690,7 +17678,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libQnnHtpV73Skel_so",
+    name: "libQnnHtpV73Skel",
     filename: "libQnnHtpV73Skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libQnnHtpV73Skel.so",
@@ -17699,7 +17687,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libadsp_jpege_skel_so",
+    name: "libadsp_jpege_skel",
     filename: "libadsp_jpege_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libadsp_jpege_skel.so",
@@ -17708,7 +17696,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libapn_dsp_skel_so",
+    name: "libapn_dsp_skel",
     filename: "libapn_dsp_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libapn_dsp_skel.so",
@@ -17717,7 +17705,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libbitml_nsp_skel_so",
+    name: "libbitml_nsp_skel",
     filename: "libbitml_nsp_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libbitml_nsp_skel.so",
@@ -17726,7 +17714,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libbitml_nsp_v2_skel_so",
+    name: "libbitml_nsp_v2_skel",
     filename: "libbitml_nsp_v2_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libbitml_nsp_v2_skel.so",
@@ -17735,7 +17723,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libdsp_streamer_binning_so",
+    name: "libdsp_streamer_binning",
     filename: "libdsp_streamer_binning.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libdsp_streamer_binning.so",
@@ -17744,7 +17732,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libevadsp_3_0_so",
+    name: "libevadsp_3_0",
     filename: "libevadsp_3_0.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libevadsp_3_0.so",
@@ -17753,7 +17741,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libhdr_skel_so",
+    name: "libhdr_skel",
     filename: "libhdr_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libhdr_skel.so",
@@ -17762,7 +17750,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libhme_dsp_skel_so",
+    name: "libhme_dsp_skel",
     filename: "libhme_dsp_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libhme_dsp_skel.so",
@@ -17771,7 +17759,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libmctfengine_skel_so",
+    name: "libmctfengine_skel",
     filename: "libmctfengine_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libmctfengine_skel.so",
@@ -17780,7 +17768,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_libosie_skel_so",
+    name: "libosie_skel",
     filename: "libosie_skel.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/libosie_skel.so",
@@ -17789,7 +17777,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_nearby_napp_header",
+    name: "nearby",
     filename: "nearby.napp_header",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/nearby.napp_header",
@@ -17798,7 +17786,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "vendor_lib_rfsa_adsp_nearby_so",
+    name: "nearby",
     filename: "nearby.so",
     owner: "realme",
     src: "proprietary/vendor/lib/rfsa/adsp/nearby.so",
@@ -17892,7 +17880,7 @@ cc_prebuilt_library_shared {
                 "vendor.qti.imsrtpservice@3.1",
                 "libbinder",
                 "libbinder_ndk",
-                "vendor.qti.ImsRtpService-V2-ndk",
+                "vendor.qti.ImsRtpService-V1-ndk",
                 "libdiag_system",
                 "libcutils",
                 "libutils",
@@ -18772,7 +18760,6 @@ cc_prebuilt_library_shared {
                 "proprietary/system_ext/lib64/libwfdnative.so",
             ],
             shared_libs: [
-                "libinput_shim",
                 "libandroid_runtime",
                 "libui",
                 "libinput",
@@ -18784,7 +18771,7 @@ cc_prebuilt_library_shared {
                 "libwfdclient",
                 "libhidlbase",
                 "libhidlmemory",
-                "android.hidl.base@1.0",
+                "libhidlbase",
                 "android.hidl.token@1.0-utils",
                 "android.hardware.graphics.common@1.0",
                 "android.hardware.graphics.bufferqueue@1.0",
@@ -18843,6 +18830,7 @@ cc_prebuilt_library_shared {
                 "proprietary/system_ext/lib64/libwfdservice.so",
             ],
             shared_libs: [
+                "libwfdservice_shim",
                 "liblog",
                 "libutils",
                 "libcutils",
@@ -18858,7 +18846,7 @@ cc_prebuilt_library_shared {
                 "libaudioclient",
                 "libaudiofoundation",
                 "audioclient-types-aidl-cpp",
-                "android.media.audio.common.types-V4-cpp",
+                "android.media.audio.common.types-V2-cpp",
                 "libwfdmmsrc_system",
                 "libwfdavenhancements",
                 "libhidlbase",
@@ -18962,8 +18950,6 @@ cc_prebuilt_library_shared {
                 "libmmosal",
                 "libutils",
                 "liblog",
-                "libcutils",
-                "libwfdconfigutils",
                 "libc++",
                 "libc",
                 "libm",
@@ -19057,32 +19043,6 @@ cc_prebuilt_library_shared {
                 "libwfduibcsrc",
                 "libwfdcommonutils",
                 "libwfdconfigutils",
-                "libc++",
-                "libc",
-                "libm",
-                "libdl",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    prefer: true,
-    system_ext_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "vendor.qti.ImsRtpService-V2-ndk",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/system_ext/lib64/vendor.qti.ImsRtpService-V2-ndk.so",
-            ],
-            shared_libs: [
-                "libbinder_ndk",
-                "android.hardware.common-V2-ndk",
                 "libc++",
                 "libc",
                 "libm",
@@ -19245,7 +19205,7 @@ cc_prebuilt_library_shared {
                 "proprietary/system_ext/lib64/vendor.qti.hardware.qccsyshal@1.2-halimpl.so",
             ],
             shared_libs: [
-                "libprotobuf-cpp-full-21.7",
+                "libprotobuf-cpp-full",
                 "libcutils",
                 "liblog",
                 "libhidlbase",
@@ -19368,31 +19328,6 @@ cc_prebuilt_library_shared {
             shared_libs: [
                 "libbinder_ndk",
                 "android.hardware.common-V2-ndk",
-                "libc++",
-                "libc",
-                "libm",
-                "libdl",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    prefer: true,
-    system_ext_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "vendor.qti.ims.datachannelservice-V3-ndk",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/system_ext/lib64/vendor.qti.ims.datachannelservice-V3-ndk.so",
-            ],
-            shared_libs: [
-                "libbinder_ndk",
                 "libc++",
                 "libc",
                 "libm",
@@ -20441,7 +20376,7 @@ cc_prebuilt_library_shared {
 }
 
 cc_prebuilt_library_shared {
-    name: "vendor.oplus.hardware.charger-V10-ndk",
+    name: "vendor.oplus.hardware.charger-V5-ndk",
     owner: "realme",
     strip: {
         none: true,
@@ -20449,7 +20384,7 @@ cc_prebuilt_library_shared {
     target: {
         android_arm: {
             srcs: [
-                "proprietary/odm/lib/vendor.oplus.hardware.charger-V10-ndk.so",
+                "proprietary/odm/lib/vendor.oplus.hardware.charger-V5-ndk.so",
             ],
             shared_libs: [
                 "libbinder_ndk",
@@ -20461,44 +20396,7 @@ cc_prebuilt_library_shared {
         },
         android_arm64: {
             srcs: [
-                "proprietary/odm/lib64/vendor.oplus.hardware.charger-V10-ndk.so",
-            ],
-            shared_libs: [
-                "libbinder_ndk",
-                "libc++",
-                "libc",
-                "libm",
-                "libdl",
-            ],
-        },
-    },
-    compile_multilib: "both",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "vendor.oplus.hardware.charger-V9-ndk",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm: {
-            srcs: [
-                "proprietary/odm/lib/vendor.oplus.hardware.charger-V9-ndk.so",
-            ],
-            shared_libs: [
-                "libbinder_ndk",
-                "libc++",
-                "libc",
-                "libm",
-                "libdl",
-            ],
-        },
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/vendor.oplus.hardware.charger-V9-ndk.so",
+                "proprietary/odm/lib64/vendor.oplus.hardware.charger-V5-ndk.so",
             ],
             shared_libs: [
                 "libbinder_ndk",
@@ -22129,7 +22027,7 @@ cc_prebuilt_library_shared {
 }
 
 cc_prebuilt_library_shared {
-    name: "vendor.oplus.hardware.subsys-V5-ndk",
+    name: "vendor.oplus.hardware.subsys-V3-ndk",
     owner: "realme",
     strip: {
         none: true,
@@ -22137,7 +22035,7 @@ cc_prebuilt_library_shared {
     target: {
         android_arm: {
             srcs: [
-                "proprietary/odm/lib/vendor.oplus.hardware.subsys-V5-ndk.so",
+                "proprietary/odm/lib/vendor.oplus.hardware.subsys-V3-ndk.so",
             ],
             shared_libs: [
                 "libbinder_ndk",
@@ -22149,7 +22047,7 @@ cc_prebuilt_library_shared {
         },
         android_arm64: {
             srcs: [
-                "proprietary/odm/lib64/vendor.oplus.hardware.subsys-V5-ndk.so",
+                "proprietary/odm/lib64/vendor.oplus.hardware.subsys-V3-ndk.so",
             ],
             shared_libs: [
                 "libbinder_ndk",
@@ -22166,7 +22064,7 @@ cc_prebuilt_library_shared {
 }
 
 cc_prebuilt_library_shared {
-    name: "vendor.oplus.hardware.subsys_radio-V8-ndk",
+    name: "vendor.oplus.hardware.subsys_radio-V4-ndk",
     owner: "realme",
     strip: {
         none: true,
@@ -22174,11 +22072,11 @@ cc_prebuilt_library_shared {
     target: {
         android_arm: {
             srcs: [
-                "proprietary/odm/lib/vendor.oplus.hardware.subsys_radio-V8-ndk.so",
+                "proprietary/odm/lib/vendor.oplus.hardware.subsys_radio-V4-ndk.so",
             ],
             shared_libs: [
                 "libbinder_ndk",
-                "vendor.oplus.hardware.subsys-V5-ndk",
+                "vendor.oplus.hardware.subsys-V3-ndk",
                 "libc++",
                 "libc",
                 "libm",
@@ -22187,11 +22085,11 @@ cc_prebuilt_library_shared {
         },
         android_arm64: {
             srcs: [
-                "proprietary/odm/lib64/vendor.oplus.hardware.subsys_radio-V8-ndk.so",
+                "proprietary/odm/lib64/vendor.oplus.hardware.subsys_radio-V4-ndk.so",
             ],
             shared_libs: [
                 "libbinder_ndk",
-                "vendor.oplus.hardware.subsys-V5-ndk",
+                "vendor.oplus.hardware.subsys-V3-ndk",
                 "libc++",
                 "libc",
                 "libm",
@@ -23062,229 +22960,6 @@ cc_prebuilt_library_shared {
 }
 
 cc_prebuilt_library_shared {
-    name: "libQnnHtpV73Skel.aiframe_signed",
-    stem: "libQnnHtpV73Skel",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/cdsp/signed/libQnnHtpV73Skel.so",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    check_elf_files: false,
-    relative_install_path: "aiframe/cdsp/signed",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libQnnHtpV73Skel.aiframe_unsigned",
-    stem: "libQnnHtpV73Skel",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/cdsp/unsigned/libQnnHtpV73Skel.so",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    check_elf_files: false,
-    relative_install_path: "aiframe/cdsp/unsigned",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libQnnHtp.aiframe",
-    stem: "libQnnHtp",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/libQnnHtp.so",
-            ],
-            shared_libs: [
-                "libc",
-                "libm",
-                "libdl",
-                "liblog",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    relative_install_path: "aiframe",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libQnnHtpPrepare.aiframe",
-    stem: "libQnnHtpPrepare",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/libQnnHtpPrepare.so",
-            ],
-            shared_libs: [
-                "libc",
-                "libm",
-                "libdl",
-                "liblog",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    relative_install_path: "aiframe",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libQnnHtpV73Stub.aiframe",
-    stem: "libQnnHtpV73Stub",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/libQnnHtpV73Stub.so",
-            ],
-            shared_libs: [
-                "libc",
-                "libm",
-                "libdl",
-                "liblog",
-                "libcdsprpc",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    relative_install_path: "aiframe",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libQnnSystem.aiframe",
-    stem: "libQnnSystem",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/libQnnSystem.so",
-            ],
-            shared_libs: [
-                "libc",
-                "libm",
-                "libdl",
-                "liblog",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    relative_install_path: "aiframe",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libaiboost_qnn_external_delegate",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/libaiboost_qnn_external_delegate.so",
-            ],
-            shared_libs: [
-                "libm",
-                "liblog",
-                "libdl",
-                "libc",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    relative_install_path: "aiframe",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libqcom_llm",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/libqcom_llm.so",
-            ],
-            shared_libs: [
-                "liblog",
-                "libc",
-                "libm",
-                "libdl",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    relative_install_path: "aiframe",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libtransformer_lite",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/aiframe/libtransformer_lite.so",
-            ],
-            shared_libs: [
-                "libOpenCL",
-                "liblog",
-                "libm",
-                "libdl",
-                "libc",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    relative_install_path: "aiframe",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
     name: "android.hardware.secure_element@1.0-impl",
     owner: "realme",
     strip: {
@@ -23819,55 +23494,6 @@ cc_prebuilt_library_shared {
 }
 
 cc_prebuilt_library_shared {
-    name: "libaiboost",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/libaiboost.so",
-            ],
-            shared_libs: [
-                "libm",
-                "libdl",
-                "liblog",
-                "libc",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
-    name: "libaiboost_llm",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/libaiboost_llm.so",
-            ],
-            shared_libs: [
-                "libm",
-                "liblog",
-                "libdl",
-                "libz",
-                "libc",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
     name: "libaiboost_qnn_sr",
     owner: "realme",
     strip: {
@@ -24344,8 +23970,8 @@ cc_prebuilt_library_shared {
                 "proprietary/odm/lib64/libqti-radio-service.so",
             ],
             shared_libs: [
-                "vendor.oplus.hardware.subsys-V5-ndk",
-                "vendor.oplus.hardware.subsys_radio-V8-ndk",
+                "vendor.oplus.hardware.subsys-V3-ndk",
+                "vendor.oplus.hardware.subsys_radio-V4-ndk",
                 "libradio-service",
                 "libsubsys-service",
                 "libradioapis",
@@ -24359,7 +23985,6 @@ cc_prebuilt_library_shared {
                 "libssl",
                 "libbinder_ndk",
                 "libdiag",
-                "libvasapi",
                 "libqdutils",
                 "libc++",
                 "libc",
@@ -24385,8 +24010,8 @@ cc_prebuilt_library_shared {
                 "proprietary/odm/lib64/libradio-service.so",
             ],
             shared_libs: [
-                "vendor.oplus.hardware.subsys-V5-ndk",
-                "vendor.oplus.hardware.subsys_radio-V8-ndk",
+                "vendor.oplus.hardware.subsys-V3-ndk",
+                "vendor.oplus.hardware.subsys_radio-V4-ndk",
                 "libhidlbase",
                 "libmindroid-framework",
                 "libcutils",
@@ -24542,7 +24167,7 @@ cc_prebuilt_library_shared {
                 "proprietary/odm/lib64/libsubsys-service.so",
             ],
             shared_libs: [
-                "vendor.oplus.hardware.subsys-V5-ndk",
+                "vendor.oplus.hardware.subsys-V3-ndk",
                 "libhidlbase",
                 "libmindroid-framework",
                 "libcutils",
@@ -24618,39 +24243,6 @@ cc_prebuilt_library_shared {
 }
 
 cc_prebuilt_library_shared {
-    name: "libvasapi",
-    owner: "realme",
-    strip: {
-        none: true,
-    },
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/lib64/libvasapi.so",
-            ],
-            shared_libs: [
-                "libqmi_common_so",
-                "libqmi_cci",
-                "libqmi_encdec",
-                "libcutils",
-                "libradioapis",
-                "libutils",
-                "libqmi_csi",
-                "liblog",
-                "libmindroid-framework",
-                "libc++",
-                "libc",
-                "libm",
-                "libdl",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    prefer: true,
-    device_specific: true,
-}
-
-cc_prebuilt_library_shared {
     name: "vendor.qti.esepowermanager@1.0",
     owner: "realme",
     strip: {
@@ -24708,7 +24300,7 @@ cc_prebuilt_library_shared {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_aiboost_libQnnHtpV73Skel_so",
+    name: "libQnnHtpV73Skel",
     filename: "libQnnHtpV73Skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/aiboost/libQnnHtpV73Skel.so",
@@ -24717,7 +24309,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_aiboost_libaiboostubwc_skel_so",
+    name: "libaiboostubwc_skel",
     filename: "libaiboostubwc_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/aiboost/libaiboostubwc_skel.so",
@@ -24726,7 +24318,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_capi_v3_oprec_so",
+    name: "capi_v3_oprec",
     filename: "capi_v3_oprec.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/capi_v3_oprec.so",
@@ -24735,7 +24327,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libCalculator_skel_so",
+    name: "libCalculator_skel",
     filename: "libCalculator_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libCalculator_skel.so",
@@ -24744,7 +24336,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libQnnHtpV73_so",
+    name: "libQnnHtpV73",
     filename: "libQnnHtpV73.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libQnnHtpV73.so",
@@ -24753,7 +24345,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libQnnHtpV73Skel_so",
+    name: "libQnnHtpV73Skel",
     filename: "libQnnHtpV73Skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libQnnHtpV73Skel.so",
@@ -24762,7 +24354,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libQnnSaver_so",
+    name: "libQnnSaver",
     filename: "libQnnSaver.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libQnnSaver.so",
@@ -24771,7 +24363,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libSnpeHtpV73Skel_so",
+    name: "libSnpeHtpV73Skel",
     filename: "libSnpeHtpV73Skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libSnpeHtpV73Skel.so",
@@ -24780,7 +24372,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libSuperRawPost_skel_so",
+    name: "libSuperRawPost_skel",
     filename: "libSuperRawPost_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libSuperRawPost_skel.so",
@@ -24789,7 +24381,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libaisr_skel_so",
+    name: "libaisr_skel",
     filename: "libaisr_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libaisr_skel.so",
@@ -24798,7 +24390,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libarc_gk_pt_hvx_skel_so",
+    name: "libarc_gk_pt_hvx_skel",
     filename: "libarc_gk_pt_hvx_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libarc_gk_pt_hvx_skel.so",
@@ -24807,7 +24399,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libarc_htp_driver_skel_so",
+    name: "libarc_htp_driver_skel",
     filename: "libarc_htp_driver_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libarc_htp_driver_skel.so",
@@ -24816,7 +24408,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libcalculator_skel_so",
+    name: "libcalculator_skel",
     filename: "libcalculator_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libcalculator_skel.so",
@@ -24825,7 +24417,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libhvxFaceBeautyPre_skel_so",
+    name: "libhvxFaceBeautyPre_skel",
     filename: "libhvxFaceBeautyPre_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libhvxFaceBeautyPre_skel.so",
@@ -24834,7 +24426,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libktvdrc_so",
+    name: "libktvdrc",
     filename: "libktvdrc.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libktvdrc.so",
@@ -24843,7 +24435,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libktveffect_so",
+    name: "libktveffect",
     filename: "libktveffect.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libktveffect.so",
@@ -24852,7 +24444,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libktveq_so",
+    name: "libktveq",
     filename: "libktveq.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libktveq.so",
@@ -24861,7 +24453,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libktvns_so",
+    name: "libktvns",
     filename: "libktvns.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libktvns.so",
@@ -24870,7 +24462,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libktvpitchshift_so",
+    name: "libktvpitchshift",
     filename: "libktvpitchshift.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libktvpitchshift.so",
@@ -24879,7 +24471,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libktvreverb_so",
+    name: "libktvreverb",
     filename: "libktvreverb.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libktvreverb.so",
@@ -24888,7 +24480,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libktvvolume_so",
+    name: "libktvvolume",
     filename: "libktvvolume.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libktvvolume.so",
@@ -24897,7 +24489,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libvdblurless_5_0_2_skel_so",
+    name: "libvdblurless_5.0.2_skel",
     filename: "libvdblurless_5.0.2_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libvdblurless_5.0.2_skel.so",
@@ -24906,7 +24498,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_libvdsuperphoto_skel_so",
+    name: "libvdsuperphoto_skel",
     filename: "libvdsuperphoto_skel.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/libvdsuperphoto_skel.so",
@@ -24915,7 +24507,7 @@ prebuilt_rfsa {
 }
 
 prebuilt_rfsa {
-    name: "odm_lib_rfsa_adsp_nlc_so",
+    name: "nlc",
     filename: "nlc.so",
     owner: "realme",
     src: "proprietary/odm/lib/rfsa/adsp/nlc.so",
@@ -25097,15 +24689,6 @@ dex_import {
 }
 
 dex_import {
-    name: "vendor.qti.hardware.c2pa-V1-java",
-    owner: "realme",
-    jars: [
-        "proprietary/system_ext/framework/vendor.qti.hardware.c2pa-V1-java.jar",
-    ],
-    system_ext_specific: true,
-}
-
-dex_import {
     name: "vendor.qti.ims.connection-V1.0-java",
     owner: "realme",
     jars: [
@@ -25119,15 +24702,6 @@ dex_import {
     owner: "realme",
     jars: [
         "proprietary/system_ext/framework/vendor.qti.ims.connectionaidlservice-V1-java.jar",
-    ],
-    system_ext_specific: true,
-}
-
-dex_import {
-    name: "vendor.qti.ims.datachannelservice-V3-java",
-    owner: "realme",
-    jars: [
-        "proprietary/system_ext/framework/vendor.qti.ims.datachannelservice-V3-java.jar",
     ],
     system_ext_specific: true,
 }
@@ -25631,6 +25205,15 @@ prebuilt_etc_xml {
     name: "vendor.qti.hardware.power.powermodule.xml",
     owner: "realme",
     src: "proprietary/vendor/etc/vintf/manifest/vendor.qti.hardware.power.powermodule.xml",
+    filename_from_src: true,
+    sub_dir: "vintf/manifest",
+    soc_specific: true,
+}
+
+prebuilt_etc_xml {
+    name: "vendor.qti.hardware.qxr-service.xml",
+    owner: "realme",
+    src: "proprietary/vendor/etc/vintf/manifest/vendor.qti.hardware.qxr-service.xml",
     filename_from_src: true,
     sub_dir: "vintf/manifest",
     soc_specific: true,
@@ -26632,7 +26215,7 @@ cc_prebuilt_binary {
             ],
             shared_libs: [
                 "android.hardware.contexthub-V1-ndk",
-                "libbase-v33",
+                "libbase",
                 "libbinder_ndk",
                 "liblog",
                 "libsnsapi",
@@ -28806,7 +28389,7 @@ cc_prebuilt_binary {
                 "android.hardware.health@2.0",
                 "libbinder_ndk",
                 "vendor.oplus.hardware.charger-V1-ndk",
-                "libprotobuf-cpp-lite-21.7",
+                "libprotobuf-cpp-lite",
                 "libostatslog",
                 "android.hardware.health-V1-ndk",
                 "vendor.oplus.hardware.displaypanelfeature@1.0",
@@ -28979,35 +28562,6 @@ cc_prebuilt_binary {
                 "libc",
                 "libcutils",
                 "libc++",
-                "libm",
-                "libdl",
-            ],
-        },
-    },
-    compile_multilib: "64",
-    strip: {
-        none: true,
-    },
-    prefer: true,
-    relative_install_path: "hw",
-    device_specific: true,
-}
-
-cc_prebuilt_binary {
-    name: "gauged",
-    owner: "realme",
-    target: {
-        android_arm64: {
-            srcs: [
-                "proprietary/odm/bin/hw/gauged",
-            ],
-            shared_libs: [
-                "libcutils",
-                "liblog",
-                "libbase",
-                "libutils",
-                "libc++",
-                "libc",
                 "libm",
                 "libdl",
             ],
@@ -29403,7 +28957,7 @@ cc_prebuilt_binary {
                 "libolc_vnd",
                 "libhardware",
                 "libsensorndkbridge",
-                "libtinyxml2-v34",
+                "libtinyxml2",
                 "libc++",
                 "libc",
                 "libm",
@@ -29492,14 +29046,15 @@ cc_prebuilt_binary {
 }
 
 cc_prebuilt_binary {
-    name: "vendor.oplus.hardware.charger-V10-service",
+    name: "vendor.oplus.hardware.charger-V5-service",
     owner: "realme",
     target: {
         android_arm64: {
             srcs: [
-                "proprietary/odm/bin/hw/vendor.oplus.hardware.charger-V10-service",
+                "proprietary/odm/bin/hw/vendor.oplus.hardware.charger-V5-service",
             ],
             shared_libs: [
+                "libbase_shim",
                 "libcutils",
                 "libhidlbase",
                 "libbinder_ndk",
@@ -29511,7 +29066,7 @@ cc_prebuilt_binary {
                 "android.hardware.sensors@1.0",
                 "libsensorndkbridge",
                 "libm",
-                "vendor.oplus.hardware.charger-V10-ndk",
+                "vendor.oplus.hardware.charger-V5-ndk",
                 "vendor.oplus.hardware.osense.client-V1-ndk",
                 "libosenseaidlhalclient",
                 "libjsoncpp",
@@ -29550,12 +29105,11 @@ cc_prebuilt_binary {
                 "libcutils",
                 "libjsoncpp",
                 "libsecurity_event_dcs_vnd",
-                "libsecurity_event_olc_vnd",
+                "libolc_vnd",
                 "vendor.oplus.hardware.cryptoeng-V1-ndk",
                 "libbinder_ndk",
                 "vendor.oplus.hardware.cryptoeng@1.0",
                 "vendor.oplus.hardware.commondcs-V1-ndk",
-                "libGPTEE_vendor",
                 "vendor.oplus.hardware.biometrics.fingerprintpay-V1-ndk",
                 "vendor.oplus.hardware.fido.fido2ca-V1-ndk",
                 "vendor.oplus.hardware.fido.fidoca-V1-ndk",
@@ -29608,7 +29162,6 @@ cc_prebuilt_binary {
                 "vendor.oplus.hardware.displaypanelfeature@1.0",
                 "vendor.oplus.hardware.cwb@1.0",
                 "libqservice",
-                "vendor.oplus.hardware.mmdisplayfeature@1.0",
                 "libc++",
                 "libc",
                 "libm",
@@ -30026,7 +29579,7 @@ cc_prebuilt_binary {
                 "libbinder_ndk",
                 "vendor.oplus.hardware.riskdetect-V1-ndk",
                 "libsecurity_event_dcs_vnd",
-                "libsecurity_event_olc_vnd",
+                "libolc_vnd",
                 "libc++",
                 "libc",
                 "libm",
@@ -30300,7 +29853,7 @@ cc_prebuilt_binary {
                 "libhwbinder",
                 "libutils",
                 "libbinder_ndk",
-                "libtinyxml2-v34",
+                "libtinyxml2",
                 "libc++",
                 "libc",
                 "libm",

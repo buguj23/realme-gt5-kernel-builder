@@ -44,19 +44,19 @@ def lock_fetch(file: str) -> None:
 
 def write_readme(file: str, android: str, api: int, kmi: str, note: str) -> None:
     (ROOT / "README.md").write_text(
-        f"""# Realme GT5 — kernel `{file}` + ROM ossi
+        f"""# Realme GT5 (`5.15.149`) — `{file}` + ROM `ossi`
 
-Branch for **one** Action-Build SM8550 5.15 OGKI analogue.
+Single verified branch for Realme GT5 (`RMX3820` / `RE5C33`) matching stock **`RMX3820_15.0.0.320(CN01)`**.
 
 | | |
 |---|---|
-| Analogue | `{file}` ({note}) |
+| Manifest | `{file}` ({note}) |
 | Android | {android} (API {api}) |
-| KMI | `{kmi}` |
+| KMI | `{kmi}` (gen `8`, `module_layout = 0x0222dd63`) |
 | SoC | SM8550 kalama |
 | Device | ossi / RMX3820 / RE5C33 |
-| Root | YukiSU LKM `CONFIG_KSU=m` |
-| Kernel | OEM OGKI `oplus_build_kernel.sh kalama gki` — **not** Google GKI |
+| Root | `Pure-OGKI` (zero built-in root) or `YukiSU-LKM` (`CONFIG_KSU=m`) |
+| Kernel | OEM OGKI `realme_GT5-AndroidV` — **not** Google GKI |
 | ROM | [Build instructions](docs/ROM_BUILD.md) |
 | metadata | **f2fs** (stock) |
 
@@ -64,10 +64,11 @@ Branch for **one** Action-Build SM8550 5.15 OGKI analogue.
 export FILE={file}
 scripts/00-fetch.sh
 scripts/10-patch.sh
-scripts/20-build.sh
+KSU_MODE=YukiSU-LKM scripts/20-build.sh
+scripts/30-package.sh
 ```
 
-CI: **Build Realme GT5 OGKI (KSU)** uses the matching stock baseline.
+CI: **Build Realme GT5 OGKI (`5.15.149`)** uses this exact stock baseline.
 """,
         encoding="utf-8",
     )
@@ -101,18 +102,31 @@ def main() -> int:
         "soc": "sm8550",
         "cpud": "kalama",
         "file": file,
+        "manifest_repo": spec.get("manifest_repo", "https://github.com/DestoryG/kernel_manifest"),
+        "manifest_branch": spec.get("manifest_branch", "realme/sm8550"),
         "android": android,
         "api": api,
+        "first_api_level": spec.get("first_api_level", 33),
         "kmi": kmi,
+        "kmi_generation": spec.get("kmi_generation", 8),
+        "clang": spec.get("clang", "r450784e"),
+        "module_layout": spec.get("module_layout", "0x0222dd63"),
         "build_method": "gki",
-        "build_method_meaning": "OEM OGKI flavor of oplus_build_kernel.sh, NOT Google generic GKI",
-        "root": "YukiSU LKM CONFIG_KSU=m + Kasumi + YukiZygisk",
+        "build_method_meaning": "OEM OGKI flavor of oplus_build_kernel.sh kalama gki (not Google generic GKI)",
+        "root_modes": ["Pure-OGKI", "YukiSU-LKM"],
+        "default_root_mode": "Pure-OGKI",
+        "yukisu_repo": "https://github.com/Rouyashiki/YukiSU",
+        "susfs": False,
+        "kpm": False,
+        "fake_config": False,
         "metadata_fs": spec["metadata_fs"],
         "linux_release": release,
         "coloros": spec["coloros"],
         "linux": spec["linux"],
+        "vermagic": spec["vermagic"],
         "security_patch": spec["security_patch"],
         "os_patch_level": spec["os_patch_level"],
+        "payload_metadata_sha256": spec["payload_metadata_sha256"],
         "note": note,
     }
     (ROOT / "kernel.json").write_text(json.dumps(kernel, indent=2) + "\n")

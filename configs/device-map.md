@@ -1,29 +1,15 @@
-# Realme GT5 × Action-Build 5.15 OGKI analogues
+# Realme GT5 (`5.15.149`) Source Manifest Map
 
-Action-Build workflow_dispatch 没有真我 SKU。真我 GT5（ossi / RMX3820 / RE5C33，SM8550 kalama）
-使用同 SoC 的一加 / OPPO OGKI 清单作为上游。
+This repository targets **one** verified Realme GT5 (`RMX3820` / `RE5C33` / `ossi`) source baseline matching stock **`RMX3820_15.0.0.320(CN01)`** (Android 15, SPL `2024-11-05`):
 
-构建命令（所有 SM8550 清单 README 相同）：
+| Key | Value |
+|---|---|
+| Manifest Repo | `https://github.com/DestoryG/kernel_manifest` (`realme/sm8550`) |
+| Manifest File | `manifests/realme-sm8550/realme_gt5_v.xml` (`FILE=realme_gt5_v`) |
+| Kernel Source | `realme-kernel-opensource/realme_GT5-AndroidV-common-source` (`5.15.149`) |
+| SoC / Platform | `SM8550` / `kalama` (`KMI: android13-5.15`, gen `8`) |
+| Toolchain | Hermetic Clang `r450784e` (`14.0.7`) |
+| Verified `module_layout` | `0x0222dd63` (**3260 / 3260** vmlinux symbol CRCs match stock `.ko`s) |
 
-```
-./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
-```
-
-这里的 `gki` 是 **OEM OGKI 构建 flavor**，不是 Google `ci.android.com` 通用 GKI。
-
-| FILE（Action-Build） | Android | common revision | 与 GT5 关系 |
-|---|---|---|---|
-| `oneplus_ace2_pro_b` | 16 | `oneplus/sm8550_b_16.0.0_ace_2_pro` | **默认。** 同 kalama / ColorOS，AnyKernel 已含 corot |
-| `oneplus_ace2_pro_v` | 15 | `oneplus/sm8550_v_15.0.0_ace_2_pro` | A15 ROM |
-| `oneplus_11_b` | 16 | `oneplus/sm8550_b_16.0.0_oneplus_11` | salami，同平台 |
-| `oneplus_11_v` | 15 | `oneplus/sm8550_v_15.0.0_oneplus11` | A15 |
-| `oneplus_11_u` | 14 | `oneplus/sm8550_u_*_oneplus11` | A14 5.15 |
-| `oneplus_11_t` | 13 | `oneplus/sm8550_t_*` | A13 5.15 |
-| `oneplus_ace3_{v,b}` | 15/16 | sm8550 ace3 | 同 SoC |
-| `oneplus_open_{v,b}` | 15/16 | sm8550 open | 同 SoC |
-| `oneplus_12r_{v,b}` | 15/16 | sm8550 12r | 同 SoC |
-| `oppo_find_x6_pro_{v,b}` | 15/16 | Appendix `oppo/sm8550` | ColorOS 近亲 |
-| `oppo_find_n3_{v,b}` | 15/16 | Appendix `oppo/sm8550` | 同 SoC |
-
-清单文件已 vendored：`manifests/oneplus-sm8550/`、`manifests/oppo-sm8550/`。
-5.15 补丁已从 Action-Build 拉取：`patches/bbrv3/*5.15*`、`patches/ntsync/*5.15*`、`patches/fix_5.15.legacy`。
+> Why OnePlus analogues (`oneplus_ace2_pro_v`, `oneplus_ace2_pro_b`) were removed:
+> Empirically tested `OnePlusOSS` SM8550 sources produce `module_layout = 0xbb266e1e`, which fails `insmod` against stock Realme GT5 `15.0.0.320` modules (`0x0222dd63`). Only `realme_gt5_v` (`realme_GT5-AndroidV-*`) preserves exact KMI compatibility.

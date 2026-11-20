@@ -25,7 +25,7 @@ def valid_run(run, repo, branch):
     return (run["path"].split("@", 1)[0] == ".github/workflows/" + WORKFLOW
             and run["conclusion"] == "success"
             and run["head_repository"]["full_name"].lower() == repo.lower()
-            and run["head_branch"] in ("main", branch))
+            and run["head_branch"] == branch)
 
 
 def artifact_runs(repo, branch, artifact, run_id):
@@ -34,11 +34,9 @@ def artifact_runs(repo, branch, artifact, run_id):
         require(re.fullmatch(r"[0-9]+", run_id), "kernel run ID must be numeric")
         runs = [api(f"{base}/runs/{run_id}")]
     else:
-        runs = []
-        for head in (branch, "main"):
-            query = urlencode({"branch": head, "status": "success", "per_page": 30})
-            runs.extend(api(f"{base}/workflows/{WORKFLOW}/runs?{query}")["workflow_runs"])
-        runs.sort(key=lambda run: (run["head_branch"] == branch, run["created_at"]), reverse=True)
+        query = urlencode({"branch": branch, "status": "success", "per_page": 30})
+        runs = api(f"{base}/workflows/{WORKFLOW}/runs?{query}")["workflow_runs"]
+        runs.sort(key=lambda run: run["created_at"], reverse=True)
     for run in runs:
         if not valid_run(run, repo, branch):
             continue

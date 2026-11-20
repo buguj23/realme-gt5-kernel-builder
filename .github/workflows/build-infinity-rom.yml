@@ -4,27 +4,27 @@ on:
   workflow_dispatch:
     inputs:
       kernel_run_id:
-        description: "Optional run ID of a compatible GT5 kernel build"
+        description: "Optional run ID of a compatible 5.15.149 GT5 kernel build"
         required: false
         default: ""
       kernel_file:
-        description: "Stock ROM baseline"
+        description: "Stock ROM baseline (single 5.15.149 / RMX3820_15.0.0.320 branch)"
         type: choice
         required: true
-        default: "5.15.180"
-        options: ["5.15.180", "5.15.167", "5.15.149", "5.15.123"]
+        default: "5.15.149"
+        options: ["5.15.149"]
       ksu_variant:
         description: "Kernel package variant"
         type: choice
         required: true
-        default: BakaSU
-        options: [BakaSU, SukiSU-Nova, FinaSU]
+        default: Pure-OGKI
+        options: [Pure-OGKI, YukiSU-LKM]
       source_dir:
-        description: "Android checkout on the runner (default: ~/gt5-rom/<branch>)"
+        description: "Android checkout on the runner (default: ~/gt5-rom/5.15.149)"
         required: false
         default: ""
       stock_dir:
-        description: "Verified stock input directory (default: ~/gt5-stock/<branch>)"
+        description: "Verified stock input directory (default: ~/gt5-stock/5.15.149)"
         required: false
         default: ""
       stock_slot:
@@ -103,7 +103,7 @@ jobs:
             --stock-images "$STOCK" \
             --pkg "$RUNNER_TEMP/ossi-kernel-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
             --output "$RUNNER_TEMP/ossi-rom-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" "${stock_args[@]}"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v4
         with:
           name: ossi_userdebug_${{ inputs.kernel_file }}_${{ inputs.ksu_variant }}
           path: ${{ runner.temp }}/ossi-rom-${{ github.run_id }}-${{ github.run_attempt }}/

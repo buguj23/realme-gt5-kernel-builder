@@ -6,7 +6,7 @@
 #   hardware/oplus                    Oplus HALs + sepolicy/qti
 #   hardware/pixelworks/interfaces    referenced by sm8550-common/common.mk
 #
-# usage: rom-provision-deps.sh <src-dir> [--branch lineage-23.2] [--mirror URL]
+# usage: rom-provision-deps.sh <src-dir> [--branch lineage-22.2] [--mirror URL]
 #   branch must match the manifest's Android version:
 #     A16 -> lineage-23.2,  A15 -> lineage-22.2,  A14 -> lineage-21
 # Existing trees must use the requested branch and the mirror or LineageOS origin;
@@ -15,7 +15,7 @@ set -euo pipefail
 
 SRC=${1:?usage: rom-provision-deps.sh <src-dir> [--branch BR] [--mirror URL]}
 shift || true
-BRANCH=lineage-23.2
+BRANCH=lineage-22.2
 MIRROR=https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS
 
 while [ $# -gt 0 ]; do

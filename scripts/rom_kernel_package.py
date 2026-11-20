@@ -13,7 +13,7 @@ import kmi
 from rom_inputs import baseline, require, sha256
 
 RELEASE = rb"Linux version ([0-9]+\.[0-9]+\.[0-9]+[^\x00\s]*)"
-VARIANTS = ("BakaSU", "SukiSU-Nova", "FinaSU", "local")
+VARIANTS = ("Pure-OGKI", "YukiSU-LKM", "local")
 
 
 def kernel_release(path):

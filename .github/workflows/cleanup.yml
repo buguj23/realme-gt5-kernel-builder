@@ -7,9 +7,10 @@ on:
         type: choice
         description: '清理的工作流名称'
         required: true
-        default: 'Build Realme GT5 OGKI (KSU)'
+        default: 'Build Realme GT5 OGKI (5.15.149)'
         options:
-          - Build Realme GT5 OGKI (KSU)
+          - Build Realme GT5 OGKI (5.15.149)
+          - Build Project Infinity-X (ossi)
       cache_mode:
         type: choice
         description: '缓存清理类型'

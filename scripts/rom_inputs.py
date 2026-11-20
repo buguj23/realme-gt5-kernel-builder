@@ -3,6 +3,7 @@ import base64
 from contextlib import contextmanager
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import struct
@@ -183,3 +184,34 @@ def avb_footer_key(path):
                 f"{path}: invalid vbmeta public key")
         stream.seek(offset + 256 + auth + key_offset)
         return stream.read(key_size)
+
+
+def extract_fs(image, dest, subpath=None):
+    """Extract an EROFS or ext4 partition (or subpath) using rootless host tools."""
+    dest = Path(dest)
+    dest.mkdir(parents=True, exist_ok=True)
+    with raw_image(image) as raw:
+        with Path(raw).open("rb") as stream:
+            stream.seek(1024)
+            sb = stream.read(1024)
+        require(len(sb) == 1024, f"{image}: truncated filesystem superblock")
+        target = "/" + subpath.strip("/") if subpath else None
+        if sb[:4] == b"\xe2\xe1\xf5\xe0":
+            cmd = ["fsck.erofs", f"--extract={dest}"]
+            if target:
+                cmd.append(f"--path={target}")
+            cmd.append(str(raw))
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL)
+            return "erofs"
+        if sb[56:58] == b"\x53\xef":
+            # debugfs' rdump may return zero on errors; inspect stderr after extracting.
+            result = subprocess.run(["debugfs", "-R", f'rdump {target or "/"} "{dest}"', str(raw)],
+                                    check=True, capture_output=True, text=True)
+            errors = [
+                line for line in result.stderr.splitlines()
+                if not line.startswith("debugfs ")
+                and not (os.geteuid() != 0 and "Operation not permitted while changing ownership of" in line)
+            ]
+            require(not errors, f"{image}: extraction error: {' '.join(errors[:2])}")
+            return "ext4"
+        raise ValueError(f"{image}: expected ext4 or EROFS")

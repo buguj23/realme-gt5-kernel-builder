@@ -1,63 +1,45 @@
 #!/usr/bin/env bash
-# 00-fetch.sh — sync Action-Build OEM OGKI (OnePlus/OPPO SM8550 5.15 analogue).
-# Never downloads Google generic GKI. The oplus script argument "gki" is the
-# OEM OGKI flavor: ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
+# 00-fetch.sh — Sync Realme GT5 (5.15.149) OEM OGKI tree from DestoryG/kernel_manifest (realme_gt5_v).
+# Always fetches OEM OGKI (oplus_build_kernel.sh kalama gki), never Google generic GKI.
 set -euo pipefail
 
 REPO_DIR=$(cd "$(dirname "$0")/.." && pwd)
-FILE=${FILE:-oneplus_ace2_pro_b}
-WORK=${WORK:-$HOME/gt5_kernel_ab}
-DYNAMIC_REPO=${DYNAMIC_REPO:-Numbersf}
+# shellcheck source=scripts/lib-kernel.sh
+source "$REPO_DIR/scripts/lib-kernel.sh"
+enable_local_proxy_if_up
 
-mkdir -p "$WORK/.repo/manifests" "$WORK/.repo/manifests_fallback"
+FILE=${FILE:-realme_gt5_v}
+DYNAMIC_REPO=${DYNAMIC_REPO:-DestoryG}
+MANIFEST_BRANCH=${MANIFEST_BRANCH:-realme/sm8550}
+WORK=${WORK:-$HOME/gt5_kernel_5_15_149}
 
-pick_xml() {
-  local name=$1
-  if [ -f "$REPO_DIR/manifests/oneplus-sm8550/${name}.xml" ]; then
-    cp "$REPO_DIR/manifests/oneplus-sm8550/${name}.xml" "$WORK/.repo/manifests_fallback/${name}.xml"
-    cp "$REPO_DIR/manifests/oneplus-sm8550/README.md" "$WORK/.repo/manifests_fallback/README.md"
-    echo "local-oneplus"
-    return 0
-  fi
-  if [ -f "$REPO_DIR/manifests/oppo-sm8550/${name}.xml" ]; then
-    cp "$REPO_DIR/manifests/oppo-sm8550/${name}.xml" "$WORK/.repo/manifests_fallback/${name}.xml"
-    cp "$REPO_DIR/manifests/oppo-sm8550/README.md" "$WORK/.repo/manifests_fallback/README.md" 2>/dev/null || true
-    echo "local-oppo"
-    return 0
-  fi
-  return 1
-}
+XML_SRC="$REPO_DIR/manifests/realme-sm8550/${FILE}.xml"
+[ -f "$XML_SRC" ] || { echo "unknown FILE=$FILE (expected realme_gt5_v in manifests/realme-sm8550/)" >&2; exit 1; }
 
-FOUND=""
-if pick_xml "$FILE" >/tmp/gt5_xml_src; then
-  FOUND=$(cat /tmp/gt5_xml_src)
-else
-  echo "unknown FILE=$FILE (need an SM8550 5.15 analogue: oneplus_ace2_pro_b / oneplus_11_v / ...)" >&2
-  exit 1
-fi
-
-XML_PATH="$WORK/.repo/manifests_fallback/${FILE}.xml"
-REVISION=$(grep -oP '<project[^>]+revision="\K[^"]+' "$XML_PATH" | head -n1)
-CPU=$(echo "$REVISION" | sed -E 's#^(oneplus|realme|oppo)/([^_]+).*#\2#')
-echo "FILE=$FILE analogue revision=$REVISION cpu=$CPU source=$FOUND"
-echo "Action-Build has no 真我 SKU; this is the SM8550 OGKI stand-in for Realme GT5 (ossi/RMX3820)."
+mkdir -p "$WORK/.repo/manifests_fallback"
+cp "$XML_SRC" "$WORK/.repo/manifests_fallback/${FILE}.xml"
+cp "$REPO_DIR/manifests/realme-sm8550/README.md" "$WORK/.repo/manifests_fallback/README.md"
 
 command -v repo >/dev/null || {
-  echo "repo tool missing. Install: curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo && chmod +x ~/bin/repo"
-  echo "XML staged at $XML_PATH — CI uses the same file via Numbersf/kernel_manifest."
-  exit 0
+  echo "repo tool missing. Staged manifest at $WORK/.repo/manifests_fallback/${FILE}.xml" >&2
+  exit 1
 }
 
 cd "$WORK"
-cp "$XML_PATH" ".repo/manifests/${FILE}.xml"
-if [[ "$FOUND" == local-oppo ]]; then
-  repo init -u "https://github.com/Numbersf/Kernel_Manifest_Appendix.git" -b oppo/sm8550 -m "${FILE}.xml" --depth=1 --no-clone-bundle --no-tags
+# Use the dynamic manifest repo when reachable, falling back cleanly to the vendored XML.
+if git ls-remote --heads "https://github.com/${DYNAMIC_REPO}/kernel_manifest.git" "$MANIFEST_BRANCH" 2>/dev/null | grep -q "$MANIFEST_BRANCH"; then
+  repo init -u "https://github.com/${DYNAMIC_REPO}/kernel_manifest.git" -b "$MANIFEST_BRANCH" -m "${FILE}.xml" --depth=1 --no-clone-bundle --no-tags
 else
-  repo init -u "https://github.com/${DYNAMIC_REPO}/kernel_manifest.git" -b oneplus/sm8550 -m "${FILE}.xml" --depth=1 --no-clone-bundle --no-tags
+  echo "Using vendored manifest $XML_SRC"
+  mkdir -p .repo/local_manifests
+  repo init -u "https://github.com/${DYNAMIC_REPO}/kernel_manifest.git" -b "$MANIFEST_BRANCH" -m "${FILE}.xml" --depth=1 --no-clone-bundle --no-tags 2>/dev/null || true
+  mkdir -p .repo/manifests
+  cp "$XML_SRC" ".repo/manifests/${FILE}.xml"
+  ln -sfn "manifests/${FILE}.xml" .repo/manifest.xml
 fi
 repo sync -c -j"$(nproc)" --no-clone-bundle --no-tags --force-sync
 
-# Strip GKI ABI fences so OEM OGKI + extra LKM (kernelsu.ko) can link.
+# Remove GKI protected export blockers if present, keeping OEM OGKI symbols intact.
 for dir in kernel_platform/common kernel_platform/msm-kernel; do
   [ -e "$dir/BUILD.bazel" ] || continue
   sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' "$dir/BUILD.bazel" || true
@@ -67,4 +49,5 @@ if [ -f kernel_platform/common/build.config.gki ]; then
   sed -i 's/check_defconfig//' kernel_platform/common/build.config.gki || true
 fi
 
-echo "OGKI tree ready under $WORK/kernel_platform (oplus_build_kernel.sh kalama gki)"
+SUBLEVEL=$(awk '/^SUBLEVEL =/ {print $3}' kernel_platform/common/Makefile)
+echo "OGKI 5.15.${SUBLEVEL} tree ready under $WORK/kernel_platform (manifest=${DYNAMIC_REPO}:${MANIFEST_BRANCH}/${FILE}.xml)"

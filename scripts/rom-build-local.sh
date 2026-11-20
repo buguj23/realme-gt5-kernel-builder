@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-rom-build-local.sh --src DIR --branch 5.15.180 --pkg DIR --stock-images DIR
+rom-build-local.sh --src DIR --branch 5.15.149 --pkg DIR --stock-images DIR
   [--sync] [--pool DIR] [--blobs DIR --blob-list FILE] [--output DIR]
   [--payload-metadata FILE] [--stock-layout FILE] [--stock-slot a|b] [--jobs N] [--min-free-gb N]
   [--oem-key FILE] [--avb-key FILE] [--check-only]

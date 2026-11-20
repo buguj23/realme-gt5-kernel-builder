@@ -8,13 +8,13 @@
 #   * This diagnostic prepares images only. The ROM builder signs and verifies the AVB chain.
 set -euo pipefail
 REPO_DIR=$(cd "$(dirname "$0")/.." && pwd)
-KP_DIR=${KP_DIR:-$HOME/gt5_kernel_ab/kernel_platform}
-OUT=${OUT:-$HOME/gt5_infinity_workspace/kernel_deliver}
+KP_DIR=${KP_DIR:-$HOME/gt5_kernel_5_15_149/kernel_platform}
+OUT=${OUT:-$REPO_DIR/out/artifacts}
 COLOROS=${COLOROS:-}
 if [ -z "$COLOROS" ] && [ -f "$REPO_DIR/kernel.json" ]; then
   COLOROS=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("coloros",""))' "$REPO_DIR/kernel.json")
 fi
-COLOROS=${COLOROS:-16.0.3.500}
+COLOROS=${COLOROS:-15.0.0.320}
 
 read_cat() {
   python3 - "$REPO_DIR/official/catalog.json" "$COLOROS" "$1" <<'PY'
