@@ -1,0 +1,91 @@
+name: Seed CodeLinaro Prebuilts for CN Kernel Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_file:
+        description: "Manifest XML under manifests/realme-sm8550/"
+        type: string
+        required: true
+        default: "realme_gt5_v"
+      release_tag:
+        description: "GitHub Release tag to publish compressed bare CLO seed archives"
+        type: string
+        required: true
+        default: "gt5-clo-5.15.149-seed"
+
+permissions:
+  contents: write
+
+jobs:
+  seed:
+    name: Seed CLO repos (${{ inputs.manifest_file }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install zstd
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends zstd python3
+
+      - name: Shallow-clone CodeLinaro projects from manifest
+        env:
+          FILE: ${{ inputs.manifest_file }}
+        run: |
+          set -euo pipefail
+          SEED_WORK="$RUNNER_TEMP/clo-seed"
+          OUT_STAGE="$RUNNER_TEMP/out"
+          mkdir -p "$SEED_WORK" "$OUT_STAGE"
+          python3 - "manifests/realme-sm8550/${FILE}.xml" > "$SEED_WORK/targets.tsv" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          root = ET.parse(sys.argv[1]).getroot()
+          remotes = {r.attrib["name"]: r.attrib for r in root.findall("remote")}
+          clo_fetch = remotes["clo-la"]["fetch"].rstrip("/")
+          for p in root.findall("project"):
+              if p.attrib.get("remote") == "clo-la":
+                  name = p.attrib["name"]
+                  rev = p.attrib["revision"]
+                  upstream = p.attrib.get("upstream", "refs/heads/main")
+                  print(f"{name}\t{clo_fetch}/{name}\t{rev}\t{upstream}")
+          PY
+          cat "$SEED_WORK/targets.tsv"
+          while IFS=$'\t' read -r repo_name repo_url rev upstream; do
+            dest="$SEED_WORK/${repo_name}.git"
+            mkdir -p "$(dirname "$dest")"
+            echo "Fetching $repo_name ($rev / $upstream)..."
+            git init --bare -q "$dest"
+            if ! git -C "$dest" fetch --depth=1 -q "$repo_url" "$rev" 2>/dev/null; then
+              git -C "$dest" fetch --depth=1 -q "$repo_url" "${upstream}:${upstream}"
+            fi
+            git -C "$dest" update-ref "$upstream" FETCH_HEAD 2>/dev/null || true
+            git -C "$dest" update-ref HEAD FETCH_HEAD
+            git -C "$dest" rev-parse --verify "${rev}^{commit}" >/dev/null
+            du -sh "$dest"
+          done < "$SEED_WORK/targets.tsv"
+          rm -f "$SEED_WORK/targets.tsv"
+          tar -C "$SEED_WORK" -cf - . | zstd -T0 -6 | split -b 1800M -d -a 2 - "$OUT_STAGE/gt5-clo-5.15.149-seed.tar.zst.part-"
+          (
+            cd "$OUT_STAGE"
+            sha256sum gt5-clo-*.tar.zst.part-* > SHA256SUMS.txt
+          )
+          ls -lh "$OUT_STAGE"
+
+      - name: Publish Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          FILE: ${{ inputs.manifest_file }}
+        run: |
+          set -euo pipefail
+          OUT_STAGE="$RUNNER_TEMP/out"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --cleanup-tag --yes || true
+          fi
+          gh release create "$TAG" "$OUT_STAGE"/* \
+            --title "GT5 5.15.149 CodeLinaro Prebuilts Seed (${FILE})" \
+            --notes "Automated shallow bare snapshot of clo-la repositories for fast domestic CN runner downloads."

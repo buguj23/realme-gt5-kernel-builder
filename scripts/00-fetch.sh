@@ -55,6 +55,45 @@ if [ "$INIT_OK" != 1 ]; then
   ln -sfn "manifests/${FILE}.xml" .repo/manifest.xml
 fi
 
+repo_clean_locks "$WORK"
+if [ "$(resolve_mirror_mode)" = "cn" ] && [ -z "${CLO_MIRROR:-}" ] && grep -qs 'git.codelinaro.org/clo/la' ".repo/manifests/${FILE}.xml" 2>/dev/null; then
+  CLO_SEED_TAG="${KERNEL_CLO_SEED_TAG:-gt5-clo-5.15.149-seed}"
+  CLO_SEED_REPO="${KERNEL_CLO_SEED_REPO:-buguj23/realme-gt5-kernel-builder}"
+  CLO_SEED_DIR="${KERNEL_CLO_SEED_DIR:-$HOME/.cache/gt5-clo-seed/5.15.149}"
+  if [ ! -f "$CLO_SEED_DIR/.ready" ]; then
+    CLO_DL=$(mktemp -d "${TMPDIR:-/tmp}/clo-seed.XXXXXXXX")
+    BASE_CLO="https://github.com/${CLO_SEED_REPO}/releases/download/${CLO_SEED_TAG}"
+    if download_multi_mirror "$CLO_DL/SHA256SUMS.txt" "" "${BASE_CLO}/SHA256SUMS.txt" 2>/dev/null; then
+      echo "Fetching verified CodeLinaro kernel prebuilts seed ($CLO_SEED_TAG)..."
+      CLO_PARTS=$(awk '$2 ~ /\.tar\.zst/ {print $2}' "$CLO_DL/SHA256SUMS.txt" | sort)
+      CLO_OK=1
+      for part in $CLO_PARTS; do
+        part_sha=$(awk -v f="$part" '$2 == f || $2 == ("*" f) {print $1; exit}' "$CLO_DL/SHA256SUMS.txt")
+        if ! download_multi_mirror "$CLO_DL/$part" "$part_sha" "${BASE_CLO}/${part}"; then
+          CLO_OK=0
+          break
+        fi
+      done
+      if [ "$CLO_OK" = 1 ] && [ -n "$CLO_PARTS" ]; then
+        rm -rf "${CLO_SEED_DIR}.tmp"
+        mkdir -p "${CLO_SEED_DIR}.tmp"
+        if (for part in $CLO_PARTS; do cat "$CLO_DL/$part"; done) | zstd -dc | tar -xf - -C "${CLO_SEED_DIR}.tmp"; then
+          rm -rf "$CLO_SEED_DIR"
+          mv "${CLO_SEED_DIR}.tmp" "$CLO_SEED_DIR"
+          touch "$CLO_SEED_DIR/.ready"
+        else
+          rm -rf "${CLO_SEED_DIR}.tmp"
+        fi
+      fi
+    fi
+    rm -rf "$CLO_DL"
+  fi
+  if [ -f "$CLO_SEED_DIR/.ready" ]; then
+    export CLO_MIRROR="file://${CLO_SEED_DIR}"
+    echo "Using verified local CodeLinaro seed: $CLO_MIRROR"
+  fi
+fi
+
 repo_sync_resilient "$WORK" "$(mirror_net_jobs)"
 
 # Remove GKI protected export blockers if present, keeping OEM OGKI symbols intact.

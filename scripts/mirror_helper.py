@@ -429,6 +429,11 @@ def rewrite_manifest_text(
 
     if clo_mirror:
         clo = clo_mirror.rstrip("/")
+        text = re.sub(
+            r'(<remote[^>]*name="clo-la"[^>]*fetch=")([^"]+)(")',
+            lambda m: f"{m.group(1)}{clo}{m.group(3)}",
+            text,
+        )
         for candidate in DEFAULT_CLO_MIRRORS:
             text = text.replace(f'fetch="{candidate}"', f'fetch="{clo}"')
             text = text.replace(f'fetch="{candidate}/"', f'fetch="{clo}"')
