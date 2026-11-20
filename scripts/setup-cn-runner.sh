@@ -70,10 +70,10 @@ if [ "$SKIP_APT" != 1 ]; then
   fi
 
   PKGS=(
-    aria2 ca-certificates ccache cpio curl wget git git-lfs gnupg
+    aria2 ca-certificates ccache cpio curl wget git git-lfs gh gnupg
     bc bison flex build-essential libelf-dev libssl-dev dwarves zstd lz4 xz-utils
-    clang lld llvm python3 python-is-python3 rsync unzip zip
-    erofs-utils e2fsprogs android-sdk-libsparse-utils
+    clang lld llvm python3 python-is-python3 python3-yaml rsync unzip zip
+    erofs-utils e2fsprogs android-sdk-libsparse-utils mkbootimg
   )
   if [ "$WITH_ROM_DEPS" = 1 ]; then
     PKGS+=(
@@ -84,6 +84,14 @@ if [ "$SKIP_APT" != 1 ]; then
 
   $SUDO apt-get update
   $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${PKGS[@]}"
+fi
+
+if ! command -v avbtool >/dev/null 2>&1; then
+  tmp_avb=$(mktemp)
+  python3 "$MIRROR_HELPER" download --output "$tmp_avb" --expect-token "#!/usr/bin/env python" \
+    "https://raw.githubusercontent.com/LineageOS/android_external_avb/lineage-22.2/avbtool.py"
+  $SUDO install -m 0755 "$tmp_avb" /usr/local/bin/avbtool
+  rm -f "$tmp_avb"
 fi
 
 if command -v ccache >/dev/null 2>&1; then

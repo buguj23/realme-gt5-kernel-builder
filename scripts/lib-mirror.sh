@@ -31,6 +31,8 @@ git_resilient_args() {
   )
   if [ "${MIRROR_FORCE_PROXY:-0}" != 1 ] && _is_domestic_url "$url"; then
     GIT_RESILIENT_ARGS+=(-c "http.proxy=" -c "https.proxy=")
+  elif [ "${MIRROR_IGNORE_TUNNEL:-0}" != 1 ] && timeout 1 bash -c '</dev/tcp/127.0.0.1/7890' 2>/dev/null; then
+    GIT_RESILIENT_ARGS+=(-c "http.https://github.com.proxy=socks5h://127.0.0.1:7890" -c "https.https://github.com.proxy=socks5h://127.0.0.1:7890")
   fi
 }
 

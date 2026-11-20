@@ -22,19 +22,25 @@ USER_AGENT_GIT = "git/2.43.0"
 USER_AGENT_HTTP = "Mozilla/5.0 (X11; Linux x86_64) realme-gt5-builder/1.0"
 
 DEFAULT_GITHUB_PROXIES = (
-    "https://ghfast.top/",
+    "https://cdn.gh-proxy.org/",
+    "https://edgeone.gh-proxy.org/",
+    "https://gh-proxy.org/",
+    "https://gh-proxy.com/",
     "https://v6.gh-proxy.org/",
     "https://ghproxy.net/",
+    "https://ghfast.top/",
 )
 
 # Known proxy prefixes stripped before applying a different mirror so rewrites stay idempotent.
 KNOWN_GITHUB_PROXY_PREFIXES = (
-    "https://ghfast.top/",
+    "https://cdn.gh-proxy.org/",
+    "https://edgeone.gh-proxy.org/",
+    "https://gh-proxy.org/",
+    "https://gh-proxy.com/",
     "https://v6.gh-proxy.org/",
     "https://ghproxy.net/",
-    "https://gh-proxy.com/",
+    "https://ghfast.top/",
     "https://mirror.ghproxy.com/",
-    "https://gh-proxy.org/",
     "https://hk.gh-proxy.org/",
     "https://ghproxy.cc/",
     "https://gh.llkk.cc/",
@@ -85,6 +91,7 @@ DEFAULT_CLO_MIRRORS = (
 )
 
 DOMESTIC_DIRECT_HOSTS = (
+    "ivolces.com",
     "tsinghua.edu.cn",
     "bfsu.edu.cn",
     "ustc.edu.cn",
@@ -242,7 +249,15 @@ def expand_github_url(url: str, mode: str | None = None) -> list[str]:
     return dedup
 
 
-def _build_opener(respect_proxy: bool) -> urllib.request.OpenerDirector:
+def _tunnel_proxy_url() -> str:
+    port = int(os.environ.get("MIRROR_LOCAL_PROXY_PORT", "7890"))
+    return f"http://127.0.0.1:{port}"
+
+
+def _build_opener(respect_proxy: bool, use_tunnel: bool = False) -> urllib.request.OpenerDirector:
+    if use_tunnel:
+        proxy = _tunnel_proxy_url()
+        return urllib.request.build_opener(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
     if respect_proxy:
         return urllib.request.build_opener()
     return urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -256,10 +271,14 @@ def _probe_http(
     expect_token: bytes | None = None,
 ) -> tuple[bool, int, str]:
     """Return (ok, latency_ms, reason) for one candidate URL."""
+    domestic = is_domestic_url(url)
+    use_tunnel = False
     respect_proxy = os.environ.get("MIRROR_RESPECT_PROXY", "0") == "1"
-    if is_domestic_url(url) and os.environ.get("MIRROR_FORCE_PROXY", "0") != "1":
+    if domestic and os.environ.get("MIRROR_FORCE_PROXY", "0") != "1":
         respect_proxy = False
-    opener = _build_opener(respect_proxy)
+    elif not domestic and local_tunnel_up() and not os.environ.get("GITHUB_PROXY", "").strip():
+        use_tunnel = True
+    opener = _build_opener(respect_proxy, use_tunnel=use_tunnel)
     target = url
     if is_git:
         clean = url.rstrip("/")
@@ -326,10 +345,27 @@ def rank_urls(
     return results
 
 
+def local_tunnel_up(host: str = "127.0.0.1", port: int | None = None) -> bool:
+    """Return True when a local outbound proxy or SSH -R reverse tunnel is listening."""
+    if os.environ.get("MIRROR_IGNORE_TUNNEL", "0") == "1":
+        return False
+    import socket
+    check_port = port or int(os.environ.get("MIRROR_LOCAL_PROXY_PORT", "7890"))
+    try:
+        with socket.create_connection((host, check_port), timeout=0.25):
+            return True
+    except OSError:
+        return False
+
+
 def rank_github_urls(url: str, mode: str | None = None, timeout: float = 6.0, is_git: bool = True) -> list[str]:
     resolved_mode = detect_mirror_mode(mode)
     candidates = expand_github_url(url, mode=resolved_mode)
     base = strip_github_proxy(url)
+    # If user explicitly runs an SSH -R tunnel / local Clash on 127.0.0.1:7890, prefer direct GitHub via tunnel first (zero 3rd-party leakage).
+    if local_tunnel_up() and not os.environ.get("GITHUB_PROXY", "").strip():
+        ordered = [base] + [u for u in candidates if u != base]
+        return ordered
     if resolved_mode == "cn" and os.environ.get("MIRROR_RACE_DIRECT", "0") != "1":
         domestic = [u for u in candidates if u != base]
         ranked_dom = [u for u, _ in rank_urls(domestic, timeout=timeout, is_git=is_git, reject_html=True)]
@@ -479,11 +515,16 @@ def download_multi_mirror(
 
     # 1. Primary: aria2c multi-server + multi-connection resumable transfer.
     aria2 = shutil.which("aria2c")
+    tunnel_on = local_tunnel_up() and os.environ.get("MIRROR_FORCE_PROXY", "0") != "1"
     if aria2:
         env = os.environ.copy()
+        aria2_proxy_args: list[str] = []
         if all(is_domestic_url(u) for u in active_urls) and env.get("MIRROR_FORCE_PROXY", "0") != "1":
             for k in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "all_proxy"):
                 env.pop(k, None)
+            aria2_proxy_args = ["--all-proxy="]
+        elif tunnel_on and all(not is_domestic_url(u) for u in active_urls):
+            aria2_proxy_args = [f"--all-proxy={_tunnel_proxy_url()}"]
         cmd = [
             aria2,
             "-c",
@@ -499,6 +540,7 @@ def download_multi_mirror(
             "--auto-file-renaming=false",
             "--summary-interval=0",
             "--console-log-level=warn",
+            *aria2_proxy_args,
             "-d", str(output.parent),
             "-o", output.name,
             *active_urls,
@@ -515,19 +557,22 @@ def download_multi_mirror(
     last_err = "no candidate succeeded"
     for candidate in active_urls:
         env = os.environ.copy()
+        use_tunnel = not is_domestic_url(candidate) and local_tunnel_up()
         if is_domestic_url(candidate) and env.get("MIRROR_FORCE_PROXY", "0") != "1":
             for k in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "all_proxy"):
                 env.pop(k, None)
         tmp = output.with_name(output.name + ".part")
         ok = False
         if curl:
-            res = subprocess.run(
-                [curl, "-fsSL", "--retry", "3", "--retry-delay", "2", "--connect-timeout", "15", "-C", "-", candidate, "-o", str(tmp)],
-                env=env,
-            )
+            curl_args = [curl, "-fsSL", "--retry", "3", "--retry-delay", "2", "--connect-timeout", "15", "-C", "-"]
+            if is_domestic_url(candidate) and env.get("MIRROR_FORCE_PROXY", "0") != "1":
+                curl_args += ["--noproxy", "*"]
+            elif use_tunnel:
+                curl_args += ["-x", _tunnel_proxy_url()]
+            res = subprocess.run([*curl_args, candidate, "-o", str(tmp)], env=env)
             ok = res.returncode == 0 and tmp.is_file()
         else:
-            opener = _build_opener(not is_domestic_url(candidate))
+            opener = _build_opener(not is_domestic_url(candidate), use_tunnel=use_tunnel)
             try:
                 with opener.open(urllib.request.Request(candidate, headers={"User-Agent": USER_AGENT_HTTP}), timeout=30) as resp:
                     with tmp.open("wb") as fh:

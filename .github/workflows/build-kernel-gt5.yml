@@ -224,8 +224,8 @@ jobs:
         run: |
           PKGS=(
             aria2 bc bison build-essential ccache cpio curl flex g++ git clang lld llvm
-            libelf-dev libssl-dev libxml2-utils lzip python3 rsync tar unzip zip zstd
-            erofs-utils e2fsprogs android-sdk-libsparse-utils
+            libelf-dev libssl-dev libxml2-utils lzip python3 python3-yaml rsync tar unzip zip zstd
+            erofs-utils e2fsprogs android-sdk-libsparse-utils mkbootimg gh
           )
           missing=0
           for p in "${PKGS[@]}"; do
@@ -239,6 +239,13 @@ jobs:
             sudo apt-get install -y --no-install-recommends "${PKGS[@]}"
           else
             echo "All required build packages already installed."
+          fi
+          if ! command -v avbtool >/dev/null 2>&1; then
+            tmp_avb=$(mktemp)
+            python3 scripts/mirror_helper.py download --output "$tmp_avb" --expect-token "#!/usr/bin/env python" \
+              "https://raw.githubusercontent.com/LineageOS/android_external_avb/lineage-22.2/avbtool.py"
+            sudo install -m 0755 "$tmp_avb" /usr/local/bin/avbtool
+            rm -f "$tmp_avb"
           fi
 
       - name: Install repo tool (multi-mirror)
