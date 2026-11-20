@@ -172,15 +172,30 @@ repo_sync_resilient() {
   local mode
   mode=$(resolve_mirror_mode)
 
-  local -a gh_prefixes
+  local -a gh_prefixes=()
   if [ "$mode" = "cn" ]; then
     if [ -n "${GITHUB_PROXY:-}" ]; then
-      gh_prefixes=("$GITHUB_PROXY" "https://ghfast.top/" "https://v6.gh-proxy.org/" "https://ghproxy.net/" "direct")
-    else
-      gh_prefixes=("https://ghfast.top/" "https://v6.gh-proxy.org/" "https://ghproxy.net/" "direct")
+      gh_prefixes+=("$GITHUB_PROXY")
     fi
+    local ranked_url pfx
+    while IFS= read -r ranked_url; do
+      [ -n "$ranked_url" ] || continue
+      if [[ "$ranked_url" == https://github.com/* ]]; then
+        pfx="direct"
+      else
+        pfx="${ranked_url%https://github.com/*}"
+      fi
+      if [[ " ${gh_prefixes[*]:-} " != *" ${pfx} "* ]]; then
+        gh_prefixes+=("$pfx")
+      fi
+    done < <(PYTHONPATH="$LIB_MIRROR_DIR" python3 "$MIRROR_HELPER" probe-github --url "https://github.com/DestoryG/kernel_manifest.git" --mode "$mode" --timeout 4 2>/dev/null || true)
+    for pfx in "https://cdn.gh-proxy.org/" "https://edgeone.gh-proxy.org/" "https://gh-proxy.org/" "https://v6.gh-proxy.org/" "direct"; do
+      if [[ " ${gh_prefixes[*]:-} " != *" ${pfx} "* ]]; then
+        gh_prefixes+=("$pfx")
+      fi
+    done
   else
-    gh_prefixes=("direct" "https://ghfast.top/" "https://v6.gh-proxy.org/")
+    gh_prefixes=("direct" "https://cdn.gh-proxy.org/" "https://edgeone.gh-proxy.org/" "https://gh-proxy.org/")
   fi
 
   local aosp_mirror="" lineage_mirror="" clo_mirror="${CLO_MIRROR:-}"
@@ -200,7 +215,17 @@ repo_sync_resilient() {
     echo "[repo-sync attempt $((idx + 1))/$max_attempts] jobs=$jobs github_prefix=$prefix"
     if (
       cd "$work_dir"
-      GIT_TERMINAL_PROMPT=0 repo sync -c -j"$jobs" --no-clone-bundle --no-tags --force-sync "${extra_sync_args[@]}"
+      export GIT_TERMINAL_PROMPT=0
+      export GIT_CONFIG_COUNT=4
+      export GIT_CONFIG_KEY_0="http.version"
+      export GIT_CONFIG_VALUE_0="HTTP/1.1"
+      export GIT_CONFIG_KEY_1="http.postBuffer"
+      export GIT_CONFIG_VALUE_1="524288000"
+      export GIT_CONFIG_KEY_2="http.lowSpeedLimit"
+      export GIT_CONFIG_VALUE_2="${GIT_HTTP_LOW_SPEED_LIMIT:-1024}"
+      export GIT_CONFIG_KEY_3="http.lowSpeedTime"
+      export GIT_CONFIG_VALUE_3="${GIT_HTTP_LOW_SPEED_TIME:-30}"
+      repo sync -c -j"$jobs" --no-clone-bundle --no-tags --force-sync "${extra_sync_args[@]}"
     ); then
       return 0
     fi

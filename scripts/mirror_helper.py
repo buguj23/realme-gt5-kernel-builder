@@ -25,10 +25,7 @@ DEFAULT_GITHUB_PROXIES = (
     "https://cdn.gh-proxy.org/",
     "https://edgeone.gh-proxy.org/",
     "https://gh-proxy.org/",
-    "https://gh-proxy.com/",
     "https://v6.gh-proxy.org/",
-    "https://ghproxy.net/",
-    "https://ghfast.top/",
 )
 
 # Known proxy prefixes stripped before applying a different mirror so rewrites stay idempotent.
