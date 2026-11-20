@@ -132,7 +132,11 @@ class ChinaMirrorTests(unittest.TestCase):
             manifests = Path(tmp) / ".repo" / "manifests"
             manifests.mkdir(parents=True)
             subprocess.run(["git", "init", "-q", str(manifests)], check=True)
-            subprocess.run(["git", "-C", str(manifests), "commit", "--allow-empty", "-q", "-m", "init"], check=True)
+            subprocess.run(
+                ["git", "-C", str(manifests), "-c", "user.name=test", "-c", "user.email=test@example.invalid",
+                 "commit", "--allow-empty", "-q", "-m", "init"],
+                check=True,
+            )
             subprocess.run(["git", "-C", str(manifests), "branch", "-M", "default"], check=True)
             subprocess.run(["git", "-C", str(manifests), "config", "--local", "remote.origin.url",
                             "https://cdn.gh-proxy.org/https://github.com/ProjectInfinity-X/manifest.git"], check=True)
