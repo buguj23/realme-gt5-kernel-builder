@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 from urllib.parse import urlencode
 
 from rom_inputs import baseline, require
@@ -17,8 +18,18 @@ from rom_kernel_package import VARIANTS, verify_package
 WORKFLOW = "build-kernel-gt5.yml"
 
 
+def _run_retry(cmd, retries=3, **kwargs):
+    for attempt in range(1, retries + 1):
+        try:
+            return subprocess.run(cmd, check=True, **kwargs)
+        except subprocess.CalledProcessError:
+            if attempt >= retries:
+                raise
+            time.sleep(attempt * 2)
+
+
 def api(path):
-    return json.loads(subprocess.check_output(["gh", "api", path], text=True))
+    return json.loads(_run_retry(["gh", "api", path], capture_output=True, text=True).stdout)
 
 
 def valid_run(run, repo, branch):
@@ -84,8 +95,8 @@ def main():
         try:
             with tempfile.TemporaryDirectory(prefix="ossi-kernel-download-", dir=dest.parent) as tmp:
                 temp = Path(tmp)
-                subprocess.run(["gh", "run", "download", str(run["id"]), "-R", args.repo,
-                                "-n", artifact, "-D", temp], check=True)
+                _run_retry(["gh", "run", "download", str(run["id"]), "-R", args.repo,
+                            "-n", artifact, "-D", str(temp)])
                 stage = temp / "package"
                 stage.mkdir()
                 extract_package(temp / "kernel-package.tar.zst", stage)

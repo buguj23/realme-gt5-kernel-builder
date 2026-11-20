@@ -33,9 +33,26 @@ on:
         default: auto
         options: [auto, a, b]
       run_build:
-        description: "Build and verify a userdebug ROM on the self-hosted runner"
+        description: "Build and verify a userdebug ROM on the runner"
         type: boolean
         default: false
+      runner:
+        description: "Runner for verify job (default: domestic self-hosted instance)"
+        type: choice
+        required: true
+        default: self-hosted
+        options:
+          - self-hosted
+          - ubuntu-latest
+      rom_runner:
+        description: "Runner label for full ROM build job"
+        type: choice
+        required: true
+        default: self-hosted
+        options:
+          - self-hosted
+          - gt5-rom
+          - ubuntu-latest
 
 permissions:
   actions: read
@@ -43,7 +60,9 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'self-hosted' }}
+    env:
+      MIRROR_MODE: ${{ runner.environment == 'github-hosted' && 'direct' || 'cn' }}
     outputs:
       run-id: ${{ steps.kernel.outputs.run-id }}
     steps:
@@ -68,7 +87,9 @@ jobs:
   build:
     if: ${{ inputs.run_build }}
     needs: verify
-    runs-on: [self-hosted, linux, x64, gt5-rom]
+    runs-on: ${{ inputs.rom_runner == 'gt5-rom' && fromJSON('["self-hosted","linux","x64","gt5-rom"]') || (inputs.rom_runner || 'self-hosted') }}
+    env:
+      MIRROR_MODE: ${{ runner.environment == 'github-hosted' && 'direct' || 'cn' }}
     concurrency:
       group: ossi-self-hosted-rom
       cancel-in-progress: false
@@ -77,6 +98,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Ensure domestic runner tools and ROM dependencies
+        run: |
+          if ! command -v aria2c >/dev/null 2>&1 || ! command -v fsck.erofs >/dev/null 2>&1 || ! command -v repo >/dev/null 2>&1; then
+            bash scripts/setup-cn-runner.sh --with-rom-deps
+          fi
       - name: Fetch the verified kernel artifact
         env:
           GH_TOKEN: ${{ github.token }}
@@ -97,9 +123,11 @@ jobs:
           set -euo pipefail
           SRC="${ROM_SOURCE:-$HOME/gt5-rom/$BRANCH}"
           STOCK="${STOCK_DIR:-$HOME/gt5-stock/$BRANCH}"
+          source scripts/lib-mirror.sh
+          repo_clean_locks "$SRC"
           stock_args=()
           if [[ "$STOCK_SLOT" != auto ]]; then stock_args+=(--stock-slot "$STOCK_SLOT"); fi
-          bash scripts/rom-build-local.sh --sync --src "$SRC" --branch "$BRANCH" \
+          bash scripts/rom-build-local.sh --sync --auto-fetch-stock --src "$SRC" --branch "$BRANCH" \
             --stock-images "$STOCK" \
             --pkg "$RUNNER_TEMP/ossi-kernel-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
             --output "$RUNNER_TEMP/ossi-rom-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" "${stock_args[@]}"

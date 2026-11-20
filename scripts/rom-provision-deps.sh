@@ -13,18 +13,31 @@
 # validation is local only and never switches branches or rewrites user trees.
 set -euo pipefail
 
+HERE=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=scripts/lib-mirror.sh
+source "$HERE/lib-mirror.sh"
+
 SRC=${1:?usage: rom-provision-deps.sh <src-dir> [--branch BR] [--mirror URL]}
 shift || true
 BRANCH=lineage-22.2
-MIRROR=https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS
+MIRROR_EXPLICIT=0
+MIRROR=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --branch) BRANCH=${2:?}; shift 2 ;;
-    --mirror) MIRROR=${2:?}; shift 2 ;;
+    --mirror) MIRROR=${2:?}; MIRROR_EXPLICIT=1; shift 2 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
+
+if [ "$MIRROR_EXPLICIT" = 0 ]; then
+  if [ "$(resolve_mirror_mode)" = "cn" ]; then
+    MIRROR="$(PYTHONPATH="$HERE" python3 "$HERE/mirror_helper.py" probe-lineage | sed 's:/*$::')/LineageOS"
+  else
+    MIRROR="https://github.com/LineageOS"
+  fi
+fi
 
 ensure() { # <path> <repo>
   local path=$1 repo=$2 top branch origin expected="${MIRROR%/}/$2"
@@ -50,18 +63,31 @@ ensure() { # <path> <repo>
       || { echo "  FAILED  $path has no origin URL" >&2; return 1; }
     origin=${origin%/}
     origin=${origin%.git}
+    origin=$(PYTHONPATH="$HERE" python3 -c 'import sys, mirror_helper as m; print(m.strip_github_proxy(sys.argv[1]))' "$origin")
     case "$origin" in
-      "$expected"|"https://github.com/LineageOS/$repo"|"git@github.com:LineageOS/$repo"|"ssh://git@github.com/LineageOS/$repo") ;;
-      *) echo "  FAILED  $path origin does not match the expected LineageOS repository or mirror" >&2; return 1 ;;
+      "$expected"|"https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS/$repo"|"https://mirrors.bfsu.edu.cn/git/lineageOS/LineageOS/$repo"|"https://github.com/LineageOS/$repo"|"git@github.com:LineageOS/$repo"|"ssh://git@github.com/LineageOS/$repo") ;;
+      *) echo "  FAILED  $path origin does not match the expected LineageOS repository or mirror ($origin)" >&2; return 1 ;;
     esac
     echo "  present $path"
     return 0
   fi
   mkdir -p "$(dirname "$SRC/$path")"
   echo "  clone   $path ($repo @ $BRANCH)"
-  git clone --depth=1 -b "$BRANCH" -q "$MIRROR/$repo.git" "$SRC/$path" ||
-    git clone --depth=1 -b "$BRANCH" -q "https://github.com/LineageOS/$repo.git" "$SRC/$path" \
-    || { echo "  FAILED  $repo @ $BRANCH" >&2; return 1; }
+  local cloned=0
+  for m_base in "$MIRROR" \
+    "https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS" \
+    "https://mirrors.bfsu.edu.cn/git/lineageOS/LineageOS"; do
+    git_resilient_args "${m_base%/}/$repo.git"
+    if GIT_TERMINAL_PROMPT=0 git "${GIT_RESILIENT_ARGS[@]}" clone --depth=1 -b "$BRANCH" -q "${m_base%/}/$repo.git" "$SRC/$path" 2>/dev/null; then
+      cloned=1
+      break
+    fi
+    rm -rf "$SRC/$path"
+  done
+  if [ "$cloned" != 1 ]; then
+    git_clone_resilient "https://github.com/LineageOS/$repo.git" "$SRC/$path" --depth=1 -b "$BRANCH" -q \
+      || { echo "  FAILED  $repo @ $BRANCH" >&2; return 1; }
+  fi
 }
 
 case "$BRANCH" in

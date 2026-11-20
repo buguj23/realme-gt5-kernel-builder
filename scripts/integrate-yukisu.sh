@@ -65,11 +65,13 @@ if [ ! -f "$KDIR/usr/include/linux/unistd.h" ]; then
   make -C "$C" O="$KDIR" "${KERNEL_MAKE_ARGS[@]}" headers_install
 fi
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib-mirror.sh"
+
 if [ ! -d "$YUKI_DIR/.git" ]; then
   mkdir -p "$(dirname "$YUKI_DIR")"
-  git clone --branch "$YUKI_REF" "$YUKI_REPO" "$YUKI_DIR"
+  git_clone_resilient "$YUKI_REPO" "$YUKI_DIR" --branch "$YUKI_REF" --depth 1
 elif [ "${YUKI_SKIP_FETCH:-0}" != 1 ]; then
-  git -C "$YUKI_DIR" fetch origin "$YUKI_REF"
+  git_fetch_resilient "$YUKI_DIR" "$YUKI_REPO" "$YUKI_REF" --depth 1
   git -C "$YUKI_DIR" checkout -q FETCH_HEAD
 fi
 

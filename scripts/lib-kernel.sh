@@ -2,7 +2,12 @@
 # lib-kernel.sh — shared toolchain, proxy, and Kconfig helpers for Realme GT5 (5.15.149).
 # Source from 00-fetch.sh, 10-patch.sh, 20-build.sh, integrate-yukisu.sh, and CI.
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib-mirror.sh"
+
 enable_local_proxy_if_up() {
+  if [ "$(resolve_mirror_mode)" = "cn" ] && [ "${MIRROR_ENABLE_LOCAL_PROXY:-0}" != 1 ]; then
+    return 0
+  fi
   if [ -z "${http_proxy:-}" ] && timeout 1 bash -c '</dev/tcp/127.0.0.1/7890' 2>/dev/null; then
     export http_proxy="http://127.0.0.1:7890"
     export https_proxy="http://127.0.0.1:7890"
@@ -49,13 +54,9 @@ detect_pahole_bin() {
 }
 
 detect_ccache_bin() {
-  local repo_dir=$1
+  local _unused=${1:-}
   if command -v ccache >/dev/null 2>&1; then
     command -v ccache
-    return 0
-  fi
-  if [ -x "$repo_dir/lib/ccache" ]; then
-    echo "$repo_dir/lib/ccache"
     return 0
   fi
   return 1

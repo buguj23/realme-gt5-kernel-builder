@@ -32,24 +32,41 @@ done
 [ -n "$DIR" ] && [ -n "$BRANCH" ] || { echo "--dir and --branch are required" >&2; exit 2; }
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-export REPO_URL=${REPO_URL:-https://mirrors.tuna.tsinghua.edu.cn/git/git-repo}
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib-mirror.sh"
+ensure_repo_bin >/dev/null
+export REPO_URL=${REPO_URL:-$(ensure_repo_url)}
 
 mkdir -p "$DIR"
 cd "$DIR"
 DIR=$PWD
+repo_clean_locks "$DIR"
 
 if [ ! -d .repo ]; then
   echo "[1/3] repo init $MANIFEST ($BRANCH)"
-  repo init -u "$MANIFEST" -b "$BRANCH" --depth=1 --no-clone-bundle
+  mapfile -t MANIFEST_CANDIDATES < <(PYTHONPATH="$HERE" python3 "$HERE/mirror_helper.py" probe-github --url "$MANIFEST" --mode "${MIRROR_MODE:-auto}")
+  [ "${#MANIFEST_CANDIDATES[@]}" -gt 0 ] || MANIFEST_CANDIDATES=("$MANIFEST")
+  INIT_OK=0
+  for m_url in "${MANIFEST_CANDIDATES[@]}"; do
+    if GIT_TERMINAL_PROMPT=0 repo init -u "$m_url" -b "$BRANCH" --depth=1 --no-clone-bundle --no-tags; then
+      INIT_OK=1
+      break
+    fi
+    rm -rf .repo
+  done
+  [ "$INIT_OK" = 1 ] || { echo "repo init failed for $MANIFEST ($BRANCH)" >&2; exit 1; }
 fi
 python3 "$HERE/rom-check-inputs.py" source --src "$DIR" --manifest "$MANIFEST" --source-branch "$BRANCH"
 
 echo "[2/3] point remotes at domestic mirrors"
-LIB_ARGS=()
-[ -n "$GITHUB_PROXY" ] && LIB_ARGS+=(--github-proxy "$GITHUB_PROXY")
+LIB_ARGS=(--aosp auto --lineage auto)
+if [ -n "$GITHUB_PROXY" ]; then
+  LIB_ARGS+=(--github-proxy "$GITHUB_PROXY")
+elif [ "$(resolve_mirror_mode)" = "cn" ]; then
+  LIB_ARGS+=(--github-proxy auto)
+fi
 python3 "$HERE/rom-manifest-mirror.py" "$DIR" "${LIB_ARGS[@]}"
 
 echo "[3/3] repo sync -j$JOBS"
-repo sync -j"$JOBS" --no-clone-bundle --no-tags
+repo_sync_resilient "$DIR" "$JOBS"
 
 echo "sync done: $(du -sh "$DIR" | cut -f1) in $DIR"

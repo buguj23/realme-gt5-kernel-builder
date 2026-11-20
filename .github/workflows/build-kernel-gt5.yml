@@ -91,6 +91,24 @@ on:
         description: "Disable ccache & ThinLTO cache"
         required: true
         default: false
+      runner:
+        type: choice
+        description: "Target runner (default: domestic self-hosted preemptible instance)"
+        required: true
+        default: self-hosted
+        options:
+          - self-hosted
+          - ubuntu-latest
+      clean_workdir:
+        type: boolean
+        description: "Wipe kernel_workspace before sync (leave false on preemptible instances to resume cleanly)"
+        required: true
+        default: false
+      verify_stock_kmi:
+        type: boolean
+        description: "Fetch verified RMX3820_15.0.0.320 kernel/DLKM baseline and verify 3260 stock symbol CRCs"
+        required: true
+        default: true
 
 permissions:
   contents: read
@@ -102,13 +120,15 @@ concurrency:
 jobs:
   build:
     name: GT5 5.15.149 (${{ inputs.KSU_VARIANT }}, ${{ inputs.LTO }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'self-hosted' }}
     env:
       REPO_DIR: ${{ github.workspace }}
-      WORK: ${{ github.workspace }}/kernel_workspace
-      KP_DIR: ${{ github.workspace }}/kernel_workspace/kernel_platform
-      CCACHE_DIR: ${{ github.workspace }}/kernel_workspace/.ccache
-      THINLTO_CACHE_DIR: ${{ inputs.BUILD_NOCACHE && '' || format('{0}/kernel_workspace/.thinlto-cache', github.workspace) }}
+      WORK: ${{ runner.environment == 'github-hosted' && format('{0}/kernel_workspace', github.workspace) || format('{0}/gt5_kernel_5_15_149', env.HOME) }}
+      KP_DIR: ${{ runner.environment == 'github-hosted' && format('{0}/kernel_workspace/kernel_platform', github.workspace) || format('{0}/gt5_kernel_5_15_149/kernel_platform', env.HOME) }}
+      CCACHE_DIR: ${{ runner.environment == 'github-hosted' && format('{0}/kernel_workspace/.ccache', github.workspace) || format('{0}/.cache/gt5-kernel-5.15.149/ccache', env.HOME) }}
+      THINLTO_CACHE_DIR: ${{ inputs.BUILD_NOCACHE && '' || (runner.environment == 'github-hosted' && format('{0}/kernel_workspace/.thinlto-cache', github.workspace) || format('{0}/.cache/gt5-kernel-5.15.149/thinlto', env.HOME)) }}
+      STOCK_CACHE_DIR: ${{ runner.environment == 'github-hosted' && format('{0}/kernel_workspace/.stock-15.0.0.320', github.workspace) || format('{0}/.cache/gt5-stock/15.0.0.320', env.HOME) }}
+      MIRROR_MODE: ${{ runner.environment == 'github-hosted' && 'direct' || 'cn' }}
       USE_CCACHE: ${{ inputs.BUILD_NOCACHE && '0' || '1' }}
       FILE: realme_gt5_v
       DYNAMIC_REPO: ${{ inputs.DYNAMIC_REPO }}
@@ -140,6 +160,7 @@ jobs:
         run: python3 -m unittest discover -s tests -v
 
       - name: Maximize build space
+        if: runner.environment == 'github-hosted'
         env:
           BUILD_MOUNT_PATH: ${{ github.workspace }}
           REMOVE_DOTNET: "true"
@@ -150,17 +171,24 @@ jobs:
         run: bash scripts/maximize-build-space.sh
 
       - name: Re-checkout after storage resize
+        if: runner.environment == 'github-hosted'
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Configure Git
+      - name: Configure Git and clean stale preemptible locks
         run: |
+          if [ "${{ inputs.clean_workdir }}" = "true" ]; then
+            rm -rf "$WORK"
+          fi
+          mkdir -p "$WORK" "$CCACHE_DIR" "${THINLTO_CACHE_DIR:-$WORK/.tmp-lto}"
+          source scripts/lib-mirror.sh
+          repo_clean_locks "$WORK"
           git config --global user.name "gt5-builder"
           git config --global user.email "builder@users.noreply.github.com"
 
-      - name: Restore ccache and ThinLTO caches
-        if: ${{ !inputs.BUILD_NOCACHE }}
+      - name: Restore ccache and ThinLTO caches (GitHub-hosted only)
+        if: ${{ !inputs.BUILD_NOCACHE && runner.environment == 'github-hosted' }}
         uses: actions/cache@v4
         with:
           path: |
@@ -170,20 +198,32 @@ jobs:
           restore-keys: |
             gt5-5.15.149-${{ inputs.LTO }}-${{ inputs.FAST_BUILD }}-
 
-      - name: Install build dependencies
+      - name: Install build dependencies (CN mirror aware)
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            bc bison build-essential ccache cpio curl flex g++ git clang lld llvm \
+          PKGS=(
+            aria2 bc bison build-essential ccache cpio curl flex g++ git clang lld llvm
             libelf-dev libssl-dev libxml2-utils lzip python3 rsync tar unzip zip zstd
+            erofs-utils e2fsprogs android-sdk-libsparse-utils
+          )
+          missing=0
+          for p in "${PKGS[@]}"; do
+            dpkg -s "$p" >/dev/null 2>&1 || { missing=1; break; }
+          done
+          if [ "$missing" = 1 ]; then
+            if [ "${MIRROR_MODE:-auto}" = "cn" ]; then
+              sudo python3 scripts/mirror_helper.py configure-apt
+            fi
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends "${PKGS[@]}"
+          else
+            echo "All required build packages already installed."
+          fi
 
-      - name: Install repo tool
+      - name: Install repo tool (multi-mirror)
         run: |
-          mkdir -p "$HOME/.local/bin"
-          curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo -o "$HOME/.local/bin/repo"
-          chmod +x "$HOME/.local/bin/repo"
+          python3 scripts/mirror_helper.py ensure-repo --output "$HOME/.local/bin/repo" --mode "$MIRROR_MODE"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Fetch OEM OGKI sources (realme_gt5_v / 5.15.149)
@@ -208,10 +248,28 @@ jobs:
       - name: Verify kernel-package integrity
         run: |
           PKG_DIR="$WORK/verify-pkg"
+          rm -rf "$PKG_DIR"
           mkdir -p "$PKG_DIR"
           tar --zstd -xf out/artifacts/kernel-package/kernel-package.tar.zst -C "$PKG_DIR"
           python3 scripts/rom_kernel_package.py verify "$PKG_DIR" \
             --branch 5.15.149 --variant "${{ inputs.KSU_VARIANT }}" --commit "${{ github.sha }}"
+
+      - name: Verify CRCs against stock RMX3820_15.0.0.320 modules
+        if: ${{ inputs.verify_stock_kmi && !inputs.ZRAM_LZ4KD && !inputs.CCM && !inputs.NETFILTER && !inputs.DROID_SPACES }}
+        run: |
+          bash scripts/fetch-stock.sh --mode kernel --dest "$STOCK_CACHE_DIR"
+          MOD_DIR="$WORK/stock-ko-verify"
+          PKG_DIR="$WORK/verify-pkg"
+          rm -rf "$MOD_DIR"
+          mkdir -p "$MOD_DIR"
+          python3 scripts/rom_modules.py stock \
+            --branch 5.15.149 \
+            "$STOCK_CACHE_DIR" \
+            "$MOD_DIR/staged"
+          python3 scripts/kmi.py symvers "$PKG_DIR/Module.symvers"
+          python3 scripts/kmi.py image "$PKG_DIR/Image" --crc 0x0222dd63
+          python3 scripts/40-verify-crc.py "$PKG_DIR/Module.symvers" "$MOD_DIR/staged" \
+            --recursive --allow-ko-providers
 
       - name: Upload AnyKernel3 ZIP
         uses: actions/upload-artifact@v4

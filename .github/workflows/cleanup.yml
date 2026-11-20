@@ -20,7 +20,6 @@ on:
           - none
           - all
           - ccache
-          - apt-cache
           - thinlto-cache
       count:
         description: '最多处理的运行条数（0 = 不限制，所有状态均计数）'
@@ -64,6 +63,14 @@ on:
         required: false
         type: boolean
         default: true
+      runner:
+        type: choice
+        description: '执行清理的 Runner（默认使用已注册的国内 self-hosted）'
+        required: true
+        default: self-hosted
+        options:
+          - self-hosted
+          - ubuntu-latest
 
 permissions:
   actions: write
@@ -75,7 +82,7 @@ concurrency:
 
 jobs:
   cleanup:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'self-hosted' }}
     timeout-minutes: 30
     if: ${{ inputs.cache_mode != 'none' || inputs.self_cleanup || inputs.cancel_all || inputs.delete_failed || inputs.delete_success || inputs.delete_cancelled || inputs.target_run_numbers != '' || inputs.target_run_ids != '' }}
     env:
@@ -128,9 +135,8 @@ jobs:
             const mode = process.env.MODE;
             const rules = {
               'all': () => true,
-              'ccache': k => k.startsWith('ccache-'),
-              'apt-cache': k => k.includes('apt-cache') || k.startsWith('apt-'),
-              'thinlto-cache': k => k.startsWith('thinlto-'),
+              'ccache': k => k.startsWith('gt5-') || k.startsWith('ccache-'),
+              'thinlto-cache': k => k.startsWith('gt5-') || k.startsWith('thinlto-'),
             };
             const match = rules[mode];
 

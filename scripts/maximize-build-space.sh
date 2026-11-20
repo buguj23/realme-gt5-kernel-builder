@@ -2,6 +2,13 @@
 
 set -euo pipefail
 
+if [ "${FORCE_MAXIMIZE_BUILD_SPACE:-0}" != 1 ]; then
+  if [ "${RUNNER_ENVIRONMENT:-}" != "github-hosted" ] || [ ! -d /mnt ] || [ -z "${GITHUB_WORKSPACE:-}" ]; then
+    echo "Skipping maximize-build-space.sh (Azure/GitHub-hosted ephemeral VM only; current RUNNER_ENVIRONMENT=${RUNNER_ENVIRONMENT:-local})."
+    exit 0
+  fi
+fi
+
 ROOT_RESERVE_MB="${ROOT_RESERVE_MB:-1024}"
 TEMP_RESERVE_MB="${TEMP_RESERVE_MB:-100}"
 SWAP_SIZE_MB="${SWAP_SIZE_MB:-4096}"

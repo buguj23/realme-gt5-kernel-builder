@@ -41,9 +41,24 @@ One-step local wrapper:
 kernel/build-kernel-local.sh --fetch --patch --mode YukiSU-LKM
 ```
 
-GitHub Actions workflows:
+## Domestic Cloud / Preemptible Runner Setup (`抢占实例`)
+
+All network-facing scripts (`00-fetch.sh`, `10-patch.sh`, `integrate-yukisu.sh`, `rom-sync.sh`, `rom-provision-deps.sh`, `rom-build-local.sh`, `fetch-stock.sh`) use [`scripts/mirror_helper.py`](scripts/mirror_helper.py) and [`scripts/lib-mirror.sh`](scripts/lib-mirror.sh) to probe live China mirrors (TUNA / BFSU / USTC / NJU / Aliyun / Tencent / Huawei / GitHub acceleration proxies), download multi-threaded with `aria2c`, and cleanly resume after preemptions or intermittent WAN drops.
+
+```bash
+# 1. Bootstrap Ubuntu packages (auto-switches APT to fastest live CN mirror), aria2, repo, ccache
+sudo bash scripts/setup-cn-runner.sh            # Kernel runner
+sudo bash scripts/setup-cn-runner.sh --with-rom-deps  # Kernel + Infinity-X ROM runner
+
+# 2. Fetch verified RMX3820_15.0.0.320 stock baseline from release `rmx3820-15.0.0.320-stock`
+scripts/fetch-stock.sh --mode kernel   # ~97 MiB: boot/init_boot/vendor_boot/dtbo/DLKMs/payload_metadata
+scripts/fetch-stock.sh --mode full     # Full partition set for ROM staging & extract-files
+```
+
+GitHub Actions workflows default to `self-hosted` (`MIRROR_MODE=cn`) with `ubuntu-latest` selectable as an input:
 - [`.github/workflows/build-kernel-gt5.yml`](.github/workflows/build-kernel-gt5.yml) (`Build Realme GT5 OGKI (5.15.149)`)
 - [`.github/workflows/build-infinity-rom.yml`](.github/workflows/build-infinity-rom.yml) (`Build Project Infinity-X (ossi)`)
+- [`.github/workflows/cleanup.yml`](.github/workflows/cleanup.yml) (`Workflow and Cache Cleanup`)
 
 ## Documentation
 

@@ -10,8 +10,10 @@ build/
 out/artifacts/*
 *.img
 *.zip
-!ZRAM.zip
-official/stock/
+official/stock/*
+!official/stock/*/
+official/stock/*/*
+!official/stock/*/payload_metadata.bin
 
 # Python caches
 __pycache__/

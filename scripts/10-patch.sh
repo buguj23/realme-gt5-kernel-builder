@@ -77,7 +77,7 @@ fi
 
 if [ "$APPLY_REKERNEL" = 1 ]; then
   if [ ! -d "$WORK/Re-Kernel/.git" ]; then
-    git clone --depth 1 https://github.com/Sakion-Team/Re-Kernel.git "$WORK/Re-Kernel"
+    git_clone_resilient https://github.com/Sakion-Team/Re-Kernel.git "$WORK/Re-Kernel" --depth 1
   fi
   mkdir -p "$C/drivers/rekernel"
   cp -a "$WORK/Re-Kernel/LKM-Source/." "$C/drivers/rekernel/"
@@ -89,7 +89,7 @@ fi
 
 if [ "$APPLY_ZRAM" = 1 ]; then
   if [ ! -d "$WORK/SukiSU_patch/.git" ]; then
-    git clone --depth 1 https://github.com/ShirkNeko/SukiSU_patch.git "$WORK/SukiSU_patch"
+    git_clone_resilient https://github.com/ShirkNeko/SukiSU_patch.git "$WORK/SukiSU_patch" --depth 1
   fi
   S=$WORK/SukiSU_patch/other/zram
   cp -r "$S"/lz4k/include/linux/* "$C/include/linux/"
@@ -102,7 +102,7 @@ fi
 
 if [ "$APPLY_BBG" = 1 ]; then
   if [ ! -d "$WORK/Baseband-guard/.git" ]; then
-    git clone --depth 1 https://github.com/vc-teahouse/Baseband-guard.git "$WORK/Baseband-guard"
+    git_clone_resilient https://github.com/vc-teahouse/Baseband-guard.git "$WORK/Baseband-guard" --depth 1
   fi
   if ! grep -q 'Baseband-guard' "$C/security/Makefile" 2>/dev/null; then
     (cd "$C" && bash "$WORK/Baseband-guard/setup.sh")

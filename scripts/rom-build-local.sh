@@ -12,10 +12,12 @@ EOF
 }
 
 HERE=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=scripts/lib-mirror.sh
+source "$HERE/lib-mirror.sh"
 REPO_ROOT=$(cd "$HERE/.." && pwd)
 SRC=""; BR=""; PKG=""; STOCK=""; OEM_KEY=""; AVB_KEY=""
 BLOBS=""; BLOB_LIST=""; POOL=""; OUT=""; METADATA=""; LAYOUT=""; STOCK_SLOT=""
-LUNCH=""; DEPS_INPUT=""; SYNC=0; CHECK=0; JOBS=$(nproc); MIN_FREE=120
+LUNCH=""; DEPS_INPUT=""; SYNC=0; CHECK=0; AUTO_FETCH_STOCK=0; JOBS=$(nproc); MIN_FREE=120
 while (( $# > 0 )); do
   case "$1" in
     --src) SRC=$2; shift 2 ;;
@@ -37,6 +39,7 @@ while (( $# > 0 )); do
     --min-free-gb) MIN_FREE=$2; shift 2 ;;
     --sync) SYNC=1; shift ;;
     --check-only) CHECK=1; shift ;;
+    --auto-fetch-stock) AUTO_FETCH_STOCK=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -52,8 +55,14 @@ if [ -n "$BLOBS" ]; then BLOBS=$(realpath -e -- "$BLOBS"); fi
 if [ -n "$BLOB_LIST" ]; then BLOB_LIST=$(realpath -e -- "$BLOB_LIST"); fi
 if [ -n "$POOL" ]; then POOL=$(realpath -e -- "$POOL"); fi
 PKG=$(realpath -e -- "$PKG")
+if [ "$AUTO_FETCH_STOCK" = 1 ] && [ ! -f "$STOCK/payload_metadata.bin" ]; then
+  bash "$HERE/fetch-stock.sh" --mode full --dest "$STOCK"
+fi
 STOCK=$(realpath -e -- "$STOCK")
 if [ -n "$OEM_KEY" ]; then OEM_KEY=$(realpath -e -- "$OEM_KEY"); fi
+if [ -z "$METADATA" ] && [ ! -f "$STOCK/payload_metadata.bin" ] && [ -f "$REPO_ROOT/official/stock/15.0.0.320/payload_metadata.bin" ]; then
+  METADATA="$REPO_ROOT/official/stock/15.0.0.320/payload_metadata.bin"
+fi
 METADATA=$(realpath -e -- "${METADATA:-$STOCK/payload_metadata.bin}")
 LAYOUT=$(realpath -e -- "${LAYOUT:-$STOCK/super-layout.json}")
 SRC=$(realpath -m -- "$SRC")
@@ -180,7 +189,7 @@ if [ ! -f "$TOOLS/extract_utils/main.py" ]; then
     git init -q "$TOOLS"
   fi
   if ! git -C "$TOOLS" cat-file -e "$REV^{commit}" 2>/dev/null; then
-    git -C "$TOOLS" fetch --depth=1 https://github.com/LineageOS/android_tools_extract-utils.git "$REV"
+    git_fetch_resilient "$TOOLS" "https://github.com/LineageOS/android_tools_extract-utils.git" "$REV" --depth=1
   fi
   git -C "$TOOLS" checkout --quiet --detach "$REV"
 fi
