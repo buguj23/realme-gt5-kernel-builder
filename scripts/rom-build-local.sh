@@ -95,7 +95,7 @@ if [ "$CHECK" = 0 ]; then
   [ "$FREE" -ge "$MIN_FREE" ] || fail "not enough disk space: $FREE GiB free, need $MIN_FREE"
 fi
 
-WORK=$(mktemp -d -p "$SRC" .ossi-build.XXXXXXXX 2>/dev/null || mktemp -d -p "${TMPDIR:-/tmp}" ossi-build.XXXXXXXX)
+WORK=$(mktemp -d -p "$(dirname "$SRC")" ".ossi-work.$(basename "$SRC").XXXXXXXX" 2>/dev/null || mktemp -d -p "${TMPDIR:-/tmp}" ossi-build.XXXXXXXX)
 VENDOR_BACKUP=""
 VENDOR_READY=0
 VENDOR_GENERATING=0
@@ -221,7 +221,7 @@ if [ -d "$SRC/vendor/realme/ossi" ]; then
   if [ -f "$SRC/vendor/realme/ossi/.ossi-generated" ]; then
     previous="$WORK/vendor-previous"
   else
-    previous=$(mktemp -d -p "$SRC/.ossi" vendor-previous.XXXXXXXX)
+    previous=$(mktemp -d -p "$WORK" vendor-previous.XXXXXXXX)
     rmdir "$previous"
   fi
   mv -T -- "$SRC/vendor/realme/ossi" "$previous"
@@ -237,6 +237,10 @@ VENDOR_GENERATING=1
 python3 "$HERE/rom-check-inputs.py" vendor --vendor "$SRC/vendor/realme/ossi" --blob-list "$BLOB_LIST"
 touch "$SRC/vendor/realme/ossi/.ossi-generated"
 VENDOR_READY=1
+if [ -n "$VENDOR_BACKUP" ] && [ -f "$VENDOR_BACKUP/.ossi-generated" ]; then
+  rm -rf -- "$VENDOR_BACKUP"
+  VENDOR_BACKUP=""
+fi
 
 (
   cd "$SRC"
