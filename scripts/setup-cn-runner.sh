@@ -73,7 +73,7 @@ if [ "$SKIP_APT" != 1 ]; then
     aria2 ca-certificates ccache cpio curl wget git git-lfs gh gnupg lzip
     bc bison flex build-essential libelf-dev libssl-dev dwarves zstd lz4 xz-utils
     clang lld llvm python3 python-is-python3 python3-yaml rsync unzip zip
-    erofs-utils e2fsprogs android-sdk-libsparse-utils mkbootimg
+    device-tree-compiler erofs-utils e2fsprogs android-sdk-libsparse-utils mkbootimg
   )
   if [ "$WITH_ROM_DEPS" = 1 ]; then
     PKGS+=(
@@ -92,6 +92,20 @@ if ! command -v avbtool >/dev/null 2>&1; then
     "https://raw.githubusercontent.com/LineageOS/android_external_avb/lineage-22.2/avbtool.py"
   $SUDO install -m 0755 "$tmp_avb" /usr/local/bin/avbtool
   rm -f "$tmp_avb"
+fi
+
+if ! mkbootimg --help >/dev/null 2>&1; then
+  $SUDO mkdir -p /usr/local/share/mkbootimg/gki
+  tmp_mk=$(mktemp)
+  tmp_gki=$(mktemp)
+  python3 "$MIRROR_HELPER" download --output "$tmp_mk" --expect-token "#!/usr/bin/env python" \
+    "https://raw.githubusercontent.com/LineageOS/android_system_tools_mkbootimg/lineage-22.2/mkbootimg.py"
+  python3 "$MIRROR_HELPER" download --output "$tmp_gki" \
+    "https://raw.githubusercontent.com/LineageOS/android_system_tools_mkbootimg/lineage-22.2/gki/generate_gki_certificate.py"
+  $SUDO install -m 0755 "$tmp_mk" /usr/local/share/mkbootimg/mkbootimg.py
+  $SUDO install -m 0644 "$tmp_gki" /usr/local/share/mkbootimg/gki/generate_gki_certificate.py
+  $SUDO ln -sfn /usr/local/share/mkbootimg/mkbootimg.py /usr/local/bin/mkbootimg
+  rm -f "$tmp_mk" "$tmp_gki"
 fi
 
 if command -v ccache >/dev/null 2>&1; then

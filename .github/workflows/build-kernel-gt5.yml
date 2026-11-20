@@ -195,9 +195,6 @@ jobs:
             fi
           fi
 
-      - name: Run unit tests
-        run: python3 -m unittest discover -s tests -v
-
       - name: Maximize build space
         if: runner.environment == 'github-hosted'
         env:
@@ -244,7 +241,7 @@ jobs:
           PKGS=(
             aria2 bc bison build-essential ccache cpio curl flex g++ git clang lld llvm
             libelf-dev libssl-dev libxml2-utils lzip python3 python3-yaml rsync tar unzip zip zstd
-            erofs-utils e2fsprogs android-sdk-libsparse-utils mkbootimg gh
+            device-tree-compiler erofs-utils e2fsprogs android-sdk-libsparse-utils mkbootimg gh
           )
           missing=0
           for p in "${PKGS[@]}"; do
@@ -266,6 +263,22 @@ jobs:
             sudo install -m 0755 "$tmp_avb" /usr/local/bin/avbtool
             rm -f "$tmp_avb"
           fi
+          if ! mkbootimg --help >/dev/null 2>&1; then
+            sudo mkdir -p /usr/local/share/mkbootimg/gki
+            tmp_mk=$(mktemp)
+            tmp_gki=$(mktemp)
+            python3 scripts/mirror_helper.py download --output "$tmp_mk" --expect-token "#!/usr/bin/env python" \
+              "https://raw.githubusercontent.com/LineageOS/android_system_tools_mkbootimg/lineage-22.2/mkbootimg.py"
+            python3 scripts/mirror_helper.py download --output "$tmp_gki" \
+              "https://raw.githubusercontent.com/LineageOS/android_system_tools_mkbootimg/lineage-22.2/gki/generate_gki_certificate.py"
+            sudo install -m 0755 "$tmp_mk" /usr/local/share/mkbootimg/mkbootimg.py
+            sudo install -m 0644 "$tmp_gki" /usr/local/share/mkbootimg/gki/generate_gki_certificate.py
+            sudo ln -sfn /usr/local/share/mkbootimg/mkbootimg.py /usr/local/bin/mkbootimg
+            rm -f "$tmp_mk" "$tmp_gki"
+          fi
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
 
       - name: Install repo tool (multi-mirror)
         run: |
