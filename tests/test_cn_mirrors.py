@@ -254,6 +254,9 @@ class ChinaMirrorTests(unittest.TestCase):
                     self.assertNotIn("env.", text_val, f"{wf_name}:{job_name}.env.{k} must not use env context")
             text = wf_path.read_text(encoding="utf-8")
             self.assertNotIn("storage.googleapis.com/git-repo-downloads/repo", text)
+            if wf_name == "build-infinity-rom.yml":
+                for step in data["jobs"]["build"]["steps"]:
+                    self.assertNotIn("uses", step, "build-infinity-rom build job must not stall Set up job on codeload.github.com")
         kernel_wf = (ROOT / ".github" / "workflows" / "build-kernel-gt5.yml").read_text(encoding="utf-8")
         self.assertIn("runner.environment == 'github-hosted'", kernel_wf)
         self.assertIn("mirror_helper.py ensure-repo", kernel_wf)
@@ -274,6 +277,61 @@ class ChinaMirrorTests(unittest.TestCase):
         )
         self.assertIn("--recursive", help_res.stdout)
         self.assertIn("--allow-ko-providers", help_res.stdout)
+
+    def test_prune_incomplete_repo_projects_preserves_valid_and_cleans_unfetched(self):
+        with tempfile.TemporaryDirectory() as td:
+            work = Path(td)
+            repo_dir = work / ".repo"
+
+            # 1. Incomplete shallow project: projects/prebuilts/rust.git symlinked to project-objects, no refs + stale tmp_pack
+            rust_proj = repo_dir / "projects" / "prebuilts" / "rust.git"
+            rust_obj = repo_dir / "project-objects" / "platform" / "prebuilts" / "rust.git"
+            subprocess.run(["git", "init", "--bare", str(rust_obj)], check=True, capture_output=True)
+            stale_pack = rust_obj / "objects" / "pack" / "tmp_pack_stale"
+            stale_pack.write_bytes(b"stale")
+            rust_proj.mkdir(parents=True)
+            for d in ("objects", "hooks", "rr-cache"):
+                (rust_proj / d).symlink_to(rust_obj / d)
+            subprocess.run(["git", "init", "--bare", str(rust_proj)], check=True, capture_output=True)
+            (work / "prebuilts" / "rust").mkdir(parents=True)
+            (work / "prebuilts" / "rust" / ".git").write_text("gitdir: ../../.repo/projects/prebuilts/rust.git\n")
+
+            # 2. Healthy fetched project: shared project-objects with a valid ref + shallow file
+            good_proj = repo_dir / "projects" / "build" / "make.git"
+            good_obj = repo_dir / "project-objects" / "platform" / "build" / "make.git"
+            subprocess.run(["git", "init", "--bare", str(good_obj)], check=True, capture_output=True)
+            good_proj.mkdir(parents=True)
+            (good_proj / "objects").symlink_to(good_obj / "objects")
+            subprocess.run(["git", "init", "--bare", str(good_proj)], check=True, capture_output=True)
+            blob = subprocess.check_output(
+                ["git", f"--git-dir={good_proj}", "hash-object", "-w", "--stdin"],
+                input=b"hello\n",
+            ).decode().strip()
+            tree = subprocess.check_output(
+                ["git", f"--git-dir={good_proj}", "mktree"],
+                input=f"100644 blob {blob}\tREADME\n".encode(),
+            ).decode().strip()
+            commit = subprocess.check_output(
+                [
+                    "git", "-c", "user.name=Test", "-c", "user.email=test@example.com",
+                    f"--git-dir={good_proj}", "commit-tree", tree, "-m", "init",
+                ]
+            ).decode().strip()
+            subprocess.run(
+                ["git", f"--git-dir={good_proj}", "update-ref", "refs/remotes/m/15", commit],
+                check=True,
+            )
+            (good_proj / "shallow").write_text(commit + "\n")
+
+            cmd = f'source "{SCRIPTS / "lib-mirror.sh"}" && _prune_incomplete_repo_projects "{work}"'
+            res = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, check=True)
+            self.assertIn("pruned 1 incomplete/unfetched project", res.stderr)
+            self.assertFalse(rust_proj.exists())
+            self.assertFalse(rust_obj.exists())
+            self.assertFalse((work / "prebuilts" / "rust" / ".git").exists())
+            self.assertTrue(good_proj.exists())
+            self.assertTrue(good_obj.exists())
+            self.assertTrue((good_proj / "shallow").exists())
 
 
 if __name__ == "__main__":

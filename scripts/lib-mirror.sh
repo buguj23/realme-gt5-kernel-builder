@@ -164,6 +164,92 @@ rewrite_repo_manifests() {
   done < <(find "$work_dir/.repo" -maxdepth 4 \( -path "$work_dir/.repo/manifest.xml" -o -path "$work_dir/.repo/manifests/*.xml" -o -path "$work_dir/.repo/manifests/*/*.xml" \) -type f -print0 2>/dev/null)
 }
 
+_prune_incomplete_repo_projects() {
+  local work_dir="$1"
+  [ -d "$work_dir/.repo/projects" ] || return 0
+  python3 - "$work_dir" <<'PY'
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+
+work = pathlib.Path(sys.argv[1]).resolve()
+repo_dir = work / ".repo"
+projects_dir = repo_dir / "projects"
+objects_dir = repo_dir / "project-objects"
+
+# Clean stale temporary packs left behind by interrupted git fetches.
+for root_dir in (projects_dir, objects_dir):
+    if not root_dir.is_dir():
+        continue
+    for pack_dir in root_dir.rglob("objects/pack"):
+        if not pack_dir.is_dir():
+            continue
+        for item in pack_dir.iterdir():
+            if item.name.startswith("tmp_pack_") or item.name.endswith(".temp"):
+                try:
+                    if item.is_dir():
+                        shutil.rmtree(item, ignore_errors=True)
+                    else:
+                        item.unlink(missing_ok=True)
+                except OSError:
+                    pass
+
+def has_any_ref(git_dir: pathlib.Path) -> bool:
+    res = subprocess.run(
+        ["git", f"--git-dir={git_dir}", "for-each-ref", "--count=1"],
+        capture_output=True,
+        text=True,
+    )
+    return res.returncode == 0 and bool(res.stdout.strip())
+
+# Reset projects that created .repo/projects/<path>.git but failed before fetching any ref.
+# Otherwise repo/project.py sees (is_new=False and not _HasShallow()) and drops --depth=1.
+proj_gits = [p for p in projects_dir.rglob("*.git") if p.is_dir()]
+live_obj_dirs = set()
+empty_proj = []
+
+for pg in proj_gits:
+    obj_link = pg / "objects"
+    target_obj_root = None
+    if obj_link.exists():
+        resolved_obj = pathlib.Path(os.path.realpath(obj_link))
+        cand_root = resolved_obj.parent
+        try:
+            cand_root.relative_to(objects_dir.resolve())
+            target_obj_root = cand_root
+        except ValueError:
+            target_obj_root = None
+    if has_any_ref(pg):
+        if target_obj_root is not None:
+            live_obj_dirs.add(target_obj_root)
+    else:
+        empty_proj.append((pg, target_obj_root))
+
+pruned = 0
+for pg, target_obj_root in empty_proj:
+    rel = str(pg.relative_to(projects_dir))[:-4]
+    shutil.rmtree(pg, ignore_errors=True)
+    wt_git = work / rel / ".git"
+    if wt_git.is_symlink() or wt_git.is_file():
+        wt_git.unlink(missing_ok=True)
+    elif wt_git.is_dir():
+        shutil.rmtree(wt_git, ignore_errors=True)
+    if (
+        target_obj_root is not None
+        and target_obj_root not in live_obj_dirs
+        and target_obj_root.exists()
+        and not has_any_ref(target_obj_root)
+    ):
+        shutil.rmtree(target_obj_root, ignore_errors=True)
+    pruned += 1
+
+if pruned:
+    print(f"[repo-sync] pruned {pruned} incomplete/unfetched project(s) to preserve clone-depth", file=sys.stderr)
+PY
+}
+
 _heal_unborn_repo_worktrees() {
   local work_dir="$1"
   local list_file="$work_dir/.repo/project.list"
@@ -237,6 +323,7 @@ repo_sync_resilient() {
   for ((idx = 0; idx < max_attempts; idx++)); do
     prefix=${gh_prefixes[$((idx % ${#gh_prefixes[@]}))]}
     repo_clean_locks "$work_dir"
+    _prune_incomplete_repo_projects "$work_dir"
     if [ "$mode" = "cn" ] || [ -n "$aosp_mirror" ] || [ -n "$lineage_mirror" ] || [ -n "$clo_mirror" ]; then
       rewrite_repo_manifests "$work_dir" "$prefix" "$aosp_mirror" "$lineage_mirror" "$clo_mirror"
     fi
@@ -250,9 +337,9 @@ repo_sync_resilient() {
       export GIT_CONFIG_KEY_1="http.postBuffer"
       export GIT_CONFIG_VALUE_1="524288000"
       export GIT_CONFIG_KEY_2="http.lowSpeedLimit"
-      export GIT_CONFIG_VALUE_2="${GIT_HTTP_LOW_SPEED_LIMIT:-16384}"
+      export GIT_CONFIG_VALUE_2="${GIT_HTTP_LOW_SPEED_LIMIT:-8192}"
       export GIT_CONFIG_KEY_3="http.lowSpeedTime"
-      export GIT_CONFIG_VALUE_3="${GIT_HTTP_LOW_SPEED_TIME:-45}"
+      export GIT_CONFIG_VALUE_3="${GIT_HTTP_LOW_SPEED_TIME:-180}"
       export GIT_CONFIG_KEY_4="protocol.file.allow"
       export GIT_CONFIG_VALUE_4="always"
       repo sync -c -j"$jobs" --no-clone-bundle --no-tags --force-sync "${extra_sync_args[@]}"

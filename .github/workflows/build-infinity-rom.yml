@@ -221,8 +221,33 @@ jobs:
           fi
           echo "OSSI_DELIVERY_DIR=$DELIVERY_DIR" >> "$GITHUB_ENV"
           echo "OSSI_UPLOAD_DIR=$UPLOAD_DIR" >> "$GITHUB_ENV"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ossi_userdebug_${{ inputs.kernel_file }}_${{ inputs.ksu_variant }}
-          path: ${{ env.OSSI_UPLOAD_DIR }}
-          if-no-files-found: error
+      - name: Publish delivery metadata and summary
+        env:
+          UPLOAD_MODE: ${{ inputs.upload_mode }}
+        run: |
+          DELIVERY_DIR="${OSSI_DELIVERY_DIR:?}"
+          UPLOAD_DIR="${OSSI_UPLOAD_DIR:?}"
+          test -s "$DELIVERY_DIR/rom-delivery.json"
+          test -s "$DELIVERY_DIR/SHA256SUMS.txt"
+          {
+            echo "## Project Infinity-X (ossi) Build Delivery"
+            echo ""
+            echo "- Delivery Directory (runner): \`$DELIVERY_DIR\`"
+            echo "- Staged Upload Directory: \`$UPLOAD_DIR\` (\`upload_mode=$UPLOAD_MODE\`)"
+            echo ""
+            echo "### Artifacts"
+            echo '```text'
+            ls -lh "$DELIVERY_DIR"
+            echo '```'
+            echo ""
+            echo "### SHA256SUMS.txt"
+            echo '```text'
+            cat "$DELIVERY_DIR/SHA256SUMS.txt"
+            echo '```'
+            echo ""
+            echo "### rom-delivery.json"
+            echo '```json'
+            cat "$DELIVERY_DIR/rom-delivery.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$DELIVERY_DIR/SHA256SUMS.txt"
