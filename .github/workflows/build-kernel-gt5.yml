@@ -145,7 +145,26 @@ jobs:
       APPLY_KPM: "0"
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (self-hosted multi-mirror)
+        if: runner.environment != 'github-hosted'
+        run: |
+          rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
+          REPO_URL="https://github.com/${{ github.repository }}.git"
+          OK=0
+          for prefix in "https://cdn.gh-proxy.org/" "https://edgeone.gh-proxy.org/" "https://gh-proxy.org/" "https://v6.gh-proxy.org/" "https://gh-proxy.com/" ""; do
+            echo "Trying checkout: ${prefix:-direct}${REPO_URL} @ ${{ github.sha }}"
+            if GIT_TERMINAL_PROMPT=0 git -c http.lowSpeedLimit=1024 -c http.lowSpeedTime=20 clone --depth=1 --branch "${{ github.ref_name }}" "${prefix}${REPO_URL}" "$GITHUB_WORKSPACE" && \
+               GIT_TERMINAL_PROMPT=0 git -C "$GITHUB_WORKSPACE" -c http.lowSpeedLimit=1024 -c http.lowSpeedTime=20 fetch --depth=1 "${prefix}${REPO_URL}" "${{ github.sha }}" && \
+               git -C "$GITHUB_WORKSPACE" checkout -f FETCH_HEAD; then
+              OK=1
+              break
+            fi
+            rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
+          done
+          [ "$OK" = 1 ] || exit 1
+
+      - name: Checkout repository (GitHub-hosted)
+        if: runner.environment == 'github-hosted'
         uses: actions/checkout@v4
         with:
           persist-credentials: false

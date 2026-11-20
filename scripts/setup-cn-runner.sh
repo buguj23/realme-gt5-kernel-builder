@@ -70,7 +70,7 @@ if [ "$SKIP_APT" != 1 ]; then
   fi
 
   PKGS=(
-    aria2 ca-certificates ccache cpio curl wget git git-lfs gh gnupg
+    aria2 ca-certificates ccache cpio curl wget git git-lfs gh gnupg lzip
     bc bison flex build-essential libelf-dev libssl-dev dwarves zstd lz4 xz-utils
     clang lld llvm python3 python-is-python3 python3-yaml rsync unzip zip
     erofs-utils e2fsprogs android-sdk-libsparse-utils mkbootimg
