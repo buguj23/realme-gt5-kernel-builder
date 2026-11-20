@@ -2634,7 +2634,6 @@ odm/firmware/ufs/SAMSUNG-KLUFG8RHDB-B0E1.bin|5bd56ec654a0a93787f433522f0a32ce6eb
 odm/firmware/ufs/SAMSUNG-KLUFG8RHHD-B0G1.bin|0ea0b70986dd7393bdfbcf4199402bc5da4f7123
 odm/firmware/ufs/move_target_ufs_fw_to_oplusreserve1.sh|b475fe409081759411a684b98dfe8ba9e2a5db4d
 odm/etc/aac_richtap.config|33b70b98b9721de652050d9b5ad07bc18cdfcd25
-vendor/lib64/libaacvibrator.so|0c0c6f1c526f279184559b19c4c4e68d602c4538
 odm/etc/wifi/kiwi/bdwlan.elf|6a59080e9e644c9184214b894a35101bf2dec568
 odm/etc/wifi/kiwi/regdb.bin|d27a4bd45e39d5ea549e222eaae300681bc34819
 odm/vendor/etc/wifi/WCNSS_qcom_cfg.ini|12e1c289552c24cb32640b9e736899fa5c6b1263
@@ -2657,9 +2656,6 @@ odm/lib64/libsubsys-service.so|d169f1f09f10dc680ea628bea09b635a675c26f3
 odm/lib64/libsubsys-utils.so|fa90faccc7b656aba23c2b3e99812725b6f452be
 odm/bin/hw/vendor.oplus.hardware.charger-V5-service|d957675bd2501c23dc6e7d98a234796c81470516|d9ddb7dfaefd9bb633fbf84057f3e9cd831a665b
 odm/etc/init/vendor.oplus.hardware.charger-V5-service.rc|e3f74a0a9253560a506ca98ff7c17fbf1500e47f
-odm/lib/vendor.oplus.hardware.charger-V5-ndk.so|455b52efc4d37efe8d1747b3695a3bdc68852f01
-odm/lib64/vendor.oplus.hardware.charger-V5-ndk.so|6ae6a323c109ca152c0ee7332d588130064a008d
-vendor/etc/vintf/manifest/vendor.qti.hardware.display.composer-service.xml|6fc74e0b0b7161b0c816ef84d217f89f0d694021
 
 # ---- Oplus HAL payload present on this device (auto-included) ----
 odm/bin/hw/android.hardware.power.stats-impl.oplus|4886ee874785043e8ef6038451b7e2f983e179a4
@@ -2780,14 +2776,11 @@ odm/lib/libtensorflowlite_oplus.so|63e4202be5edb8eae61dbc6958e3e1127996d903
 odm/lib/soundfx/liboplusupmixeffect.so|920d6c90a768c03087816b2613aa66a8d446db5d
 odm/lib/vendor.oplus.hardware.appradio@1.0.so|4299a983c1fde2a50fcf4d682c0fba36d21cd279
 odm/lib/vendor.oplus.hardware.binaural_record-V1-ndk.so|59c2befa7ac80ce15d3b576ec24973c93756afa0
-odm/lib/vendor.oplus.hardware.biometrics.fingerprint@2.1.so|e6295a1d40160bc63a0d9bf8f696997a705d5d65
-odm/lib/vendor.oplus.hardware.biometrics.fingerprintpay-V1-ndk.so|6553c38a0fbe824e0d19fce4e3959ec66fe2101c
 odm/lib/vendor.oplus.hardware.camera_rfi-V1-ndk.so|35f06753f7d9010db9d3fa072350c5a19b98265e
 odm/lib/vendor.oplus.hardware.camera_rfi-V1-service-impl.so|076f2c16f540d09cbb2af92f20dcd5f52bd934bf
 odm/lib/vendor.oplus.hardware.cameraextension-V1-service-impl.so|b7d14cc3b380a1af62f4b52ff83d2a0959c2593d
 odm/lib/vendor.oplus.hardware.cammidasservice-V1-ndk.so|fb10b73c7a6ed93234f367e5f0fc1e0317f6aa4b
 odm/lib/vendor.oplus.hardware.charger@1.0.so|781fb885bac57dca232de2c3035a44b6afaf1ad5
-odm/lib/vendor.oplus.hardware.commondcs-V1-ndk.so|9703bb6e2e9997eac9ca796c3d999c830573177b
 odm/lib/vendor.oplus.hardware.communicationcenter-V1-ndk.so|cc5d3fa4c1ef52c936c3de092fbd6c9d4473cd09
 odm/lib/vendor.oplus.hardware.communicationcenter-V2-ndk.so|f094c21cf8446abb350797f9d35fa13ebb90ebce
 odm/lib/vendor.oplus.hardware.cryptoeng-V1-ndk.so|3fb9f168527a9d24b04c9265ab1844fc771c14ea
@@ -2816,9 +2809,6 @@ odm/lib/vendor.oplus.hardware.olc2-V2-ndk.so|dac987c873304e39a3424aa822e189c813b
 odm/lib/vendor.oplus.hardware.oplusSensor-V1-ndk.so|d282d877e3e95fdf6b12fadba368a52ce1a52085
 odm/lib/vendor.oplus.hardware.orms@1.0.so|bac865c26d6b9bc8d164231ca5c483eeb586c014
 odm/lib/vendor.oplus.hardware.ormsHalService-V1-ndk.so|8d954d0fc0f4ce27e9d313672c928b2715c2aaf7
-odm/lib/vendor.oplus.hardware.osense.client-V1-ndk.so|5e1d61bc107d22c12eb707a8f58c06b4ea0d87b8
-odm/lib/vendor.oplus.hardware.performance-V1-ndk.so|cd6c39f59ed9ed35c5a703413faaebbae9ad17fe
-odm/lib/vendor.oplus.hardware.performance-V2-ndk.so|2837bf51083e1286b8cbd4117072b6f1ec4f8c41
 odm/lib/vendor.oplus.hardware.power.powermonitor-V1-ndk.so|0a7781f0ba6a514394040dfa51c6251a1eda4e52
 odm/lib/vendor.oplus.hardware.radio@1.0.so|31114713d2ec6c799a2b9c71069feb85e5138cbf
 odm/lib/vendor.oplus.hardware.riskdetect-V1-ndk.so|0be71ab4d4267ed2a4d1816f51d6542217f9ebda
@@ -2828,11 +2818,8 @@ odm/lib/vendor.oplus.hardware.sendextcamcmd-V2-ndk.so|76d9f929b50d16e8df298957d8
 odm/lib/vendor.oplus.hardware.stability.oplus_project-V2-ndk.so|439b4327e24a0202a5882342826807211b80ca6d
 odm/lib/vendor.oplus.hardware.subsys-V3-ndk.so|36a89cd97ff669237c355d6e99b3ae1f8b63d838
 odm/lib/vendor.oplus.hardware.subsys_radio-V4-ndk.so|c6002c75406e5c688d19b1b1ff30c24e92da9c69
-odm/lib/vendor.oplus.hardware.touch-V1-ndk.so|fbeb0ce5ecfb94941861ecdfe9602349b7f2ef83
-odm/lib/vendor.oplus.hardware.touch-V2-ndk.so|67aecb4e288b9d4ae4a7c767e246f69cdb152e80
 odm/lib/vendor.oplus.hardware.transfer-V1-ndk.so|955b9a04313079c3cc8ce16c41be5cd507fd76fe
 odm/lib/vendor.oplus.hardware.transmessage@1.0.so|e9323ff876ed29675f280af1d0d1d865d3ac3c2e
-odm/lib/vendor.oplus.hardware.urcc-V1-ndk.so|7d4fd87b13e8d4a47f13f93ebf4d89129b8f8814
 odm/lib/vendor.oplus.hardware.virtual_device.audio-V1-ndk.so|93a4986febba8eeba5304395a640ec1cc92bd13e
 odm/lib/vendor.oplus.hardware.virtual_device.audio-impl.so|315f588de6bd1ae402fca0755b3aa538dc5dd347
 odm/lib/vendor.oplus.hardware.virtual_device.camera.hal@3.3.so|fbae5ff27da0b3210d75d3f0f82fb0c5f975426e
@@ -2860,10 +2847,7 @@ odm/lib64/libtrace.so|2a8c19d8e45ba3ce6a3a585f1f3228cc721658b8
 odm/lib64/soundfx/liboplusupmixeffect.so|f5fc92f03053d33a0d4563487960a16030e8107e
 odm/lib64/vendor.oplus.hardware.appradio@1.0.so|c3ea4666c47198493adacab4b0c28a40d5efd096
 odm/lib64/vendor.oplus.hardware.binaural_record-V1-ndk.so|b74abff5d0784679f96451d2147fe2acb607eaf1
-odm/lib64/vendor.oplus.hardware.biometrics.fingerprint@2.1.so|260a4dbf55a5e26b2cea492e38d5f4843833dcc6
-odm/lib64/vendor.oplus.hardware.biometrics.fingerprintpay-V1-ndk.so|311aea5757906c282f47020e9bbe7b7f0350e365
 odm/lib64/vendor.oplus.hardware.charger@1.0.so|1361233293b4c7b8a488b31810840a646c5c173d
-odm/lib64/vendor.oplus.hardware.commondcs-V1-ndk.so|c41ac8a37a14d4356722f8873bde96f24092963e
 odm/lib64/vendor.oplus.hardware.communicationcenter-V1-ndk.so|6fbe5127a15d56c72d8099dc1596a52d6b65190e
 odm/lib64/vendor.oplus.hardware.cryptoeng-V1-ndk.so|34bd7019078f80b2bde6e41f6a1ceb2b104863db
 odm/lib64/vendor.oplus.hardware.cryptoeng@1.0.so|c06cb66a3385b501345907559e78bfd87648f70a
@@ -2890,20 +2874,14 @@ odm/lib64/vendor.oplus.hardware.olc2-V1-ndk.so|7cfe0d67e582f8e943863acd1a0bf99fe
 odm/lib64/vendor.oplus.hardware.oplusSensor-V1-ndk.so|b700d259075628dd5e09b040f132151510d77d6b
 odm/lib64/vendor.oplus.hardware.orms@1.0.so|243a651b264a301b631136f830e90d542937832f
 odm/lib64/vendor.oplus.hardware.ormsHalService-V1-ndk.so|e7ccb448602e41b13bcb84232d9c9d90f33847ef
-odm/lib64/vendor.oplus.hardware.osense.client-V1-ndk.so|95d4c0bf06388dae183c1d9b1ef38453b87a4202
-odm/lib64/vendor.oplus.hardware.performance-V1-ndk.so|ac54ffc4d69d713aa2ac443caf473197705e50d8
-odm/lib64/vendor.oplus.hardware.performance-V2-ndk.so|1a2a09b12d7e70b18bbd7b9f8a1692503ac3986d
 odm/lib64/vendor.oplus.hardware.power.powermonitor-V1-ndk.so|a47427e40af327933d72bdfe64881e435dbd5b0a
 odm/lib64/vendor.oplus.hardware.radio@1.0.so|718cd92613c80a840663b3db3f150d423af89f3b
 odm/lib64/vendor.oplus.hardware.riskdetect-V1-ndk.so|98d9cdb3ea99745a95d051cd354786609ffce09e
 odm/lib64/vendor.oplus.hardware.rpmh-V1-ndk.so|99d17824740a46f1e9d13a956b3b38debfeffdee
 odm/lib64/vendor.oplus.hardware.subsys-V3-ndk.so|989a75a3d9510f89d423f0b640c4055dd0652f5a
 odm/lib64/vendor.oplus.hardware.subsys_radio-V4-ndk.so|cc5470fa4d5c341c2b495a673b761c59df157cef
-odm/lib64/vendor.oplus.hardware.touch-V1-ndk.so|ea2f626ca0190f3bfa37f23efd48225d2e85038f
-odm/lib64/vendor.oplus.hardware.touch-V2-ndk.so|e9dc06f62af4d0d137eb9291454fad185403b5ae
 odm/lib64/vendor.oplus.hardware.transfer-V1-ndk.so|0c549a5e1dc5d1130b97494d6861a8c389eab702
 odm/lib64/vendor.oplus.hardware.transmessage@1.0.so|b23c16e64241923097328a04f879944150477170
-odm/lib64/vendor.oplus.hardware.urcc-V1-ndk.so|efb1a37a0818f516c2fa970cb0d3a21b75d27d47
 odm/lib64/vendor.oplus.hardware.virtual_device.audio-V1-ndk.so|c418c1117b61283b4e826aae095c247844646ddd
 odm/lib64/vendor.oplus.hardware.virtual_device.audio-impl.so|58589ef909d6ce6f061b0c70de8c3796092f528c
 odm/lib64/vendor.oplus.hardware.virtual_device.camera.hal@3.3.so|8cbbd72e32f525b09cadc811d46abde8431b188a

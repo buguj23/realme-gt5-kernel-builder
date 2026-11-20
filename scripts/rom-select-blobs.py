@@ -49,11 +49,14 @@ EXTRA_PATTERNS = [
 ]
 
 EXCLUDE_EXTRA_PATTERNS = (
-    re.compile(r'^vendor/lib(64)?/vendor\.oplus\.hardware\.(osense\.client|performance|commondcs)-V\d+-ndk\.so$'),
+    re.compile(r'^(odm|vendor)/lib(64)?/vendor\.oplus\.hardware\.(osense\.client|performance|commondcs|urcc|biometrics\.fingerprintpay|esim|charger|touch|radio)-V\d+-ndk\.so$'),
     re.compile(r'^odm/bin/hw/vendor-oplus-hardware-(performance|commondcs|osense\.client)-'),
     re.compile(r'^odm/etc/init/vendor-oplus-hardware-(performance|commondcs|osense\.client)-'),
     re.compile(r'^odm/etc/vintf/manifest/manifest_(performance|commondcs|osense).*\.xml$'),
     re.compile(r'^odm/etc/vintf/manifest/manifest_oplus_ifaa\.xml$'),
+    re.compile(r'^vendor/lib(64)?/libaacvibrator\.so$'),
+    re.compile(r'^odm/lib(64)?/vendor\.oplus\.hardware\.biometrics\.fingerprint@2\.1\.so$'),
+    re.compile(r'^vendor/etc/vintf/manifest/vendor\.qti\.hardware\.display\.composer-service\.xml$'),
 )
 
 AOSP_OR_CAF_LIB_PREFIXES = (
@@ -466,7 +469,7 @@ def select(a, cleanup):
     for list_path in list_paths:
         for line in Path(list_path).read_text().splitlines():
             parsed = parse_entry(line)
-            if parsed and parsed[0] not in seen_sources:
+            if parsed and parsed[0] not in seen_sources and not is_excluded_extra(parsed[0]):
                 seen_sources.add(parsed[0])
                 sources.append(parsed)
     dump = None

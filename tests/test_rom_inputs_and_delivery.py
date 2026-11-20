@@ -520,7 +520,13 @@ class RomInputTests(unittest.TestCase):
 
     def test_select_blobs_sar_and_excluded_extras(self):
         self.assertTrue(BLOBS["is_excluded_extra"]("vendor/lib64/vendor.oplus.hardware.performance-V1-ndk.so"))
+        self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib64/vendor.oplus.hardware.performance-V2-ndk.so"))
+        self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib/vendor.oplus.hardware.touch-V2-ndk.so"))
+        self.assertTrue(BLOBS["is_excluded_extra"]("vendor/lib64/libaacvibrator.so"))
+        self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib64/vendor.oplus.hardware.biometrics.fingerprint@2.1.so"))
+        self.assertTrue(BLOBS["is_excluded_extra"]("vendor/etc/vintf/manifest/vendor.qti.hardware.display.composer-service.xml"))
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/etc/vintf/manifest/manifest_performance_aidl.xml"))
+        self.assertFalse(BLOBS["is_excluded_extra"]("vendor/lib64/vendor.oplus.hardware.commondcs-V1-ndk_platform.so"))
         self.assertFalse(BLOBS["is_excluded_extra"]("odm/bin/hw/vendor.oplus.hardware.charger-V5-service"))
 
         # Simulate extracted System-as-Root system partition layout
@@ -545,6 +551,64 @@ class RomInputTests(unittest.TestCase):
                 if not line or line.startswith("#"):
                     continue
                 self.assertRegex(line, r"^CONFIG_[A-Za-z0-9_]+=(y|m|n|\d+|\".*\")$", f"{cfg}:{lineno}: {line}")
+
+    def test_infinity_compat_patches_idempotent(self):
+        patcher = runpy.run_path(str(SCRIPTS / "rom-patch-source.py"))
+        pkg = self.root / "packages/apps/SimpleSettingsConfig"
+        (pkg / "src/org/lineageos/settingsconfig").mkdir(parents=True)
+        (pkg / "Android.bp").write_text(
+            'android_app {\n    name: "SimpleSettingsConfig",\n\n'
+            '    static_libs: [\n        "org.lineageos.platform.internal",\n    ],\n\n'
+            '    srcs: ["src/**/*.java"],\n\n    platform_apis: true,\n'
+            '    certificate: "platform",\n}\n'
+        )
+        (pkg / "AndroidManifest.xml").write_text(
+            '<manifest>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
+            '    <uses-permission android:name="lineageos.permission.WRITE_SECURE_SETTINGS" />\n'
+            '    <uses-permission android:name="lineageos.permission.WRITE_SETTINGS" />\n</manifest>\n'
+        )
+        (pkg / "src/org/lineageos/settingsconfig/BootReceiver.java").write_text(
+            'import android.util.Log;\nimport lineageos.providers.LineageSettings;\n'
+            '                case "lineage_global":\n'
+            '                    LineageSettings.Global.putString(c, k, v);\n'
+            '                    break;\n\n'
+            '                case "lineage_secure":\n'
+            '                    LineageSettings.Secure.putString(c, k, v);\n'
+            '                    break;\n'
+        )
+        (self.root / "vendor/infinity/config").mkdir(parents=True)
+        (self.root / "vendor/infinity/config/device_framework_matrix.xml").write_text("<compatibility-matrix/>\n")
+        (self.root / "device/oneplus/sm8550-common").mkdir(parents=True)
+        (self.root / "device/oneplus/sm8550-common/common.mk").write_text(
+            "DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \\\n    vendor/lineage/config/device_framework_matrix.xml\n"
+            "# LiveDisplay\nPRODUCT_PACKAGES += \\\n    vendor.lineage.livedisplay-service.oplus\n"
+        )
+        (self.root / "hardware/oplus/aidl/livedisplay").mkdir(parents=True)
+        (self.root / "hardware/oplus/aidl/livedisplay/Android.bp").write_text("cc_binary {}\n")
+        (self.root / "build/soong/fsgen").mkdir(parents=True)
+        (self.root / "build/soong/fsgen/super_img.go").write_text(
+            "func buildingSuperImage(partitionVars android.PartitionVariables) bool {\n"
+            "\treturn partitionVars.ProductBuildSuperPartition\n"
+            "}\n"
+        )
+
+        patcher["apply_all"](self.root)
+        self.assertNotIn("org.lineageos.platform.internal", (pkg / "Android.bp").read_text())
+        self.assertIn('sdk_version: "current"', (pkg / "Android.bp").read_text())
+        self.assertNotIn("lineageos.permission.WRITE_", (pkg / "AndroidManifest.xml").read_text())
+        self.assertNotIn("LineageSettings", (pkg / "src/org/lineageos/settingsconfig/BootReceiver.java").read_text())
+        common = (self.root / "device/oneplus/sm8550-common/common.mk").read_text()
+        self.assertIn("vendor/infinity/config/device_framework_matrix.xml", common)
+        self.assertNotIn("vendor.lineage.livedisplay-service.oplus", common)
+        self.assertFalse((self.root / "hardware/oplus/aidl/livedisplay/Android.bp").exists())
+        self.assertTrue((self.root / "hardware/oplus/aidl/livedisplay/Android.bp.disabled").is_file())
+        super_go = (self.root / "build/soong/fsgen/super_img.go").read_text()
+        self.assertIn("android.InList(p, supported)", super_go)
+
+        # Second invocation must be an exact no-op
+        before = super_go
+        patcher["apply_all"](self.root)
+        self.assertEqual((self.root / "build/soong/fsgen/super_img.go").read_text(), before)
 
 
 if __name__ == "__main__":

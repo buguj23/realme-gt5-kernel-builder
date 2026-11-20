@@ -86,12 +86,13 @@ OGKI_BUILD_MODE ?= prebuilt
 
 # Platform properties and filesystem labels come with the same-SoC common tree.
 OGKI_COMMON_PATH := device/oneplus/sm8550-common
-TARGET_ODM_PROP += $(OGKI_COMMON_PATH)/properties/odm.prop
-TARGET_PRODUCT_PROP += $(OGKI_COMMON_PATH)/properties/product.prop
-TARGET_SYSTEM_EXT_PROP += $(OGKI_COMMON_PATH)/properties/system_ext.prop
-TARGET_VENDOR_PROP += $(OGKI_COMMON_PATH)/properties/vendor.prop
+TARGET_ODM_PROP += $(OGKI_COMMON_PATH)/odm.prop
+TARGET_PRODUCT_PROP += $(OGKI_COMMON_PATH)/product.prop
+TARGET_SYSTEM_EXT_PROP += $(OGKI_COMMON_PATH)/system_ext.prop
+TARGET_VENDOR_PROP += $(OGKI_COMMON_PATH)/vendor.prop
 TARGET_FS_CONFIG_GEN := $(OGKI_COMMON_PATH)/config.fs
 BOARD_PRODUCTIMAGE_MINIMAL_PARTITION_RESERVED_SIZE := false
+-include vendor/infinity/config/BoardConfigReservedSize.mk
 -include vendor/lineage/config/BoardConfigReservedSize.mk
 
 ifeq ($(OGKI_BUILD_MODE),inline)

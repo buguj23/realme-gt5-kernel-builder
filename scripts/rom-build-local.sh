@@ -144,7 +144,11 @@ if [ "$SYNC" = 1 ]; then
 fi
 python3 "$HERE/rom-check-inputs.py" source --branch "$BR" --src "$SRC"
 [ -f "$SRC/build/envsetup.sh" ] || fail "source tree sync is incomplete"
+rm -f \
+  "$SRC/hardware/qcom/sm7250/Android.bp" "$SRC/hardware/qcom/sm7250/Android.mk" \
+  "$SRC/hardware/qcom/sm8150/Android.bp" "$SRC/hardware/qcom/sm8150/Android.mk"
 bash "$HERE/rom-provision-deps.sh" "$SRC" --branch "$DEPS_BR"
+python3 "$HERE/rom-patch-source.py" "$SRC"
 if [ -z "$BLOBS" ]; then
   BLOBS="$WORK/blobs"
   selected="$WORK/proprietary-files.txt"
