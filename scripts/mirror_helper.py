@@ -362,10 +362,9 @@ def rank_github_urls(url: str, mode: str | None = None, timeout: float = 6.0, is
     resolved_mode = detect_mirror_mode(mode)
     candidates = expand_github_url(url, mode=resolved_mode)
     base = strip_github_proxy(url)
-    # If user explicitly runs an SSH -R tunnel / local Clash on 127.0.0.1:7890, prefer direct GitHub via tunnel first (zero 3rd-party leakage).
-    if local_tunnel_up() and not os.environ.get("GITHUB_PROXY", "").strip():
-        ordered = [base] + [u for u in candidates if u != base]
-        return ordered
+    # Only force the 127.0.0.1 tunnel ahead of CN CDN mirrors when explicitly requested (e.g. private repos or zero-proxy mode).
+    if os.environ.get("MIRROR_PREFER_TUNNEL", "0") == "1" and local_tunnel_up() and not os.environ.get("GITHUB_PROXY", "").strip():
+        return [base] + [u for u in candidates if u != base]
     if resolved_mode == "cn" and os.environ.get("MIRROR_RACE_DIRECT", "0") != "1":
         domestic = [u for u in candidates if u != base]
         ranked_dom = [u for u, _ in rank_urls(domestic, timeout=timeout, is_git=is_git, reject_html=True)]
