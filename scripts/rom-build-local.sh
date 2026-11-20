@@ -2,6 +2,12 @@
 # Build one Realme GT5 ROM baseline. Also used by the self-hosted CI job.
 set -euo pipefail
 
+# GitHub Actions Runner.Worker sets SIGPIPE to SIG_IGN; non-interactive bash cannot undo an inherited SIG_IGN with trap.
+if [ "${OSSI_SIGPIPE_RESET:-0}" != 1 ] && command -v python3 >/dev/null 2>&1; then
+  export OSSI_SIGPIPE_RESET=1
+  exec python3 -c 'import os, signal, sys; signal.signal(signal.SIGPIPE, signal.SIG_DFL); os.execvp("bash", ["bash", sys.argv[1], *sys.argv[2:]])' "$0" "$@"
+fi
+
 usage() {
   cat <<'EOF'
 rom-build-local.sh --src DIR --branch 5.15.149 --pkg DIR --stock-images DIR
@@ -235,9 +241,17 @@ VENDOR_READY=1
   export DIST_DIR="$WORK/dist"
   export OSSI_AVB_KEY="${AVB_KEY:-$SRC/external/avb/test/data/testkey_rsa4096.pem}"
   [ -s "$OSSI_AVB_KEY" ] || fail "AVB signing key missing"
-  set +u
+  set +euo pipefail
+  if [ "${USE_CCACHE:-0}" != 1 ]; then
+    export CCACHE_EXEC="${CCACHE_EXEC:-disabled}" USE_CCACHE=0
+  fi
   source build/envsetup.sh
-  lunch "$WANT_LUNCH"
+  if [ "${USE_CCACHE:-0}" != 1 ]; then
+    unset CCACHE_EXEC || true
+    export USE_CCACHE=0
+  fi
+  lunch "$WANT_LUNCH" || fail "lunch $WANT_LUNCH failed"
+  set -e
   [ "$(get_build_var TARGET_DEVICE)" = ossi ] || fail "source product must build for ossi"
   [ "$(get_build_var PLATFORM_SDK_VERSION)" = "$SDK" ] || fail "source platform SDK differs from $SDK"
   PLATFORM_SPL="$(get_build_var PLATFORM_SECURITY_PATCH)"
@@ -246,8 +260,9 @@ VENDOR_READY=1
   OTA_NAME=$PRODUCT
   if [ "$(get_build_var TARGET_BUILD_TYPE)" = debug ]; then OTA_NAME="${OTA_NAME}_debug"; fi
   OTA_ZIP="$(get_abs_build_var PRODUCT_OUT)/$OTA_NAME-ota.zip"
-  mka -j"$JOBS" target-files-package otapackage check-vintf-all dist
-  set -u
+  set +eo pipefail
+  mka -j"$JOBS" target-files-package otapackage check-vintf-all dist || fail "mka build failed"
+  set -euo pipefail
   python3 "$HERE/rom-verify-delivery.py" --dist "$DIST_DIR" --ota "$OTA_ZIP" \
     --prebuilt "$SRC/device/realme/ossi/prebuilt" --stock "$STOCK" --avb-key "$OSSI_AVB_KEY" \
     --ota-cert "$OTA_CERT" --delta-generator "$DELTA_GENERATOR" --platform-security-patch "$PLATFORM_SPL" \

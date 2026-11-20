@@ -333,6 +333,39 @@ class ChinaMirrorTests(unittest.TestCase):
             self.assertTrue(good_obj.exists())
             self.assertTrue((good_proj / "shallow").exists())
 
+    def test_rom_build_local_restores_sigpipe_when_inherited_ignored(self):
+        with tempfile.TemporaryDirectory() as td:
+            probe = Path(td) / "probe.sh"
+            header = "\n".join((SCRIPTS / "rom-build-local.sh").read_text(encoding="utf-8").splitlines()[:10])
+            probe.write_text(
+                header
+                + "\nset +o pipefail\n"
+                + "x=$(cat /dev/zero | tr '\\0' 'a' | fold -w 4 | head -n 1)\n"
+                + '[ "$x" = "aaaa" ]\n',
+                encoding="utf-8",
+            )
+            env = os.environ.copy()
+            env.pop("OSSI_SIGPIPE_RESET", None)
+            for argv in (
+                ["bash", str(SCRIPTS / "rom-build-local.sh"), "--help"],
+                ["bash", str(probe)],
+            ):
+                res = subprocess.run(
+                    [
+                        sys.executable,
+                        "-c",
+                        "import signal, subprocess, sys; signal.signal(signal.SIGPIPE, signal.SIG_IGN); "
+                        "sys.exit(subprocess.run(sys.argv[1:], stdout=subprocess.DEVNULL).returncode)",
+                        *argv,
+                    ],
+                    cwd=str(ROOT),
+                    env=env,
+                    timeout=5,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(res.returncode, 0, res.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
