@@ -164,6 +164,34 @@ rewrite_repo_manifests() {
   done < <(find "$work_dir/.repo" -maxdepth 4 \( -path "$work_dir/.repo/manifest.xml" -o -path "$work_dir/.repo/manifests/*.xml" -o -path "$work_dir/.repo/manifests/*/*.xml" \) -type f -print0 2>/dev/null)
 }
 
+_heal_unborn_repo_worktrees() {
+  local work_dir="$1"
+  local list_file="$work_dir/.repo/project.list"
+  [ -f "$list_file" ] || return 1
+  local healed=0 p target
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    [ -e "$work_dir/$p/.git" ] || continue
+    if ! git -C "$work_dir/$p" rev-parse --verify -q HEAD >/dev/null 2>&1; then
+      target=$(git -C "$work_dir/$p" for-each-ref --format='%(objectname)' --count=1 refs/remotes/m/ 2>/dev/null || true)
+      if [ -z "$target" ]; then
+        target=$(git -C "$work_dir/$p" rev-parse --verify -q FETCH_HEAD 2>/dev/null || true)
+      fi
+      if [ -n "$target" ]; then
+        echo "[repo-heal] forcing detached checkout for unborn HEAD in $p ($target)" >&2
+        if git -C "$work_dir/$p" checkout -f --detach "$target" >/dev/null 2>&1; then
+          healed=$((healed + 1))
+        fi
+      fi
+    fi
+  done < "$list_file"
+  if [ "$healed" -gt 0 ]; then
+    echo "[repo-heal] healed $healed unborn worktree(s)" >&2
+    return 0
+  fi
+  return 1
+}
+
 repo_sync_resilient() {
   local work_dir="$1"
   local jobs="${2:-$(mirror_net_jobs)}"
@@ -230,6 +258,11 @@ repo_sync_resilient() {
       repo sync -c -j"$jobs" --no-clone-bundle --no-tags --force-sync "${extra_sync_args[@]}"
     ); then
       return 0
+    fi
+    if _heal_unborn_repo_worktrees "$work_dir"; then
+      if (cd "$work_dir" && GIT_TERMINAL_PROMPT=0 repo sync -l -c -j"$jobs" --no-tags --force-sync); then
+        return 0
+      fi
     fi
     sleep $(( (idx + 1) * 3 ))
   done
