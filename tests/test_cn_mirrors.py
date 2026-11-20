@@ -21,6 +21,7 @@ import rom_inputs  # noqa: E402
 
 class _MockMirrorHandler(BaseHTTPRequestHandler):
     GOOD_PAYLOAD = b"REALME_GT5_VERIFIED_STOCK_PAYLOAD_5_15_149" * 64
+    REPO_PAYLOAD = (b"#!/usr/bin/env python3\n" + b"# copyright\n" * 350 + b"REPO_URL = 'https://example.invalid/git-repo'\n")
 
     def do_GET(self):
         if self.path == "/fail":
@@ -38,6 +39,14 @@ class _MockMirrorHandler(BaseHTTPRequestHandler):
             body = self.GOOD_PAYLOAD
             self.send_response(200)
             self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if self.path == "/repo":
+            body = self.REPO_PAYLOAD
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -164,6 +173,16 @@ class ChinaMirrorTests(unittest.TestCase):
                         expected_sha256="0" * 64,
                         expand_github=False,
                     )
+
+                repo_dest = Path(tmp) / "repo"
+                mirror_helper.download_multi_mirror(
+                    [f"http://127.0.0.1:{port}/html", f"http://127.0.0.1:{port}/repo"],
+                    repo_dest,
+                    jobs=2,
+                    expand_github=False,
+                    expect_token=b"REPO_URL",
+                )
+                self.assertEqual(repo_dest.read_bytes(), _MockMirrorHandler.REPO_PAYLOAD)
         finally:
             server.shutdown()
             server.server_close()

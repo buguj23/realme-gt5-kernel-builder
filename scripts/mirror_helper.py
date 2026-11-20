@@ -68,11 +68,12 @@ DEFAULT_REPO_GIT_MIRRORS = (
 )
 
 DEFAULT_REPO_BIN_URLS = (
-    "https://mirrors.tuna.tsinghua.edu.cn/git/git-repo",
-    "https://ghfast.top/https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo",
-    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo",
+    "https://cdn.gh-proxy.org/https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo",
+    "https://edgeone.gh-proxy.org/https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo",
+    "https://gh-proxy.org/https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo",
     "https://cdn.jsdelivr.net/gh/GerritCodeReview/git-repo@main/repo",
     "https://fastly.jsdelivr.net/gh/GerritCodeReview/git-repo@main/repo",
+    "https://v6.gh-proxy.org/https://raw.githubusercontent.com/GerritCodeReview/git-repo/main/repo",
     "https://storage.googleapis.com/git-repo-downloads/repo",
 )
 
@@ -295,7 +296,7 @@ def _probe_http(
         with opener.open(req, timeout=timeout) as resp:
             status = getattr(resp, "status", 200)
             ctype = (resp.headers.get("Content-Type") or "").lower()
-            sample = resp.read(512)
+            sample = resp.read(8192 if expect_token else 512)
             ms = int((time.monotonic() - t0) * 1000)
             if status not in (200, 206):
                 return False, ms, f"http {status}"
@@ -547,7 +548,7 @@ def download_multi_mirror(
         res = subprocess.run(cmd, env=env)
         if res.returncode == 0 and output.is_file():
             if not expected_sha256 or sha256_file(output).lower() == expected_sha256.lower():
-                if not expect_token or expect_token in output.read_bytes()[:512]:
+                if not expect_token or expect_token in output.read_bytes()[:8192]:
                     return output
             output.unlink(missing_ok=True)
 
@@ -583,7 +584,7 @@ def download_multi_mirror(
         if not ok:
             tmp.unlink(missing_ok=True)
             continue
-        if expect_token and expect_token not in tmp.read_bytes()[:512]:
+        if expect_token and expect_token not in tmp.read_bytes()[:8192]:
             tmp.unlink(missing_ok=True)
             last_err = f"{candidate}: missing expected header"
             continue
@@ -738,11 +739,25 @@ def cmd_download(args: argparse.Namespace) -> int:
     return 0
 
 
+def _is_valid_repo_launcher(path: Path) -> bool:
+    if not path.is_file() or not os.access(path, os.X_OK):
+        return False
+    head = path.read_bytes()[:8192]
+    return (b"#!/usr/bin/env python" in head or head.startswith(b"#!")) and b"REPO_URL" in head
+
+
 def cmd_ensure_repo(args: argparse.Namespace) -> int:
     dest = Path(args.output)
-    if dest.is_file() and os.access(dest, os.X_OK):
-        head = dest.read_bytes()[:256]
-        if b"#!/usr/bin/env python" in head or b"REPO_URL" in head:
+    if _is_valid_repo_launcher(dest):
+        print(dest)
+        return 0
+    existing = shutil.which("repo")
+    if existing:
+        existing_path = Path(existing)
+        if _is_valid_repo_launcher(existing_path):
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(existing_path, dest)
+            dest.chmod(0o755)
             print(dest)
             return 0
     mode = detect_mirror_mode(args.mode)

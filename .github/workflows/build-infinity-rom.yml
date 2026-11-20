@@ -36,6 +36,15 @@ on:
         description: "Build and verify a userdebug ROM on the runner"
         type: boolean
         default: false
+      upload_mode:
+        description: "Artifact upload scope (metadata-only preserves ECS ¥0.8/GB outbound)"
+        type: choice
+        required: true
+        default: metadata-only
+        options:
+          - metadata-only
+          - ota-only
+          - full
       runner:
         description: "Runner for verify job (default: domestic self-hosted instance)"
         type: choice
@@ -148,7 +157,7 @@ jobs:
           fi
       - name: Ensure domestic runner tools and ROM dependencies
         run: |
-          if ! command -v aria2c >/dev/null 2>&1 || ! command -v fsck.erofs >/dev/null 2>&1 || ! command -v repo >/dev/null 2>&1; then
+          if ! command -v aria2c >/dev/null 2>&1 || ! command -v fsck.erofs >/dev/null 2>&1 || ! command -v repo >/dev/null 2>&1 || ! command -v avbtool >/dev/null 2>&1 || ! command -v mkbootimg >/dev/null 2>&1 || ! command -v dtc >/dev/null 2>&1; then
             bash scripts/setup-cn-runner.sh --with-rom-deps
           fi
       - name: Fetch the verified kernel artifact
@@ -167,10 +176,18 @@ jobs:
           ROM_SOURCE: ${{ inputs.source_dir }}
           STOCK_DIR: ${{ inputs.stock_dir }}
           STOCK_SLOT: ${{ inputs.stock_slot }}
+          UPLOAD_MODE: ${{ inputs.upload_mode }}
         run: |
           set -euo pipefail
           SRC="${ROM_SOURCE:-$HOME/gt5-rom/$BRANCH}"
           STOCK="${STOCK_DIR:-$HOME/gt5-stock/$BRANCH}"
+          if [ "${RUNNER_ENVIRONMENT:-}" != "github-hosted" ] && [ -w "$HOME" ]; then
+            DELIVERY_DIR="$HOME/ossi-deliveries/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          else
+            DELIVERY_DIR="$RUNNER_TEMP/ossi-rom-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          fi
+          UPLOAD_DIR="$RUNNER_TEMP/ossi-upload-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$DELIVERY_DIR" "$UPLOAD_DIR"
           source scripts/lib-mirror.sh
           repo_clean_locks "$SRC"
           stock_args=()
@@ -178,9 +195,29 @@ jobs:
           bash scripts/rom-build-local.sh --sync --auto-fetch-stock --src "$SRC" --branch "$BRANCH" \
             --stock-images "$STOCK" \
             --pkg "$RUNNER_TEMP/ossi-kernel-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
-            --output "$RUNNER_TEMP/ossi-rom-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" "${stock_args[@]}"
+            --output "$DELIVERY_DIR" "${stock_args[@]}"
+          (
+            cd "$DELIVERY_DIR"
+            sha256sum * > SHA256SUMS.txt
+          )
+          cp -f "$DELIVERY_DIR/rom-delivery.json" "$DELIVERY_DIR/SHA256SUMS.txt" "$UPLOAD_DIR/"
+          [ -f "$DELIVERY_DIR/source-manifest.xml" ] && cp -f "$DELIVERY_DIR/source-manifest.xml" "$UPLOAD_DIR/" || true
+          if [ "$UPLOAD_MODE" = "full" ]; then
+            for f in "$DELIVERY_DIR"/*; do
+              [ -f "$f" ] && (ln -f "$f" "$UPLOAD_DIR/" 2>/dev/null || cp -f "$f" "$UPLOAD_DIR/")
+            done
+          elif [ "$UPLOAD_MODE" = "ota-only" ]; then
+            for f in "$DELIVERY_DIR"/*.zip; do
+              case "$(basename "$f")" in
+                *target_files*) ;;
+                *) [ -f "$f" ] && (ln -f "$f" "$UPLOAD_DIR/" 2>/dev/null || cp -f "$f" "$UPLOAD_DIR/") ;;
+              esac
+            done
+          fi
+          echo "OSSI_DELIVERY_DIR=$DELIVERY_DIR" >> "$GITHUB_ENV"
+          echo "OSSI_UPLOAD_DIR=$UPLOAD_DIR" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
           name: ossi_userdebug_${{ inputs.kernel_file }}_${{ inputs.ksu_variant }}
-          path: ${{ runner.temp }}/ossi-rom-${{ github.run_id }}-${{ github.run_attempt }}/
+          path: ${{ env.OSSI_UPLOAD_DIR }}
           if-no-files-found: error
