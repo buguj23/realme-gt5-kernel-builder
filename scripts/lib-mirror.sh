@@ -312,22 +312,46 @@ repo_sync_resilient() {
     gh_prefixes=("direct" "https://cdn.gh-proxy.org/" "https://edgeone.gh-proxy.org/" "https://gh-proxy.org/")
   fi
 
-  local aosp_mirror="" lineage_mirror="" clo_mirror="${CLO_MIRROR:-}"
+  local -a aosp_mirrors=() lineage_mirrors=()
+  local clo_mirror="${CLO_MIRROR:-}"
   if [ "$mode" = "cn" ] && [ "${REWRITE_AOSP_MIRROR:-1}" = 1 ]; then
-    aosp_mirror=${AOSP_MIRROR:-$(python3 "$MIRROR_HELPER" probe-aosp)}
-    lineage_mirror=${LINEAGE_MIRROR:-$(python3 "$MIRROR_HELPER" probe-lineage)}
+    local aosp_primary lineage_primary m
+    aosp_primary=${AOSP_MIRROR:-$(python3 "$MIRROR_HELPER" probe-aosp)}
+    lineage_primary=${LINEAGE_MIRROR:-$(python3 "$MIRROR_HELPER" probe-lineage)}
+    if [ -n "${AOSP_MIRROR:-}" ]; then
+      aosp_mirrors=("$AOSP_MIRROR")
+    else
+      for m in "$aosp_primary" "https://mirrors.bfsu.edu.cn/git/AOSP/" "https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/"; do
+        [ -n "$m" ] && [[ " ${aosp_mirrors[*]:-} " != *" ${m} "* ]] && aosp_mirrors+=("$m")
+      done
+      if [ "${MIRROR_IGNORE_TUNNEL:-0}" != 1 ] && timeout 1 bash -c '</dev/tcp/127.0.0.1/7890' 2>/dev/null; then
+        aosp_mirrors+=("https://android.googlesource.com/")
+      fi
+    fi
+    if [ -n "${LINEAGE_MIRROR:-}" ]; then
+      lineage_mirrors=("$LINEAGE_MIRROR")
+    else
+      for m in "$lineage_primary" "https://mirrors.bfsu.edu.cn/git/lineageOS/LineageOS" "https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS"; do
+        [ -n "$m" ] && [[ " ${lineage_mirrors[*]:-} " != *" ${m} "* ]] && lineage_mirrors+=("$m")
+      done
+      if [ "${MIRROR_IGNORE_TUNNEL:-0}" != 1 ] && timeout 1 bash -c '</dev/tcp/127.0.0.1/7890' 2>/dev/null; then
+        lineage_mirrors+=("https://github.com/LineageOS")
+      fi
+    fi
   fi
 
   local idx=0 max_attempts="${REPO_SYNC_RETRIES:-4}"
-  local prefix
+  local prefix aosp_mirror="" lineage_mirror=""
   for ((idx = 0; idx < max_attempts; idx++)); do
     prefix=${gh_prefixes[$((idx % ${#gh_prefixes[@]}))]}
+    [ "${#aosp_mirrors[@]}" -gt 0 ] && aosp_mirror=${aosp_mirrors[$((idx % ${#aosp_mirrors[@]}))]}
+    [ "${#lineage_mirrors[@]}" -gt 0 ] && lineage_mirror=${lineage_mirrors[$((idx % ${#lineage_mirrors[@]}))]}
     repo_clean_locks "$work_dir"
     _prune_incomplete_repo_projects "$work_dir"
     if [ "$mode" = "cn" ] || [ -n "$aosp_mirror" ] || [ -n "$lineage_mirror" ] || [ -n "$clo_mirror" ]; then
       rewrite_repo_manifests "$work_dir" "$prefix" "$aosp_mirror" "$lineage_mirror" "$clo_mirror"
     fi
-    echo "[repo-sync attempt $((idx + 1))/$max_attempts] jobs=$jobs github_prefix=$prefix"
+    echo "[repo-sync attempt $((idx + 1))/$max_attempts] jobs=$jobs github_prefix=$prefix aosp=${aosp_mirror:-default}"
     if (
       cd "$work_dir"
       export GIT_TERMINAL_PROMPT=0
@@ -337,11 +361,22 @@ repo_sync_resilient() {
       export GIT_CONFIG_KEY_1="http.postBuffer"
       export GIT_CONFIG_VALUE_1="524288000"
       export GIT_CONFIG_KEY_2="http.lowSpeedLimit"
-      export GIT_CONFIG_VALUE_2="${GIT_HTTP_LOW_SPEED_LIMIT:-8192}"
+      export GIT_CONFIG_VALUE_2="${GIT_HTTP_LOW_SPEED_LIMIT:-4096}"
       export GIT_CONFIG_KEY_3="http.lowSpeedTime"
-      export GIT_CONFIG_VALUE_3="${GIT_HTTP_LOW_SPEED_TIME:-180}"
+      export GIT_CONFIG_VALUE_3="${GIT_HTTP_LOW_SPEED_TIME:-600}"
       export GIT_CONFIG_KEY_4="protocol.file.allow"
       export GIT_CONFIG_VALUE_4="always"
+      if [ "${MIRROR_IGNORE_TUNNEL:-0}" != 1 ] && timeout 1 bash -c '</dev/tcp/127.0.0.1/7890' 2>/dev/null; then
+        export GIT_CONFIG_COUNT=9
+        export GIT_CONFIG_KEY_5="http.https://github.com.proxy"
+        export GIT_CONFIG_VALUE_5="socks5h://127.0.0.1:7890"
+        export GIT_CONFIG_KEY_6="https.https://github.com.proxy"
+        export GIT_CONFIG_VALUE_6="socks5h://127.0.0.1:7890"
+        export GIT_CONFIG_KEY_7="http.https://android.googlesource.com.proxy"
+        export GIT_CONFIG_VALUE_7="socks5h://127.0.0.1:7890"
+        export GIT_CONFIG_KEY_8="https.https://android.googlesource.com.proxy"
+        export GIT_CONFIG_VALUE_8="socks5h://127.0.0.1:7890"
+      fi
       repo sync -c -j"$jobs" --no-clone-bundle --no-tags --force-sync "${extra_sync_args[@]}"
     ); then
       return 0
