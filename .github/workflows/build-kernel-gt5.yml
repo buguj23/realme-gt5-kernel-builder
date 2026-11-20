@@ -297,6 +297,11 @@ jobs:
         run: |
           mkdir -p out/artifacts
           bash scripts/30-package.sh
+          if [ "${RUNNER_ENVIRONMENT:-}" != "github-hosted" ] && [ -f "out/artifacts/kernel-package/kernel-package.tar.zst" ]; then
+            PKG_CACHE="$HOME/.cache/gt5-kernel-packages/$GITHUB_RUN_ID/$KSU_MODE"
+            mkdir -p "$PKG_CACHE"
+            cp -f "out/artifacts/kernel-package/kernel-package.tar.zst" "$PKG_CACHE/kernel-package.tar.zst"
+          fi
 
       - name: Verify kernel-package integrity
         run: |

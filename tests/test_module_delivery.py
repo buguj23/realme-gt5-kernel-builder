@@ -111,6 +111,25 @@ class ModuleDeliveryTests(unittest.TestCase):
             STAGER["select_modules"](self.root, pool, {
                 "first_stage": ["anchor.ko"], "recovery": ["oplus_bsp_zsmalloc.ko", "zsmalloc.ko"]})
 
+    def test_system_dlkm_blocklist_prevents_vendor_dlkm_duplicate_export(self):
+        pool = self.root / "stock"
+        ramdisk, recovery, vendor, system = (
+            pool / "ramdisk", pool / "recovery", pool / "vendor_dlkm", pool / "system_dlkm"
+        )
+        for p in (ramdisk, recovery, vendor, system):
+            p.mkdir(parents=True)
+        self.module("anchor", {"module_layout": 0x12345678}, directory=ramdisk)
+        self.module("zsmalloc", {"module_layout": 0x12345678}, {"zs_map_object": 1}, directory=system)
+        self.module("zram", {"module_layout": 0x12345678, "zs_map_object": 1}, directory=system)
+        self.module("oplus_bsp_zsmalloc", {"module_layout": 0x12345678},
+                    {"zs_map_object": 1}, directory=vendor)
+        shutil.copyfile(vendor / "oplus_bsp_zsmalloc.ko", recovery / "oplus_bsp_zsmalloc.ko")
+        (vendor / "system_dlkm.modules.blocklist").write_text("blocklist zram\nblocklist zsmalloc\n")
+        result = STAGER["select_modules"](self.root, pool, {
+            "first_stage": ["anchor.ko"], "recovery": ["anchor.ko", "oplus_bsp_zsmalloc.ko"]})
+        self.assertIn("oplus_bsp_zsmalloc.ko", result["vendor_dlkm"])
+        self.assertIn("zsmalloc.ko", result["system_dlkm"])
+
     def test_stock_soft_dependencies_are_included_without_changing_load_order(self):
         names = ["consumer.ko", "recovery-only.ko", "optional-service.ko"]
         paths = {name: self.mods / name for name in names}

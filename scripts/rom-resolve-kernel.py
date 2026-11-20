@@ -2,6 +2,7 @@
 """Retrieve a verified package from the GT5 kernel workflow."""
 import argparse
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
@@ -11,6 +12,9 @@ import tarfile
 import tempfile
 import time
 from urllib.parse import urlencode
+import urllib.error
+import urllib.request
+import zipfile
 
 from rom_inputs import baseline, require
 from rom_kernel_package import VARIANTS, verify_package
@@ -39,6 +43,70 @@ def valid_run(run, repo, branch):
             and run["head_branch"] == branch)
 
 
+def _gh_token():
+    for key in ("GH_TOKEN", "GITHUB_TOKEN"):
+        value = os.environ.get(key, "").strip()
+        if value:
+            return value
+    return subprocess.check_output(["gh", "auth", "token"], text=True).strip()
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _artifact_redirect_url(repo, artifact_id):
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}/zip",
+        headers={
+            "Authorization": f"Bearer {_gh_token()}",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "realme-gt5-builder/1.0",
+        },
+    )
+    opener = urllib.request.build_opener(_NoRedirect())
+    try:
+        with opener.open(req, timeout=20) as resp:
+            return resp.headers.get("Location") or resp.geturl()
+    except urllib.error.HTTPError as err:
+        if err.code in (301, 302, 303, 307, 308):
+            location = err.headers.get("Location")
+            if location:
+                return location
+        raise
+
+
+def _download_artifact(repo, run_id, artifact, artifact_id, dest_dir):
+    if artifact_id and shutil.which("aria2c"):
+        try:
+            url = None
+            for attempt in range(1, 4):
+                try:
+                    url = _artifact_redirect_url(repo, artifact_id)
+                    if url:
+                        break
+                except (OSError, urllib.error.URLError, subprocess.CalledProcessError):
+                    if attempt >= 3:
+                        raise
+                    time.sleep(attempt * 2)
+            zip_path = dest_dir / "artifact.zip"
+            _run_retry([
+                "aria2c", "-x", "16", "-s", "16", "-k", "1M",
+                "--connect-timeout=15", "--timeout=45", "--max-tries=3",
+                "--allow-overwrite=true", "-d", str(dest_dir), "-o", zip_path.name, url,
+            ], retries=2)
+            with zipfile.ZipFile(zip_path) as archive:
+                info = archive.getinfo("kernel-package.tar.zst")
+                with archive.open(info) as src, (dest_dir / "kernel-package.tar.zst").open("wb") as dst:
+                    shutil.copyfileobj(src, dst)
+            zip_path.unlink(missing_ok=True)
+            return
+        except (OSError, urllib.error.URLError, zipfile.BadZipFile, KeyError, subprocess.CalledProcessError) as error:
+            print(f"aria2c artifact download fallback for run {run_id}: {error}", file=sys.stderr)
+    _run_retry(["gh", "run", "download", str(run_id), "-R", repo, "-n", artifact, "-D", str(dest_dir)])
+
+
 def artifact_runs(repo, branch, artifact, run_id):
     base = f"repos/{repo}/actions"
     if run_id:
@@ -55,6 +123,7 @@ def artifact_runs(repo, branch, artifact, run_id):
                    if a["name"] == artifact and not a["expired"]]
         require(len(matches) <= 1, f"run {run['id']} has duplicate {artifact} artifacts")
         if matches:
+            run["_artifact_id"] = matches[0]["id"]
             yield run
 
 
@@ -91,16 +160,34 @@ def main():
     dest = args.output.resolve()
     require(not dest.exists(), f"kernel package already exists at {dest}")
     dest.parent.mkdir(parents=True, exist_ok=True)
+    cache_root = Path(os.environ.get("GT5_KERNEL_CACHE_DIR") or (Path.home() / ".cache" / "gt5-kernel-packages"))
     for run in artifact_runs(args.repo, branch, artifact, args.run_id):
         try:
+            cache_file = cache_root / str(run["id"]) / args.variant / "kernel-package.tar.zst"
             with tempfile.TemporaryDirectory(prefix="ossi-kernel-download-", dir=dest.parent) as tmp:
                 temp = Path(tmp)
-                _run_retry(["gh", "run", "download", str(run["id"]), "-R", args.repo,
-                            "-n", artifact, "-D", str(temp)])
                 stage = temp / "package"
-                stage.mkdir()
-                extract_package(temp / "kernel-package.tar.zst", stage)
-                verify_package(stage, branch, args.variant, run["head_sha"])
+                used_cache = False
+                if cache_file.is_file():
+                    try:
+                        stage.mkdir()
+                        extract_package(cache_file, stage)
+                        verify_package(stage, branch, args.variant, run["head_sha"])
+                        used_cache = True
+                        print(f"Using verified local kernel package cache: {cache_file}")
+                    except (OSError, ValueError, KeyError, subprocess.CalledProcessError, tarfile.TarError):
+                        cache_file.unlink(missing_ok=True)
+                        shutil.rmtree(stage, ignore_errors=True)
+                if not used_cache:
+                    _download_artifact(args.repo, run["id"], artifact, run.get("_artifact_id"), temp)
+                    stage.mkdir()
+                    archive = temp / "kernel-package.tar.zst"
+                    extract_package(archive, stage)
+                    verify_package(stage, branch, args.variant, run["head_sha"])
+                    cache_file.parent.mkdir(parents=True, exist_ok=True)
+                    tmp_cache = cache_file.with_name(f".tmp-{os.getpid()}-kernel-package.tar.zst")
+                    shutil.copyfile(archive, tmp_cache)
+                    tmp_cache.replace(cache_file)
                 stage.rename(dest)
         except (OSError, ValueError, KeyError, subprocess.CalledProcessError, tarfile.TarError) as error:
             print(f"Skipping invalid kernel artifact in run {run['id']}: {error}", file=sys.stderr)

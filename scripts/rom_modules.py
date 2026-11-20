@@ -15,7 +15,8 @@ from rom_inputs import extract_fs, raw_image, require, sha256, stock_payload, ve
 
 MODULE = re.compile(r"[A-Za-z0-9_.+-]+\.ko")
 LIST_FILES = ("modules.load", "modules.load.recovery", "modules.dep",
-              "modules.softdep", "modules.blocklist", "modules.options")
+              "modules.softdep", "modules.blocklist", "modules.options",
+              "system_dlkm.modules.blocklist")
 DT_FSTAB = "/firmware/android/fstab"
 
 

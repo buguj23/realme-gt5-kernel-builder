@@ -28,6 +28,22 @@ def merged(*sets):
     return result
 
 
+def canonical_module(name):
+    return Path(name).name.removesuffix(".ko").replace("-", "_")
+
+
+def blocklisted_modules(path):
+    """Parse modprobe blocklist/blacklist entries into canonical module names."""
+    blocked = set()
+    if not path.is_file():
+        return blocked
+    for line in path.read_text().splitlines():
+        fields = line.split("#", 1)[0].split()
+        if len(fields) >= 2 and fields[0] in ("blocklist", "blacklist"):
+            blocked.add(canonical_module(fields[1]))
+    return blocked
+
+
 def dependency_closure(names, pool, dep_file):
     """Select only the modules reachable from a stock ramdisk load list."""
     dependencies = {}
@@ -39,8 +55,7 @@ def dependency_closure(names, pool, dep_file):
             require(sep, f"{dep_file}: malformed dependency entry")
             dependencies[Path(source).name] = [Path(provider).name for provider in providers.split()]
 
-    def canonical(name):
-        return Path(name).name.removesuffix(".ko").replace("-", "_")
+    canonical = canonical_module
 
     softdep_file = dep_file.with_name("modules.softdep")
     if softdep_file.is_file():
@@ -100,11 +115,17 @@ def select_modules(package, stock, lists):
         if not any(name in modules for modules in (early, recovery, vendor, system)):
             vendor[name] = path
 
+    blocked_system = (
+        blocklisted_modules(stock / "vendor_dlkm/system_dlkm.modules.blocklist")
+        | blocklisted_modules(stock / "system_dlkm/modules.blocklist")
+    )
+    active_system = {name: path for name, path in system.items() if canonical_module(name) not in blocked_system}
+
     symvers = package / "Module.symvers"
     verify_symbols(symvers, "normal first stage", early)
     verify_symbols(symvers, "Recovery", recovery)
     verify_symbols(symvers, "system_dlkm", system, merged(early, system))
-    verify_symbols(symvers, "normal boot DLKM", vendor, merged(early, system, vendor))
+    verify_symbols(symvers, "normal boot DLKM", vendor, merged(early, active_system, vendor))
     partitions = {"vendor_ramdisk": merged(early, recovery), "vendor_dlkm": vendor, "system_dlkm": system}
     if packaged:
         features = {tuple(kmi.vermagic(path).split()[1:]) for path in packaged.values()}
@@ -182,8 +203,11 @@ def stage(a):
             mk.append(f"{FS_MAKE[partition]} := {fs}")
         original = a.stock_pool / ("ramdisk" if partition == "vendor_ramdisk" else partition)
         for name, suffix in (("modules.blocklist", "BLOCKLIST_FILE"), ("modules.options", "OPTIONS_FILE")):
-            if (original / name).is_file():
-                shutil.copyfile(original / name, dest / name)
+            src = original / name
+            if not src.is_file() and partition == "system_dlkm" and name == "modules.blocklist":
+                src = a.stock_pool / "vendor_dlkm/system_dlkm.modules.blocklist"
+            if src.is_file():
+                shutil.copyfile(src, dest / name)
                 mk.append(f"BOARD_{prefix}_KERNEL_MODULES_{suffix} := $(DEVICE_PATH)/prebuilt/{partition}/{name}")
     report = {"package": package, "stock_payload": payload["sha256"], "lists": lists, "fs": pool["fs"],
               "dtbs_using_ramdisk_fstab": dtb_updates,
