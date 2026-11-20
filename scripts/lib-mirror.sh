@@ -18,7 +18,7 @@ mirror_net_jobs() {
 }
 
 _is_domestic_url() {
-  python3 -c 'import sys, mirror_helper as m; sys.exit(0 if m.is_domestic_url(sys.argv[1]) else 1)' "$1"
+  PYTHONPATH="$LIB_MIRROR_DIR${PYTHONPATH:+:$PYTHONPATH}" python3 -c 'import sys, mirror_helper as m; sys.exit(0 if m.is_domestic_url(sys.argv[1]) else 1)' "$1"
 }
 
 git_resilient_args() {
