@@ -99,4 +99,6 @@ echo "  Image          : $KBUILD_OUT/arch/arm64/boot/Image"
 echo "  Module.symvers : $KBUILD_OUT/Module.symvers"
 echo "  Config         : $KBUILD_OUT/.config"
 echo "  vmlinux        : $KBUILD_OUT/vmlinux"
-[ -f "$KBUILD_OUT/kernelsu.ko" ] && echo "  kernelsu.ko    : $KBUILD_OUT/kernelsu.ko"
+if [ -f "$KBUILD_OUT/kernelsu.ko" ]; then
+  echo "  kernelsu.ko    : $KBUILD_OUT/kernelsu.ko"
+fi

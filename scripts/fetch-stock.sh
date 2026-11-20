@@ -43,6 +43,11 @@ if [ -n "$LOCAL_DIR" ]; then
     [ -f "$LOCAL_DIR/$f" ] || { echo "Missing $LOCAL_DIR/$f" >&2; exit 1; }
     ln -sf "$(realpath "$LOCAL_DIR/$f")" "$DEST/$f"
   done
+  if [ "$MODE" = "full" ]; then
+    for f in super-layout.json my_bigball.img my_carrier.img my_company.img my_engineering.img my_heytap.img my_preload.img my_region.img my_stock.img; do
+      [ -f "$LOCAL_DIR/$f" ] && ln -sf "$(realpath "$LOCAL_DIR/$f")" "$DEST/$f" || true
+    done
+  fi
   python3 "$REPO_DIR/scripts/rom-check-inputs.py" --branch 5.15.149 --stock "$DEST" \
     $([ "$MODE" = "full" ] && printf '%s' "--rom-partitions" || printf '%s' "--kernel-only") 2>/dev/null || \
     python3 -c "import sys; sys.path.insert(0, '$REPO_DIR/scripts'); import rom_inputs; rom_inputs.stock_payload('$DEST', '5.15.149'); print('Verified payload_metadata.bin')"
@@ -59,22 +64,64 @@ sha_for() {
   awk -v f="$1" '$2 == f || $2 == ("*" f) {print $1; exit}' "$CACHE_DIR/SHA256SUMS.txt"
 }
 
-fetch_and_extract() {
-  local archive="$1"
-  local sha
-  sha=$(sha_for "$archive")
-  [ -n "$sha" ] || { echo "SHA256SUMS.txt missing entry for $archive" >&2; exit 1; }
-  echo "Fetching $archive (sha256=${sha:0:12}...)"
-  download_multi_mirror "$CACHE_DIR/$archive" "$sha" "${BASE_URL}/${archive}"
-  zstd -dc "$CACHE_DIR/$archive" | tar -xf - -C "$DEST"
+dest_has_all() {
+  [ "${FORCE_STOCK_FETCH:-0}" != 1 ] || return 1
+  local f
+  for f in "$@"; do
+    [ -s "$DEST/$f" ] || return 1
+  done
+  return 0
 }
 
-fetch_and_extract "RMX3820_15.0.0.320-stock-kernel-boot-dlkm.tar.zst"
+fetch_and_extract() {
+  local archive="$1"
+  shift
+  if [ "$#" -gt 0 ] && dest_has_all "$@"; then
+    echo "Already staged in $DEST: $*"
+    return 0
+  fi
+  local sha
+  sha=$(sha_for "$archive")
+  if [ -n "$sha" ]; then
+    echo "Fetching $archive (sha256=${sha:0:12}...)"
+    download_multi_mirror "$CACHE_DIR/$archive" "$sha" "${BASE_URL}/${archive}"
+    zstd -dc "$CACHE_DIR/$archive" | tar -xf - -C "$DEST"
+    [ "${KEEP_STOCK_ARCHIVES:-0}" = 1 ] || rm -f "$CACHE_DIR/$archive"
+    return 0
+  fi
+  local parts
+  parts=$(awk -v p="${archive}.part-" '$2 ~ ("^\\*?" p) {gsub(/^\*/, "", $2); print $2}' "$CACHE_DIR/SHA256SUMS.txt" | LC_ALL=C sort)
+  [ -n "$parts" ] || { echo "SHA256SUMS.txt missing entry for $archive" >&2; exit 1; }
+  local part part_sha
+  for part in $parts; do
+    part_sha=$(sha_for "$part")
+    echo "Fetching $part (sha256=${part_sha:0:12}...)"
+    download_multi_mirror "$CACHE_DIR/$part" "$part_sha" "${BASE_URL}/${part}"
+  done
+  (for part in $parts; do cat "$CACHE_DIR/$part"; done) | zstd -dc | tar -xf - -C "$DEST"
+  if [ "${KEEP_STOCK_ARCHIVES:-0}" != 1 ]; then
+    for part in $parts; do rm -f "$CACHE_DIR/$part"; done
+  fi
+}
+
+fetch_and_extract "RMX3820_15.0.0.320-stock-kernel-boot-dlkm.tar.zst" \
+  boot.img dtbo.img init_boot.img recovery.img vbmeta.img vbmeta_system.img vbmeta_vendor.img vendor_boot.img vendor_dlkm.img system_dlkm.img payload_metadata.bin
 
 if [ "$MODE" = "full" ]; then
-  for part in vendor odm system my_product; do
-    fetch_and_extract "RMX3820_15.0.0.320-stock-${part}.tar.zst"
-  done
+  fetch_and_extract "RMX3820_15.0.0.320-stock-vendor.tar.zst" vendor.img
+  fetch_and_extract "RMX3820_15.0.0.320-stock-odm.tar.zst" odm.img
+  fetch_and_extract "RMX3820_15.0.0.320-stock-system.tar.zst" system.img system_ext.img product.img
+  fetch_and_extract "RMX3820_15.0.0.320-stock-my_product.tar.zst" my_product.img my_manifest.img
+  if grep -qs 'RMX3820_15\.0\.0\.320-stock-my_bigball\.tar\.zst' "$CACHE_DIR/SHA256SUMS.txt"; then
+    fetch_and_extract "RMX3820_15.0.0.320-stock-my_bigball.tar.zst" \
+      super-layout.json my_company.img my_bigball.img my_region.img my_carrier.img my_engineering.img my_heytap.img
+  fi
+  if grep -qs 'RMX3820_15\.0\.0\.320-stock-my_preload\.tar\.zst' "$CACHE_DIR/SHA256SUMS.txt"; then
+    fetch_and_extract "RMX3820_15.0.0.320-stock-my_preload.tar.zst" my_preload.img
+  fi
+  if grep -qs 'RMX3820_15\.0\.0\.320-stock-my_stock\.tar\.zst' "$CACHE_DIR/SHA256SUMS.txt"; then
+    fetch_and_extract "RMX3820_15.0.0.320-stock-my_stock.tar.zst" my_stock.img
+  fi
 fi
 
 echo "Verified stock baseline staged at $DEST"

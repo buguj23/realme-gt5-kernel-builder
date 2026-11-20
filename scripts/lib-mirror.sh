@@ -25,7 +25,7 @@ git_resilient_args() {
   local url="$1"
   GIT_RESILIENT_ARGS=(
     -c "http.version=HTTP/1.1"
-    -c "http.lowSpeedLimit=${GIT_HTTP_LOW_SPEED_LIMIT:-1024}"
+    -c "http.lowSpeedLimit=${GIT_HTTP_LOW_SPEED_LIMIT:-16384}"
     -c "http.lowSpeedTime=${GIT_HTTP_LOW_SPEED_TIME:-45}"
     -c "http.postBuffer=524288000"
   )
@@ -250,7 +250,7 @@ repo_sync_resilient() {
       export GIT_CONFIG_KEY_1="http.postBuffer"
       export GIT_CONFIG_VALUE_1="524288000"
       export GIT_CONFIG_KEY_2="http.lowSpeedLimit"
-      export GIT_CONFIG_VALUE_2="${GIT_HTTP_LOW_SPEED_LIMIT:-1024}"
+      export GIT_CONFIG_VALUE_2="${GIT_HTTP_LOW_SPEED_LIMIT:-16384}"
       export GIT_CONFIG_KEY_3="http.lowSpeedTime"
       export GIT_CONFIG_VALUE_3="${GIT_HTTP_LOW_SPEED_TIME:-45}"
       export GIT_CONFIG_KEY_4="protocol.file.allow"

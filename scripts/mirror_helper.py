@@ -365,6 +365,11 @@ def rank_github_urls(url: str, mode: str | None = None, timeout: float = 6.0, is
     if resolved_mode == "cn" and os.environ.get("MIRROR_RACE_DIRECT", "0") != "1":
         domestic = [u for u in candidates if u != base]
         ranked_dom = [u for u, _ in rank_urls(domestic, timeout=timeout, is_git=is_git, reject_html=True)]
+        if is_git:
+            # v6.gh-proxy.org can win 1KB info/refs probes yet throttle large pack transfers; keep it behind IPv4/CDN proxies.
+            ranked_dom = [u for u in ranked_dom if "v6.gh-proxy.org" not in u] + [
+                u for u in ranked_dom if "v6.gh-proxy.org" in u
+            ]
         if ranked_dom:
             # Prefer domestic proxies for sustained pack/release throughput in CN; keep direct as last fallback.
             if base in candidates and base not in ranked_dom:
