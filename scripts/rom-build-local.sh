@@ -245,8 +245,9 @@ fi
 (
   cd "$SRC"
   repo manifest -r -o "$WORK/source-manifest.xml"
-  export OUT_DIR="$SRC/out/ossi/$BR"
-  export DIST_DIR="$WORK/dist"
+  export OUT_DIR="out/ossi/$BR"
+  export DIST_DIR="$OUT_DIR/dist"
+  rm -rf -- "$DIST_DIR"
   export OSSI_AVB_KEY="${AVB_KEY:-external/avb/test/data/testkey_rsa4096.pem}"
   [[ "$OSSI_AVB_KEY" == "$SRC/"* ]] && export OSSI_AVB_KEY="${OSSI_AVB_KEY#"$SRC/"}"
   [ -s "$OSSI_AVB_KEY" ] || fail "AVB signing key missing"
