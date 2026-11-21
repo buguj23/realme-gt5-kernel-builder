@@ -640,6 +640,25 @@ class RomInputTests(unittest.TestCase):
             'cc_binary {\n    name: "android.hardware.vibrator.service.oplus-richtap",\n    shared_libs: ["libaacvibrator"],\n}\n\n'
             'cc_library_shared {\n    name: "libaacvibrator",\n    soc_specific: true,\n}\n'
         )
+        (self.root / "build/make/tools/releasetools").mkdir(parents=True)
+        (self.root / "build/make/tools/releasetools/common.py").write_text(
+            '  if partition_name == "recovery":\n'
+            '    args = info_dict.get("recovery_mkbootimg_args")\n'
+            '    if not args:\n'
+            '      # Fall back to "mkbootimg_args" for recovery image\n'
+            '      # in case "recovery_mkbootimg_args" is not set.\n'
+            '      args = info_dict.get("mkbootimg_args")\n'
+            '  elif partition_name == "init_boot":\n'
+            '    args = info_dict.get("mkbootimg_init_args")\n'
+            '  else:\n'
+            '    args = info_dict.get("mkbootimg_args")\n'
+            '  if args and args.strip():\n'
+            '    cmd.extend(shlex.split(args))\n'
+            '\n'
+            '  args = info_dict.get("mkbootimg_version_args")\n'
+            '  if args and args.strip():\n'
+            '    cmd.extend(shlex.split(args))\n'
+        )
 
         patcher["apply_all"](self.root)
         self.assertFalse(dangling.is_symlink())
@@ -670,6 +689,8 @@ class RomInputTests(unittest.TestCase):
         richtap_bp = (self.root / "hardware/oplus/aidl/vibrator/richtap/Android.bp").read_text()
         self.assertNotIn("cc_library_shared", richtap_bp)
         self.assertIn('"libaacvibrator"', richtap_bp)
+        rt_common = (self.root / "build/make/tools/releasetools/common.py").read_text()
+        self.assertLess(rt_common.index("mkbootimg_version_args"), rt_common.index("recovery_mkbootimg_args"))
 
         # Second invocation must be an exact no-op
         before = super_go
@@ -678,6 +699,7 @@ class RomInputTests(unittest.TestCase):
         before_init_oplus = init_oplus
         before_oplus_ns = oplus_ns
         before_richtap_bp = richtap_bp
+        before_rt_common = rt_common
         patcher["apply_all"](self.root)
         self.assertEqual((self.root / "build/soong/fsgen/super_img.go").read_text(), before)
         self.assertEqual((self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text(), before_kernel_mk)
@@ -685,6 +707,7 @@ class RomInputTests(unittest.TestCase):
         self.assertEqual((self.root / "device/oneplus/sm8550-common/init/init_oplus.cpp").read_text(), before_init_oplus)
         self.assertEqual((self.root / "hardware/oplus/Android.bp").read_text(), before_oplus_ns)
         self.assertEqual((self.root / "hardware/oplus/aidl/vibrator/richtap/Android.bp").read_text(), before_richtap_bp)
+        self.assertEqual((self.root / "build/make/tools/releasetools/common.py").read_text(), before_rt_common)
 
 
 if __name__ == "__main__":

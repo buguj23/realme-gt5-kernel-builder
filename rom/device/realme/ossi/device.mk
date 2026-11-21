@@ -45,4 +45,6 @@ PRODUCT_SOONG_NAMESPACES += \
 # BoardConfigOgki.mk keeps BOARD_USES_GENERIC_KERNEL_IMAGE=false.
 $(call inherit-product, device/oneplus/sm8550-common/common.mk)
 
+DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += $(DEVICE_PATH)/device_framework_matrix.xml
+
 $(call inherit-product, vendor/realme/ossi/ossi-vendor.mk)

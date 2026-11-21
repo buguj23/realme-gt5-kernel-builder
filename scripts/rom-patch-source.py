@@ -251,6 +251,74 @@ def patch_oplus_richtap_libaacvibrator(src: Path) -> None:
     _patch_text(richtap_bp, drop_dummy_stub)
 
 
+def patch_releasetools_mkbootimg_arg_order(src: Path) -> None:
+    """Keep board mkbootimg_args overrides after mkbootimg_version_args, matching core/Makefile."""
+    common_py = src / "build/make/tools/releasetools/common.py"
+    old_boot = (
+        '  if partition_name == "recovery":\n'
+        '    args = info_dict.get("recovery_mkbootimg_args")\n'
+        '    if not args:\n'
+        '      # Fall back to "mkbootimg_args" for recovery image\n'
+        '      # in case "recovery_mkbootimg_args" is not set.\n'
+        '      args = info_dict.get("mkbootimg_args")\n'
+        '  elif partition_name == "init_boot":\n'
+        '    args = info_dict.get("mkbootimg_init_args")\n'
+        '  else:\n'
+        '    args = info_dict.get("mkbootimg_args")\n'
+        '  if args and args.strip():\n'
+        '    cmd.extend(shlex.split(args))\n'
+        '\n'
+        '  args = info_dict.get("mkbootimg_version_args")\n'
+        '  if args and args.strip():\n'
+        '    cmd.extend(shlex.split(args))\n'
+    )
+    new_boot = (
+        '  args = info_dict.get("mkbootimg_version_args")\n'
+        '  if args and args.strip():\n'
+        '    cmd.extend(shlex.split(args))\n'
+        '\n'
+        '  if partition_name == "recovery":\n'
+        '    args = info_dict.get("recovery_mkbootimg_args")\n'
+        '    if not args:\n'
+        '      # Fall back to "mkbootimg_args" for recovery image\n'
+        '      # in case "recovery_mkbootimg_args" is not set.\n'
+        '      args = info_dict.get("mkbootimg_args")\n'
+        '  elif partition_name == "init_boot":\n'
+        '    args = info_dict.get("mkbootimg_init_args")\n'
+        '  else:\n'
+        '    args = info_dict.get("mkbootimg_args")\n'
+        '  if args and args.strip():\n'
+        '    cmd.extend(shlex.split(args))\n'
+    )
+    old_vendor = (
+        '  args = info_dict.get("mkbootimg_args")\n'
+        '  if args and args.strip():\n'
+        '    cmd.extend(shlex.split(args))\n'
+        '\n'
+        '  args = info_dict.get("mkbootimg_version_args")\n'
+        '  if args and args.strip():\n'
+        '    cmd.extend(shlex.split(args))\n'
+    )
+    new_vendor = (
+        '  args = info_dict.get("mkbootimg_version_args")\n'
+        '  if args and args.strip():\n'
+        '    cmd.extend(shlex.split(args))\n'
+        '\n'
+        '  args = info_dict.get("mkbootimg_args")\n'
+        '  if args and args.strip():\n'
+        '    cmd.extend(shlex.split(args))\n'
+    )
+
+    def reorder(text: str) -> str:
+        if old_boot in text:
+            text = text.replace(old_boot, new_boot, 1)
+        if old_vendor in text:
+            text = text.replace(old_vendor, new_vendor, 1)
+        return text
+
+    _patch_text(common_py, reorder)
+
+
 def apply_all(src: Path) -> None:
     patch_simple_settings_config(src)
     patch_infinity_livedisplay_and_matrix(src)
@@ -260,6 +328,7 @@ def apply_all(src: Path) -> None:
     patch_telephony_framework_compat(src)
     patch_oplus_vendor_init_hook(src)
     patch_oplus_richtap_libaacvibrator(src)
+    patch_releasetools_mkbootimg_arg_order(src)
 
 
 def main(argv: list[str]) -> int:
