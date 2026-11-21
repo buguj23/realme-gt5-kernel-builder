@@ -280,9 +280,14 @@ _heal_unborn_repo_worktrees() {
 
 repo_sync_resilient() {
   local work_dir="$1"
+  python3 "$LIB_MIRROR_DIR/rom-fix-repo-depth.py" "$work_dir" || return 1
   local jobs="${2:-$(mirror_net_jobs)}"
   shift 2 || true
   local extra_sync_args=("$@")
+  if [ -n "${REPO_SYNC_NETWORK_JOBS:-}" ]; then
+    extra_sync_args+=(--no-interleaved --jobs-network="$REPO_SYNC_NETWORK_JOBS"
+                      --jobs-checkout="${REPO_SYNC_CHECKOUT_JOBS:-4}")
+  fi
   local mode
   mode=$(resolve_mirror_mode)
 
@@ -312,6 +317,9 @@ repo_sync_resilient() {
     gh_prefixes=("direct" "https://cdn.gh-proxy.org/" "https://edgeone.gh-proxy.org/" "https://gh-proxy.org/")
   fi
 
+  if [ "${MIRROR_UPSTREAM_ONLY:-0}" = 1 ]; then
+    gh_prefixes=("direct")
+  fi
   local -a aosp_mirrors=() lineage_mirrors=()
   local clo_mirror="${CLO_MIRROR:-}"
   if [ "$mode" = "cn" ] && [ "${REWRITE_AOSP_MIRROR:-1}" = 1 ]; then

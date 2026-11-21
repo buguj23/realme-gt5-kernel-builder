@@ -31,6 +31,12 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# A background prefetch and the build may reach these same trees together.
+# Serialize both callers; keep the lock outside the Soong-scanned source tree.
+SRC=$(realpath -e -- "$SRC")
+exec 8>"${SRC}.provision.lock"
+flock 8
+
 if [ "$MIRROR_EXPLICIT" = 0 ]; then
   if [ "$(resolve_mirror_mode)" = "cn" ]; then
     MIRROR="$(PYTHONPATH="$HERE" python3 "$HERE/mirror_helper.py" probe-lineage | sed 's:/*$::')/LineageOS"

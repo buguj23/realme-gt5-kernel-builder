@@ -600,6 +600,18 @@ class RomInputTests(unittest.TestCase):
             "\treturn partitionVars.ProductBuildSuperPartition\n"
             "}\n"
         )
+        (self.root / "build/soong/ui/build").mkdir(parents=True)
+        (self.root / "build/soong/ui/build/soong.go").write_text(
+            "func runSoong() {\n"
+            "\tinvocationEnv := make(map[string]string)\n"
+            "}\n"
+        )
+        (self.root / "build/blueprint/bootstrap").mkdir(parents=True)
+        (self.root / "build/blueprint/bootstrap/command.go").write_text(
+            "func RunBlueprint() {\n"
+            "\truntime.GOMAXPROCS(runtime.NumCPU())\n"
+            "}\n"
+        )
         (self.root / "kernel/oneplus/sm8550/include/soc/oplus").mkdir(parents=True)
         dangling = self.root / "kernel/oneplus/sm8550/include/soc/oplus/boot"
         dangling.symlink_to("../../sm8550-modules/missing")
@@ -673,6 +685,10 @@ class RomInputTests(unittest.TestCase):
         self.assertTrue((self.root / "hardware/oplus/aidl/livedisplay/Android.bp.disabled").is_file())
         super_go = (self.root / "build/soong/fsgen/super_img.go").read_text()
         self.assertIn("android.InList(p, supported)", super_go)
+        soong_go = (self.root / "build/soong/ui/build/soong.go").read_text()
+        self.assertIn('"SOONG_" + key', soong_go)
+        bp_cmd = (self.root / "build/blueprint/bootstrap/command.go").read_text()
+        self.assertIn('os.Getenv("GOMAXPROCS") == ""', bp_cmd)
         kernel_mk = (self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text()
         self.assertIn("ifeq ($(filter /%,$(OUT_DIR_PREFIX)),)", kernel_mk)
         self.assertNotIn("ifeq ($(OUT_DIR_PREFIX),out)", kernel_mk)
@@ -694,6 +710,8 @@ class RomInputTests(unittest.TestCase):
 
         # Second invocation must be an exact no-op
         before = super_go
+        before_soong_go = soong_go
+        before_bp_cmd = bp_cmd
         before_kernel_mk = kernel_mk
         before_ccl = ccl_text
         before_init_oplus = init_oplus
@@ -702,6 +720,8 @@ class RomInputTests(unittest.TestCase):
         before_rt_common = rt_common
         patcher["apply_all"](self.root)
         self.assertEqual((self.root / "build/soong/fsgen/super_img.go").read_text(), before)
+        self.assertEqual((self.root / "build/soong/ui/build/soong.go").read_text(), before_soong_go)
+        self.assertEqual((self.root / "build/blueprint/bootstrap/command.go").read_text(), before_bp_cmd)
         self.assertEqual((self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text(), before_kernel_mk)
         self.assertEqual((self.root / "packages/services/Telephony/src/com/android/phone/CarrierConfigLoader.java").read_text(), before_ccl)
         self.assertEqual((self.root / "device/oneplus/sm8550-common/init/init_oplus.cpp").read_text(), before_init_oplus)

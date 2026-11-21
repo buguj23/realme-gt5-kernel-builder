@@ -154,6 +154,44 @@ def patch_kernel_build_out_prefix(src: Path) -> None:
         _patch_text(src / rel, lambda text: text.replace(old, new, 1) if old in text else text)
 
 
+def patch_soong_runtime_memory(src: Path) -> None:
+    """Carry opt-in Go limits through Soong's clean env and honor its CPU limit."""
+    changes = [
+        (
+            src / "build/soong/ui/build/soong.go",
+            "\tinvocationEnv := make(map[string]string)\n",
+            "\tinvocationEnv := make(map[string]string)\n"
+            "\t// ossi: pass explicit host memory limits through the clean builder env.\n"
+            '\tfor _, key := range []string{"GOGC", "GOMEMLIMIT", "GOMAXPROCS"} {\n'
+            '\t\tif value, ok := pb.config.Environment().Get("SOONG_" + key); ok && value != "" {\n'
+            "\t\t\tinvocationEnv[key] = value\n"
+            "\t\t}\n"
+            "\t}\n",
+        ),
+        (
+            src / "build/blueprint/bootstrap/command.go",
+            "\truntime.GOMAXPROCS(runtime.NumCPU())\n",
+            "\t// ossi: retain an explicit runtime CPU limit on memory-constrained hosts.\n"
+            '\tif os.Getenv("GOMAXPROCS") == "" {\n'
+            "\t\truntime.GOMAXPROCS(runtime.NumCPU())\n"
+            "\t}\n",
+        ),
+    ]
+    # Validate every anchor first, so source changes cannot leave a partial patch.
+    pending = []
+    for path, old, new in changes:
+        if not path.is_file():
+            continue
+        original = path.read_text(encoding="utf-8")
+        if new in original:
+            continue
+        if original.count(old) != 1:
+            raise RuntimeError(f"Soong memory patch needs review: {path}")
+        pending.append((path, original.replace(old, new, 1)))
+    for path, updated in pending:
+        path.write_text(updated, encoding="utf-8")
+
+
 def patch_telephony_framework_compat(src: Path) -> None:
     """Bridge newer Lineage Telephony security checks onto Infinity-X frameworks/base."""
     tp_java = src / "frameworks/base/telephony/common/com/android/internal/telephony/TelephonyPermissions.java"
@@ -320,6 +358,7 @@ def patch_releasetools_mkbootimg_arg_order(src: Path) -> None:
 
 
 def apply_all(src: Path) -> None:
+    patch_soong_runtime_memory(src)
     patch_simple_settings_config(src)
     patch_infinity_livedisplay_and_matrix(src)
     patch_soong_custom_super_partitions(src)

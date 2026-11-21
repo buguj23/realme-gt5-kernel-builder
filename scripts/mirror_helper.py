@@ -199,6 +199,8 @@ def apply_github_proxy(url: str, prefix: str) -> str:
 
 def github_proxy_list(mode: str | None = None) -> list[str]:
     """Return ordered list of proxy prefixes ('' denotes direct upstream)."""
+    if os.environ.get("MIRROR_UPSTREAM_ONLY") == "1":
+        return [""]
     resolved_mode = detect_mirror_mode(mode)
     explicit = os.environ.get("GITHUB_PROXY", "").strip()
     configured = [normalize_proxy_prefix(p) for p in _split_csv_env("GITHUB_MIRRORS", DEFAULT_GITHUB_PROXIES)]
@@ -221,6 +223,8 @@ def github_proxy_list(mode: str | None = None) -> list[str]:
 def expand_github_url(url: str, mode: str | None = None) -> list[str]:
     """Expand a github.com or raw.githubusercontent.com URL across proxies and CDNs."""
     base = strip_github_proxy(url)
+    if os.environ.get("MIRROR_UPSTREAM_ONLY") == "1":
+        return [base]
     parsed = urllib.parse.urlsplit(base)
     host = (parsed.hostname or "").lower()
     urls: list[str] = []

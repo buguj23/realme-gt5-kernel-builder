@@ -417,6 +417,19 @@ class ChinaMirrorTests(unittest.TestCase):
                 )
                 self.assertEqual(res.returncode, 0, res.stderr)
 
+    def test_mirror_upstream_only_disables_github_proxies(self):
+        old = os.environ.get("MIRROR_UPSTREAM_ONLY")
+        os.environ["MIRROR_UPSTREAM_ONLY"] = "1"
+        try:
+            self.assertEqual(mirror_helper.github_proxy_list("cn"), [""])
+            url = "https://github.com/buguj23/realme-gt5-kernel-builder/releases/download/v1/a.zip"
+            self.assertEqual(mirror_helper.expand_github_url(url, "cn"), [url])
+        finally:
+            if old is None:
+                os.environ.pop("MIRROR_UPSTREAM_ONLY", None)
+            else:
+                os.environ["MIRROR_UPSTREAM_ONLY"] = old
+
 
 if __name__ == "__main__":
     unittest.main()

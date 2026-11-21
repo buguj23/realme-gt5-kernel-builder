@@ -275,6 +275,25 @@ fi
   if [ "$(get_build_var TARGET_BUILD_TYPE)" = debug ]; then OTA_NAME="${OTA_NAME}_debug"; fi
   OTA_ZIP="$(get_abs_build_var PRODUCT_OUT)/$OTA_NAME-ota.zip"
   set +eo pipefail
+  if [ "${OSSI_BUILD_PREFLIGHT:-0}" = 1 ]; then
+    echo "[preflight 1/4] Validate source paths, UAPI source, and prebuilt-kernel mode"
+    python3 "$HERE/rom-source-preflight.py" \
+      --src "$SRC" --work "$WORK" --avb-key "$OSSI_AVB_KEY" \
+      --kernel-source "$(get_build_var TARGET_KERNEL_SOURCE)" \
+      --prebuilt-kernel "$(get_build_var TARGET_PREBUILT_KERNEL)" \
+      --force-prebuilt "$(get_build_var TARGET_FORCE_PREBUILT_KERNEL)" \
+      --report "$OUT_DIR/ossi-source-preflight.json" || fail "source preflight failed"
+    echo "[preflight 2/4] Soong/Kati analysis"
+    m -j"$JOBS" nothing || fail "Soong/Kati preflight failed"
+    echo "[preflight 3/4] Dry-run complete ROM/OTA/VINTF dependency graph"
+    if ! NINJA_ARGS="-n" m -j"$JOBS" target-files-package otapackage check-vintf-all dist \
+        > "$OUT_DIR/ossi-ninja-preflight.log" 2>&1; then
+      tail -n 80 "$OUT_DIR/ossi-ninja-preflight.log"
+      fail "full ROM dependency preflight failed; see $OUT_DIR/ossi-ninja-preflight.log"
+    fi
+    echo "[preflight 4/4] Compile libagm_compress_plugin with generated kernel UAPI headers"
+    m -j"$JOBS" libagm_compress_plugin || fail "kernel UAPI/audio preflight failed"
+  fi
   mka -j"$JOBS" target-files-package otapackage check-vintf-all dist || fail "mka build failed"
   set -euo pipefail
   python3 "$HERE/rom-verify-delivery.py" --dist "$DIST_DIR" --ota "$OTA_ZIP" \
