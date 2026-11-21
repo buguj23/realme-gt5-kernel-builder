@@ -135,11 +135,31 @@ def patch_dangling_kernel_include_symlinks(src: Path) -> None:
             entry.unlink()
 
 
+def patch_kernel_build_out_prefix(src: Path) -> None:
+    """Ensure any relative OUT_DIR (e.g. out/ossi/5.15.149) gets BUILD_TOP/ for kernel O=."""
+    old = (
+        "ifeq ($(OUT_DIR_PREFIX),out)\n"
+        "    KERNEL_BUILD_OUT_PREFIX := $(BUILD_TOP)/\n"
+        "endif"
+    )
+    new = (
+        "ifeq ($(filter /%,$(OUT_DIR_PREFIX)),)\n"
+        "    KERNEL_BUILD_OUT_PREFIX := $(BUILD_TOP)/\n"
+        "endif"
+    )
+    for rel in (
+        "vendor/infinity/config/BoardConfigKernel.mk",
+        "vendor/lineage/config/BoardConfigKernel.mk",
+    ):
+        _patch_text(src / rel, lambda text: text.replace(old, new, 1) if old in text else text)
+
+
 def apply_all(src: Path) -> None:
     patch_simple_settings_config(src)
     patch_infinity_livedisplay_and_matrix(src)
     patch_soong_custom_super_partitions(src)
     patch_dangling_kernel_include_symlinks(src)
+    patch_kernel_build_out_prefix(src)
 
 
 def main(argv: list[str]) -> int:

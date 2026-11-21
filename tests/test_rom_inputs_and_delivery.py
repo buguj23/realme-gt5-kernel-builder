@@ -578,6 +578,13 @@ class RomInputTests(unittest.TestCase):
         )
         (self.root / "vendor/infinity/config").mkdir(parents=True)
         (self.root / "vendor/infinity/config/device_framework_matrix.xml").write_text("<compatibility-matrix/>\n")
+        (self.root / "vendor/infinity/config/BoardConfigKernel.mk").write_text(
+            "OUT_DIR_PREFIX := $(shell echo $(OUT_DIR) | sed -e 's|/target/.*$$||g')\n"
+            "KERNEL_BUILD_OUT_PREFIX :=\n"
+            "ifeq ($(OUT_DIR_PREFIX),out)\n"
+            "    KERNEL_BUILD_OUT_PREFIX := $(BUILD_TOP)/\n"
+            "endif\n"
+        )
         (self.root / "device/oneplus/sm8550-common").mkdir(parents=True)
         (self.root / "device/oneplus/sm8550-common/common.mk").write_text(
             "DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \\\n    vendor/lineage/config/device_framework_matrix.xml\n"
@@ -608,11 +615,16 @@ class RomInputTests(unittest.TestCase):
         self.assertTrue((self.root / "hardware/oplus/aidl/livedisplay/Android.bp.disabled").is_file())
         super_go = (self.root / "build/soong/fsgen/super_img.go").read_text()
         self.assertIn("android.InList(p, supported)", super_go)
+        kernel_mk = (self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text()
+        self.assertIn("ifeq ($(filter /%,$(OUT_DIR_PREFIX)),)", kernel_mk)
+        self.assertNotIn("ifeq ($(OUT_DIR_PREFIX),out)", kernel_mk)
 
         # Second invocation must be an exact no-op
         before = super_go
+        before_kernel_mk = kernel_mk
         patcher["apply_all"](self.root)
         self.assertEqual((self.root / "build/soong/fsgen/super_img.go").read_text(), before)
+        self.assertEqual((self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text(), before_kernel_mk)
 
 
 if __name__ == "__main__":
