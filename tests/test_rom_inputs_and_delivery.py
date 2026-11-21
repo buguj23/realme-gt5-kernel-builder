@@ -618,6 +618,14 @@ class RomInputTests(unittest.TestCase):
             "            TelephonyManager tm = mContext.getSystemService(TelephonyManager.class);\n"
             "            String modemService = tm.getModemService();\n"
         )
+        (self.root / "system/core/init").mkdir(parents=True)
+        (self.root / "system/core/init/vendor_init.h").write_text(
+            "extern void vendor_load_properties(void);\n"
+        )
+        (self.root / "device/oneplus/sm8550-common/init").mkdir(parents=True)
+        (self.root / "device/oneplus/sm8550-common/init/init_oplus.cpp").write_text(
+            "void vendor_process_bootenv() {}\n"
+        )
 
         patcher["apply_all"](self.root)
         self.assertFalse(dangling.is_symlink())
@@ -640,15 +648,20 @@ class RomInputTests(unittest.TestCase):
         ccl_text = (self.root / "packages/services/Telephony/src/com/android/phone/CarrierConfigLoader.java").read_text()
         self.assertIn("UserHandle.isSameApp(getBinderCallingUid(), Process.SHELL_UID)", ccl_text)
         self.assertIn("PhoneConfigurationManager.getInstance()", ccl_text)
+        init_oplus = (self.root / "device/oneplus/sm8550-common/init/init_oplus.cpp").read_text()
+        self.assertIn("void vendor_load_properties()", init_oplus)
+        self.assertIn("vendor_process_bootenv();", init_oplus)
 
         # Second invocation must be an exact no-op
         before = super_go
         before_kernel_mk = kernel_mk
         before_ccl = ccl_text
+        before_init_oplus = init_oplus
         patcher["apply_all"](self.root)
         self.assertEqual((self.root / "build/soong/fsgen/super_img.go").read_text(), before)
         self.assertEqual((self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text(), before_kernel_mk)
         self.assertEqual((self.root / "packages/services/Telephony/src/com/android/phone/CarrierConfigLoader.java").read_text(), before_ccl)
+        self.assertEqual((self.root / "device/oneplus/sm8550-common/init/init_oplus.cpp").read_text(), before_init_oplus)
 
 
 if __name__ == "__main__":

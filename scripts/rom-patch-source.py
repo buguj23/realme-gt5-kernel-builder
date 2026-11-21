@@ -192,6 +192,30 @@ def patch_telephony_framework_compat(src: Path) -> None:
         )
 
 
+def patch_oplus_vendor_init_hook(src: Path) -> None:
+    """Bridge Lineage 22.2 vendor_process_bootenv() to Infinity-X vendor_load_properties()."""
+    vendor_init_h = src / "system/core/init/vendor_init.h"
+    init_oplus = src / "device/oneplus/sm8550-common/init/init_oplus.cpp"
+    if not vendor_init_h.is_file() or not init_oplus.is_file():
+        return
+    if "vendor_load_properties" not in vendor_init_h.read_text(encoding="utf-8"):
+        return
+
+    def add_bridge(text: str) -> str:
+        if "void vendor_load_properties(" in text or "void vendor_process_bootenv(" not in text:
+            return text
+        suffix = "\n" if text.endswith("\n") else "\n\n"
+        return (
+            text
+            + suffix
+            + "void vendor_load_properties() {\n"
+            + "    vendor_process_bootenv();\n"
+            + "}\n"
+        )
+
+    _patch_text(init_oplus, add_bridge)
+
+
 def apply_all(src: Path) -> None:
     patch_simple_settings_config(src)
     patch_infinity_livedisplay_and_matrix(src)
@@ -199,6 +223,7 @@ def apply_all(src: Path) -> None:
     patch_dangling_kernel_include_symlinks(src)
     patch_kernel_build_out_prefix(src)
     patch_telephony_framework_compat(src)
+    patch_oplus_vendor_init_hook(src)
 
 
 def main(argv: list[str]) -> int:
