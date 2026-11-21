@@ -2751,7 +2751,6 @@ odm/etc/vintf/manifest/manifest_oplus_nfcExtns.xml|dc921e132c979da4e599aa242c004
 odm/etc/vintf/manifest/manifest_oplus_nfc_aidl.xml|3ead83e6ba4b4d41f87a0327944998e4ab40ae40
 odm/etc/vintf/manifest/manifest_oplus_riskdetect.xml|410da59b2b0a592d9b2d66bf905b68d710e60c81
 odm/etc/vintf/manifest/manifest_oplus_virtualdevice_audio_aidl.xml|12a05f75136c2b98caaf99343f9ccedc79ce1b46
-odm/etc/vintf/manifest/manifest_oplus_virtualdevice_camera.xml|6387d3bbd6ad14e766e6ffc5e7b549b62e821efd
 odm/etc/vintf/manifest/oplus_aidl_wifi_service_device_manifest.xml|a9a6904dd042fc08244ffa1760410f974d696af6
 odm/etc/vintf/manifest/vendor.oplus.hardware.olc2_aidl.xml|dd0c753d4c4bbdce31df7ea14b22bacc7dcd9c00
 odm/etc/vintf/manifest/vendor.oplus.hardware.urcc-service.xml|af69721376d6c7d7d48460d6b77d93904a7e44d6
@@ -2823,13 +2822,6 @@ odm/lib/vendor.oplus.hardware.transfer-V1-ndk.so|955b9a04313079c3cc8ce16c41be5cd
 odm/lib/vendor.oplus.hardware.transmessage@1.0.so|e9323ff876ed29675f280af1d0d1d865d3ac3c2e
 odm/lib/vendor.oplus.hardware.virtual_device.audio-V1-ndk.so|93a4986febba8eeba5304395a640ec1cc92bd13e
 odm/lib/vendor.oplus.hardware.virtual_device.audio-impl.so|315f588de6bd1ae402fca0755b3aa538dc5dd347
-odm/lib/vendor.oplus.hardware.virtual_device.camera.hal@3.3.so|fbae5ff27da0b3210d75d3f0f82fb0c5f975426e
-odm/lib/vendor.oplus.hardware.virtual_device.camera.manager@1.0-impl.so|92363ce9cfa763e10b1b3866e35b86a2647806ab
-odm/lib/vendor.oplus.hardware.virtual_device.camera.manager@1.0.so|1e40194d6d0ae6442ece1c724c900e50ada49126
-odm/lib/vendor.oplus.hardware.virtual_device.camera.provider@2.4-impl.so|04486f5cdb825b2c895a9f5334f465bf68398cbf
-odm/lib/vendor.oplus.hardware.virtual_device.camera.provider@2.5-impl.so|18edec63b22b29b1319e3dbe5bde9151a58d05f0
-odm/lib/vendor.oplus.hardware.virtual_device.camera.provider@2.6-impl.so|179f2b489ca10cd196f8540f063d896f9047ec67
-odm/lib/vendor.oplus.hardware.virtual_device.camera.provider@2.7-impl.so|16d84217a7fcbb8cc1979e18f6ead2eb67b0c39b
 odm/lib64/hw/vendor.oplus.hardware.binaural_record-impl.so|320d3546d524ebfcb8397be09b005084538c0254
 odm/lib64/lib_geofencing.so|72f03ab3906f9bdae6630b9ef9f49b0c49a4461c
 odm/lib64/libbinaural_record_session_aidl.so|074b7114671fbfd3aebe75803e5543c0049aec45
@@ -2885,13 +2877,6 @@ odm/lib64/vendor.oplus.hardware.transfer-V1-ndk.so|0c549a5e1dc5d1130b97494d6861a
 odm/lib64/vendor.oplus.hardware.transmessage@1.0.so|b23c16e64241923097328a04f879944150477170
 odm/lib64/vendor.oplus.hardware.virtual_device.audio-V1-ndk.so|c418c1117b61283b4e826aae095c247844646ddd
 odm/lib64/vendor.oplus.hardware.virtual_device.audio-impl.so|58589ef909d6ce6f061b0c70de8c3796092f528c
-odm/lib64/vendor.oplus.hardware.virtual_device.camera.hal@3.3.so|8cbbd72e32f525b09cadc811d46abde8431b188a
-odm/lib64/vendor.oplus.hardware.virtual_device.camera.manager@1.0-impl.so|e9ced3f191caaa97b2a0c79b5eea1d3a56e7777a
-odm/lib64/vendor.oplus.hardware.virtual_device.camera.manager@1.0.so|8fa2bf0a88b675ec1a39bfe717fe58247864351b
-odm/lib64/vendor.oplus.hardware.virtual_device.camera.provider@2.4-impl.so|a201f69006a8ed4025fca5920e49fce645e8e1fd
-odm/lib64/vendor.oplus.hardware.virtual_device.camera.provider@2.5-impl.so|6292f3b7a0b2eeaf948dc43cb95292a424ceed09
-odm/lib64/vendor.oplus.hardware.virtual_device.camera.provider@2.6-impl.so|1987bb29988014688ee40dbef86056edbd0d51e1
-odm/lib64/vendor.oplus.hardware.virtual_device.camera.provider@2.7-impl.so|93f1bae3361efefe2a9b2ec8e8a91ce814e8dbb8
 vendor/etc/vintf/manifest/vendor.oplus.hardware.wifi.supplicant.xml|84abe4f0363dc20a197fddd3fe1781ff171e190e
 vendor/lib/vendor.oplus.hardware.appradioaidl-V1-ndk.so|2701dcbd08400c770936b54634e21ace7232d242
 vendor/lib/vendor.oplus.hardware.camera_rfi-V1-ndk.so;MODULE_SUFFIX=_vendor|35f06753f7d9010db9d3fa072350c5a19b98265e

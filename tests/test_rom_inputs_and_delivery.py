@@ -523,6 +523,8 @@ class RomInputTests(unittest.TestCase):
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib64/vendor.oplus.hardware.performance-V2-ndk.so"))
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib/vendor.oplus.hardware.touch-V2-ndk.so"))
         self.assertFalse(BLOBS["is_excluded_extra"]("vendor/lib64/libaacvibrator.so"))
+        self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib64/vendor.oplus.hardware.virtual_device.camera.manager@1.0-impl.so"))
+        self.assertTrue(BLOBS["is_excluded_extra"]("odm/etc/vintf/manifest/manifest_oplus_virtualdevice_camera.xml"))
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib64/vendor.oplus.hardware.biometrics.fingerprint@2.1.so"))
         self.assertTrue(BLOBS["is_excluded_extra"]("vendor/etc/vintf/manifest/vendor.qti.hardware.display.composer-service.xml"))
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/etc/vintf/manifest/manifest_performance_aidl.xml"))

@@ -54,6 +54,8 @@ EXCLUDE_EXTRA_PATTERNS = (
     re.compile(r'^odm/etc/init/vendor-oplus-hardware-(performance|commondcs|osense\.client)-'),
     re.compile(r'^odm/etc/vintf/manifest/manifest_(performance|commondcs|osense).*\.xml$'),
     re.compile(r'^odm/etc/vintf/manifest/manifest_oplus_ifaa\.xml$'),
+    re.compile(r'^odm/etc/vintf/manifest/manifest_oplus_virtualdevice_camera\.xml$'),
+    re.compile(r'^odm/lib(64)?/vendor\.oplus\.hardware\.virtual_device\.camera\.'),
     re.compile(r'^odm/lib(64)?/vendor\.oplus\.hardware\.biometrics\.fingerprint@2\.1\.so$'),
     re.compile(r'^vendor/etc/vintf/manifest/vendor\.qti\.hardware\.display\.composer-service\.xml$'),
 )

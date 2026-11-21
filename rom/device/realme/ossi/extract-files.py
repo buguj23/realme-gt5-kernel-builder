@@ -159,6 +159,11 @@ else:
     })
 if platform_sdk == 35:
     blob_fixups.update({
+        'odm/bin/hw/vendor.oplus.hardware.biometrics.face@1.0-service': blob_fixup()
+            .clear_symbol_version(
+                '_ZN7android4base4TrimERKNSt3__112basic_stringIcNS1_11char_traitsIcEENS1_9allocatorIcEEEE'
+            )
+            .add_needed('libbase_shim.so'),
         'odm/bin/hw/vendor.oplus.hardware.charger-V5-service': blob_fixup()
             .add_needed('libbase_shim.so'),
         'system_ext/bin/wfdservice64': blob_fixup()
