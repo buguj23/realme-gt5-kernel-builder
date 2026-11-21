@@ -260,6 +260,9 @@ fi
     export USE_CCACHE=0
   fi
   lunch "$WANT_LUNCH" || fail "lunch $WANT_LUNCH failed"
+  # Force binary.mk / Soong cc to map legacy KERNEL_OBJ/usr & qti_kernel_headers
+  # onto generated_kernel_headers while TARGET_FORCE_PREBUILT_KERNEL keeps our OGKI Image.
+  export INLINE_KERNEL_BUILDING=true
   set -e
   [ "$(get_build_var TARGET_DEVICE)" = ossi ] || fail "source product must build for ossi"
   [ "$(get_build_var PLATFORM_SDK_VERSION)" = "$SDK" ] || fail "source platform SDK differs from $SDK"

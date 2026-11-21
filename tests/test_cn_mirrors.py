@@ -333,6 +333,57 @@ class ChinaMirrorTests(unittest.TestCase):
             self.assertTrue(good_obj.exists())
             self.assertTrue((good_proj / "shallow").exists())
 
+    def test_rom_sync_and_provision_direct_mode_skips_domestic_mirrors(self):
+        sync_text = (SCRIPTS / "rom-sync.sh").read_text(encoding="utf-8")
+        self.assertIn('--aosp https://android.googlesource.com/ --lineage https://github.com', sync_text)
+        self.assertIn('--github-proxy direct', sync_text)
+
+        deps_text = (SCRIPTS / "rom-provision-deps.sh").read_text(encoding="utf-8")
+        self.assertIn('if [ "$(resolve_mirror_mode)" = "cn" ]; then', deps_text)
+        self.assertIn('MIRROR="https://github.com/LineageOS"', deps_text)
+
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "rom"
+            manifests = src / ".repo" / "manifests" / "snippets"
+            manifests.mkdir(parents=True)
+            (src / ".repo" / "manifests" / "default.xml").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<manifest>\n'
+                '  <remote name="aosp" fetch="https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/" />\n'
+                '  <include name="snippets/infinity.xml" />\n'
+                '</manifest>\n',
+                encoding="utf-8",
+            )
+            (manifests / "infinity.xml").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<manifest>\n'
+                '  <remote name="infinity" fetch="https://edgeone.gh-proxy.org/https://github.com/ProjectInfinity-X" />\n'
+                '  <remote name="lineage" fetch="https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS" />\n'
+                '</manifest>\n',
+                encoding="utf-8",
+            )
+            res = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS / "rom-manifest-mirror.py"),
+                    str(src),
+                    "--aosp", "https://android.googlesource.com/",
+                    "--lineage", "https://github.com",
+                    "--github-proxy", "direct",
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
+            default_out = (src / ".repo" / "manifests" / "default.xml").read_text(encoding="utf-8")
+            inf_out = (manifests / "infinity.xml").read_text(encoding="utf-8")
+            self.assertIn('fetch="https://android.googlesource.com/"', default_out)
+            self.assertIn('fetch="https://github.com/ProjectInfinity-X"', inf_out)
+            self.assertIn('fetch="https://github.com/LineageOS"', inf_out)
+            self.assertNotIn("mirrors.tuna.tsinghua.edu.cn", default_out + inf_out)
+            self.assertNotIn("gh-proxy.org", inf_out)
+
     def test_rom_build_local_restores_sigpipe_when_inherited_ignored(self):
         with tempfile.TemporaryDirectory() as td:
             probe = Path(td) / "probe.sh"

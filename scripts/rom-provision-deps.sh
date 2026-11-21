@@ -74,9 +74,18 @@ ensure() { # <path> <repo>
   mkdir -p "$(dirname "$SRC/$path")"
   echo "  clone   $path ($repo @ $BRANCH)"
   local cloned=0
-  for m_base in "$MIRROR" \
-    "https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS" \
-    "https://mirrors.bfsu.edu.cn/git/lineageOS/LineageOS"; do
+  local -a clone_bases=()
+  if [ "$MIRROR_EXPLICIT" = 1 ]; then
+    clone_bases+=("$MIRROR")
+  fi
+  if [ "$(resolve_mirror_mode)" = "cn" ]; then
+    [ "$MIRROR_EXPLICIT" = 1 ] || clone_bases+=("$MIRROR")
+    clone_bases+=(
+      "https://mirrors.tuna.tsinghua.edu.cn/git/lineageOS/LineageOS"
+      "https://mirrors.bfsu.edu.cn/git/lineageOS/LineageOS"
+    )
+  fi
+  for m_base in "${clone_bases[@]}"; do
     git_resilient_args "${m_base%/}/$repo.git"
     if GIT_TERMINAL_PROMPT=0 git "${GIT_RESILIENT_ARGS[@]}" clone --depth=1 -b "$BRANCH" -q "${m_base%/}/$repo.git" "$SRC/$path" 2>/dev/null; then
       cloned=1
@@ -96,6 +105,7 @@ case "$BRANCH" in
 esac
 ensure device/oneplus/sm8550-common   android_device_oneplus_sm8550-common
 ensure hardware/oplus                 android_hardware_oplus
+ensure kernel/oneplus/sm8550          android_kernel_oneplus_sm8550
 if [ "$BRANCH" = lineage-23.2 ]; then
   ensure hardware/pixelworks/interfaces android_hardware_pixelworks_interfaces
 fi

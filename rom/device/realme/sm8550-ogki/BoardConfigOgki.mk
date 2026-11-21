@@ -144,6 +144,11 @@ else
   # kernel package (Image + every .ko + Module.symvers of the same build).
   # The generated file also sets BOARD_VENDOR_RAMDISK_KERNEL_MODULES[_LOAD],
   # BOARD_VENDOR_KERNEL_MODULES[_LOAD] and BOARD_SYSTEM_KERNEL_MODULES[_LOAD].
+  # Keep TARGET_KERNEL_SOURCE pointed at SM8550 headers for generated_kernel_headers
+  # while TARGET_FORCE_PREBUILT_KERNEL := true (from kernel-modules.mk) keeps
+  # FULL_KERNEL_BUILD := false and ships our Pure-OGKI Image + .ko modules.
+  TARGET_KERNEL_SOURCE := kernel/oneplus/sm8550
+  TARGET_KERNEL_CONFIG := gki_defconfig
   $(foreach f,Image dtb/ossi.dtb dtbo.img kernel-modules.mk,$(if $(wildcard $(DEVICE_PATH)/prebuilt/$(f)),,$(error Incomplete OGKI staging, missing $(f))))
   include $(DEVICE_PATH)/prebuilt/kernel-modules.mk
 endif

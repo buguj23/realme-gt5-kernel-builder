@@ -591,8 +591,12 @@ class RomInputTests(unittest.TestCase):
             "\treturn partitionVars.ProductBuildSuperPartition\n"
             "}\n"
         )
+        (self.root / "kernel/oneplus/sm8550/include/soc/oplus").mkdir(parents=True)
+        dangling = self.root / "kernel/oneplus/sm8550/include/soc/oplus/boot"
+        dangling.symlink_to("../../sm8550-modules/missing")
 
         patcher["apply_all"](self.root)
+        self.assertFalse(dangling.is_symlink())
         self.assertNotIn("org.lineageos.platform.internal", (pkg / "Android.bp").read_text())
         self.assertIn('sdk_version: "current"', (pkg / "Android.bp").read_text())
         self.assertNotIn("lineageos.permission.WRITE_", (pkg / "AndroidManifest.xml").read_text())

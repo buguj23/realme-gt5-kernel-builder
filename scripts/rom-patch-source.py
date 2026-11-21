@@ -125,10 +125,21 @@ def patch_soong_custom_super_partitions(src: Path) -> None:
     _patch_text(super_img, update_super_img)
 
 
+def patch_dangling_kernel_include_symlinks(src: Path) -> None:
+    """Remove dangling symlinks under kernel/oneplus/sm8550/include when sm8550-modules is absent."""
+    inc = src / "kernel/oneplus/sm8550/include"
+    if not inc.is_dir():
+        return
+    for entry in inc.rglob("*"):
+        if entry.is_symlink() and not entry.exists():
+            entry.unlink()
+
+
 def apply_all(src: Path) -> None:
     patch_simple_settings_config(src)
     patch_infinity_livedisplay_and_matrix(src)
     patch_soong_custom_super_partitions(src)
+    patch_dangling_kernel_include_symlinks(src)
 
 
 def main(argv: list[str]) -> int:

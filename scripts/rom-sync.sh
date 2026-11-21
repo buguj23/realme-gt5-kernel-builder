@@ -57,7 +57,11 @@ if [ ! -d .repo ]; then
 fi
 python3 "$HERE/rom-check-inputs.py" source --src "$DIR" --manifest "$MANIFEST" --source-branch "$BRANCH"
 
-echo "[2/3] point remotes at domestic mirrors"
+if [ "$(resolve_mirror_mode)" = "cn" ]; then
+  echo "[2/3] point remotes at domestic mirrors"
+else
+  echo "[2/3] configure upstream manifest remotes (direct)"
+fi
 LFS_SEED_URL=""
 if [ "$(resolve_mirror_mode)" = "cn" ] && grep -qs 'gitea.com/projectInfinity-x' "$DIR/.repo/manifests/snippets/infinity.xml" 2>/dev/null; then
   SEED_TAG="${INFINITY_SEED_TAG:-infinity-${BRANCH}-gitea-seed}"
@@ -98,11 +102,17 @@ if [ "$(resolve_mirror_mode)" = "cn" ] && grep -qs 'gitea.com/projectInfinity-x'
   fi
 fi
 
-LIB_ARGS=(--aosp auto --lineage auto)
+if [ "$(resolve_mirror_mode)" = "cn" ]; then
+  LIB_ARGS=(--aosp auto --lineage auto)
+else
+  LIB_ARGS=(--aosp https://android.googlesource.com/ --lineage https://github.com)
+fi
 if [ -n "$GITHUB_PROXY" ]; then
   LIB_ARGS+=(--github-proxy "$GITHUB_PROXY")
 elif [ "$(resolve_mirror_mode)" = "cn" ]; then
   LIB_ARGS+=(--github-proxy auto)
+else
+  LIB_ARGS+=(--github-proxy direct)
 fi
 if [ -n "$LFS_SEED_URL" ]; then
   LIB_ARGS+=(--lfs "$LFS_SEED_URL")
