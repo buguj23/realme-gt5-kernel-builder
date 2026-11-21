@@ -2634,6 +2634,7 @@ odm/firmware/ufs/SAMSUNG-KLUFG8RHDB-B0E1.bin|5bd56ec654a0a93787f433522f0a32ce6eb
 odm/firmware/ufs/SAMSUNG-KLUFG8RHHD-B0G1.bin|0ea0b70986dd7393bdfbcf4199402bc5da4f7123
 odm/firmware/ufs/move_target_ufs_fw_to_oplusreserve1.sh|b475fe409081759411a684b98dfe8ba9e2a5db4d
 odm/etc/aac_richtap.config|33b70b98b9721de652050d9b5ad07bc18cdfcd25
+vendor/lib64/libaacvibrator.so|0c0c6f1c526f279184559b19c4c4e68d602c4538
 odm/etc/wifi/kiwi/bdwlan.elf|6a59080e9e644c9184214b894a35101bf2dec568
 odm/etc/wifi/kiwi/regdb.bin|d27a4bd45e39d5ea549e222eaae300681bc34819
 odm/vendor/etc/wifi/WCNSS_qcom_cfg.ini|12e1c289552c24cb32640b9e736899fa5c6b1263

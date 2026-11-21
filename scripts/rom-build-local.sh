@@ -237,6 +237,7 @@ VENDOR_GENERATING=1
 python3 "$HERE/rom-check-inputs.py" vendor --vendor "$SRC/vendor/realme/ossi" --blob-list "$BLOB_LIST"
 touch "$SRC/vendor/realme/ossi/.ossi-generated"
 VENDOR_READY=1
+python3 "$HERE/rom-patch-source.py" "$SRC"
 if [ -n "$VENDOR_BACKUP" ] && [ -f "$VENDOR_BACKUP/.ossi-generated" ]; then
   rm -rf -- "$VENDOR_BACKUP"
   VENDOR_BACKUP=""

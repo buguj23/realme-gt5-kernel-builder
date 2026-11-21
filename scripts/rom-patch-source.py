@@ -216,6 +216,41 @@ def patch_oplus_vendor_init_hook(src: Path) -> None:
     _patch_text(init_oplus, add_bridge)
 
 
+def patch_oplus_richtap_libaacvibrator(src: Path) -> None:
+    """Link oplus-richtap vibrator against the real prebuilt vendor/realme/ossi libaacvibrator."""
+    vendor_bp = src / "vendor/realme/ossi/Android.bp"
+    oplus_ns = src / "hardware/oplus/Android.bp"
+    richtap_bp = src / "hardware/oplus/aidl/vibrator/richtap/Android.bp"
+    if not (vendor_bp.is_file() and oplus_ns.is_file() and richtap_bp.is_file()):
+        return
+    if 'name: "libaacvibrator"' not in vendor_bp.read_text(encoding="utf-8"):
+        return
+
+    def add_vendor_import(text: str) -> str:
+        if '"vendor/realme/ossi"' in text:
+            return text
+        anchor = '        "hardware/google/pixel",\n'
+        if anchor in text:
+            return text.replace(anchor, anchor + '        "vendor/realme/ossi",\n', 1)
+        return re.sub(
+            r'(soong_namespace\s*\{\s*imports:\s*\[)',
+            r'\1\n        "vendor/realme/ossi",',
+            text,
+            count=1,
+        )
+
+    def drop_dummy_stub(text: str) -> str:
+        return re.sub(
+            r'\n*cc_library_shared\s*\{\s*name:\s*"libaacvibrator",\s*soc_specific:\s*true,\s*\}\s*\n?',
+            "\n",
+            text,
+            count=1,
+        )
+
+    _patch_text(oplus_ns, add_vendor_import)
+    _patch_text(richtap_bp, drop_dummy_stub)
+
+
 def apply_all(src: Path) -> None:
     patch_simple_settings_config(src)
     patch_infinity_livedisplay_and_matrix(src)
@@ -224,6 +259,7 @@ def apply_all(src: Path) -> None:
     patch_kernel_build_out_prefix(src)
     patch_telephony_framework_compat(src)
     patch_oplus_vendor_init_hook(src)
+    patch_oplus_richtap_libaacvibrator(src)
 
 
 def main(argv: list[str]) -> int:

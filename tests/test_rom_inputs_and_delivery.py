@@ -522,7 +522,7 @@ class RomInputTests(unittest.TestCase):
         self.assertTrue(BLOBS["is_excluded_extra"]("vendor/lib64/vendor.oplus.hardware.performance-V1-ndk.so"))
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib64/vendor.oplus.hardware.performance-V2-ndk.so"))
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib/vendor.oplus.hardware.touch-V2-ndk.so"))
-        self.assertTrue(BLOBS["is_excluded_extra"]("vendor/lib64/libaacvibrator.so"))
+        self.assertFalse(BLOBS["is_excluded_extra"]("vendor/lib64/libaacvibrator.so"))
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/lib64/vendor.oplus.hardware.biometrics.fingerprint@2.1.so"))
         self.assertTrue(BLOBS["is_excluded_extra"]("vendor/etc/vintf/manifest/vendor.qti.hardware.display.composer-service.xml"))
         self.assertTrue(BLOBS["is_excluded_extra"]("odm/etc/vintf/manifest/manifest_performance_aidl.xml"))
@@ -626,6 +626,18 @@ class RomInputTests(unittest.TestCase):
         (self.root / "device/oneplus/sm8550-common/init/init_oplus.cpp").write_text(
             "void vendor_process_bootenv() {}\n"
         )
+        (self.root / "vendor/realme/ossi").mkdir(parents=True)
+        (self.root / "vendor/realme/ossi/Android.bp").write_text(
+            'cc_prebuilt_library_shared {\n    name: "libaacvibrator",\n}\n'
+        )
+        (self.root / "hardware/oplus/aidl/vibrator/richtap").mkdir(parents=True)
+        (self.root / "hardware/oplus/Android.bp").write_text(
+            'soong_namespace {\n    imports: [\n        "hardware/google/interfaces",\n        "hardware/google/pixel",\n    ],\n}\n'
+        )
+        (self.root / "hardware/oplus/aidl/vibrator/richtap/Android.bp").write_text(
+            'cc_binary {\n    name: "android.hardware.vibrator.service.oplus-richtap",\n    shared_libs: ["libaacvibrator"],\n}\n\n'
+            'cc_library_shared {\n    name: "libaacvibrator",\n    soc_specific: true,\n}\n'
+        )
 
         patcher["apply_all"](self.root)
         self.assertFalse(dangling.is_symlink())
@@ -651,17 +663,26 @@ class RomInputTests(unittest.TestCase):
         init_oplus = (self.root / "device/oneplus/sm8550-common/init/init_oplus.cpp").read_text()
         self.assertIn("void vendor_load_properties()", init_oplus)
         self.assertIn("vendor_process_bootenv();", init_oplus)
+        oplus_ns = (self.root / "hardware/oplus/Android.bp").read_text()
+        self.assertIn('"vendor/realme/ossi"', oplus_ns)
+        richtap_bp = (self.root / "hardware/oplus/aidl/vibrator/richtap/Android.bp").read_text()
+        self.assertNotIn("cc_library_shared", richtap_bp)
+        self.assertIn('"libaacvibrator"', richtap_bp)
 
         # Second invocation must be an exact no-op
         before = super_go
         before_kernel_mk = kernel_mk
         before_ccl = ccl_text
         before_init_oplus = init_oplus
+        before_oplus_ns = oplus_ns
+        before_richtap_bp = richtap_bp
         patcher["apply_all"](self.root)
         self.assertEqual((self.root / "build/soong/fsgen/super_img.go").read_text(), before)
         self.assertEqual((self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text(), before_kernel_mk)
         self.assertEqual((self.root / "packages/services/Telephony/src/com/android/phone/CarrierConfigLoader.java").read_text(), before_ccl)
         self.assertEqual((self.root / "device/oneplus/sm8550-common/init/init_oplus.cpp").read_text(), before_init_oplus)
+        self.assertEqual((self.root / "hardware/oplus/Android.bp").read_text(), before_oplus_ns)
+        self.assertEqual((self.root / "hardware/oplus/aidl/vibrator/richtap/Android.bp").read_text(), before_richtap_bp)
 
 
 if __name__ == "__main__":
