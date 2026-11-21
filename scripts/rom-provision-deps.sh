@@ -106,6 +106,7 @@ esac
 ensure device/oneplus/sm8550-common   android_device_oneplus_sm8550-common
 ensure hardware/oplus                 android_hardware_oplus
 ensure kernel/oneplus/sm8550          android_kernel_oneplus_sm8550
+ensure kernel/oneplus/sm8550-modules  android_kernel_oneplus_sm8550-modules
 if [ "$BRANCH" = lineage-23.2 ]; then
   ensure hardware/pixelworks/interfaces android_hardware_pixelworks_interfaces
 fi
