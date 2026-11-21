@@ -708,6 +708,14 @@ class RomInputTests(unittest.TestCase):
         rt_common = (self.root / "build/make/tools/releasetools/common.py").read_text()
         self.assertLess(rt_common.index("mkbootimg_version_args"), rt_common.index("recovery_mkbootimg_args"))
 
+        board_cfg = (SCRIPTS.parent / "rom/device/realme/ossi/BoardConfig.mk").read_text()
+        device_mk = (SCRIPTS.parent / "rom/device/realme/ossi/device.mk").read_text()
+        self.assertIn(
+            "DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += $(DEVICE_PATH)/device_framework_matrix.xml",
+            board_cfg,
+        )
+        self.assertNotIn("DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE", device_mk)
+
         # Second invocation must be an exact no-op
         before = super_go
         before_soong_go = soong_go

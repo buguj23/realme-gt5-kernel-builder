@@ -16,4 +16,7 @@ TARGET_SCREEN_DENSITY := 480
 # Recovery UI
 TARGET_RECOVERY_UI_MARGIN_HEIGHT := 103
 
+# VINTF: append after inherited common.mk (which uses := during deferred product import)
+DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += $(DEVICE_PATH)/device_framework_matrix.xml
+
 -include vendor/realme/ossi/BoardConfigVendor.mk
