@@ -89,7 +89,8 @@ def ota_header(ota, dest, payload_file=None):
         require({"payload.bin", "payload_properties.txt", METADATA} <= set(archive.namelist()),
                 "incomplete A/B OTA ZIP")
         info = key_values(archive.read(METADATA).decode("utf-8"))
-        require(info.get("ota-type") == "AB" and "ossi" in info.get("pre-device", "").split("|"),
+        devices = {d.strip() for d in re.split(r"[|,]", info.get("pre-device", "")) if d.strip()}
+        require(info.get("ota-type") == "AB" and "ossi" in devices,
                 "OTA ZIP is not an ossi A/B update")
         properties = key_values(archive.read("payload_properties.txt").decode("utf-8"))
         payload_output = payload_file.open("wb") if payload_file else nullcontext()

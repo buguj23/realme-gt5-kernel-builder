@@ -212,14 +212,21 @@ class RomInputTests(unittest.TestCase):
         properties = (f"METADATA_HASH={digest(data)}\nMETADATA_SIZE={len(data)}\n"
                       f"FILE_HASH={digest(data)}\nFILE_SIZE={len(data)}\n")
 
-        def write(payload):
+        def write(payload, meta=metadata):
             with ZipFile(ota, "w") as archive:
                 archive.writestr("payload.bin", payload)
                 archive.writestr("payload_properties.txt", properties)
-                archive.writestr("META-INF/com/android/metadata", metadata)
+                archive.writestr("META-INF/com/android/metadata", meta)
 
         write(data)
         self.assertIn("my_product", DELIVERY["ota_header"](ota, self.root / "prefix")["partitions"])
+        write(data, "ota-type=AB\npre-device=ossi,RMX3820,RE5C33,Ossi,RealmeGT5\n")
+        self.assertIn("my_product", DELIVERY["ota_header"](ota, self.root / "prefix")["partitions"])
+        write(data, "ota-type=AB\npre-device=RMX3820|ossi\n")
+        self.assertIn("my_product", DELIVERY["ota_header"](ota, self.root / "prefix")["partitions"])
+        write(data, "ota-type=AB\npre-device=RMX3820,RE5C33\n")
+        with self.assertRaisesRegex(ValueError, "not an ossi A/B update"):
+            DELIVERY["ota_header"](ota, self.root / "prefix")
         write(data + b"unexpected data")
         with self.assertRaisesRegex(ValueError, "payload size or SHA-256"):
             DELIVERY["ota_header"](ota, self.root / "prefix")
