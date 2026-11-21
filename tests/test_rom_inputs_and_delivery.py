@@ -601,6 +601,23 @@ class RomInputTests(unittest.TestCase):
         (self.root / "kernel/oneplus/sm8550/include/soc/oplus").mkdir(parents=True)
         dangling = self.root / "kernel/oneplus/sm8550/include/soc/oplus/boot"
         dangling.symlink_to("../../sm8550-modules/missing")
+        (self.root / "frameworks/base/telephony/common/com/android/internal/telephony").mkdir(parents=True)
+        (self.root / "frameworks/base/telephony/common/com/android/internal/telephony/TelephonyPermissions.java").write_text(
+            "public final class TelephonyPermissions { public static boolean isRootOrShell(int uid) { return false; } }\n"
+        )
+        (self.root / "frameworks/base/telephony/java/android/telephony").mkdir(parents=True)
+        (self.root / "frameworks/base/telephony/java/android/telephony/TelephonyManager.java").write_text(
+            "public class TelephonyManager {}\n"
+        )
+        (self.root / "packages/services/Telephony/src/com/android/phone").mkdir(parents=True)
+        (self.root / "packages/services/Telephony/src/com/android/phone/PhoneInterfaceManager.java").write_text(
+            "        if (TelephonyPermissions.isShell(Binder.getCallingUid())) {}\n"
+        )
+        (self.root / "packages/services/Telephony/src/com/android/phone/CarrierConfigLoader.java").write_text(
+            "        if (TelephonyPermissions.isShell(getBinderCallingUid())) {}\n"
+            "            TelephonyManager tm = mContext.getSystemService(TelephonyManager.class);\n"
+            "            String modemService = tm.getModemService();\n"
+        )
 
         patcher["apply_all"](self.root)
         self.assertFalse(dangling.is_symlink())
@@ -618,13 +635,20 @@ class RomInputTests(unittest.TestCase):
         kernel_mk = (self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text()
         self.assertIn("ifeq ($(filter /%,$(OUT_DIR_PREFIX)),)", kernel_mk)
         self.assertNotIn("ifeq ($(OUT_DIR_PREFIX),out)", kernel_mk)
+        pim_text = (self.root / "packages/services/Telephony/src/com/android/phone/PhoneInterfaceManager.java").read_text()
+        self.assertIn("UserHandle.isSameApp(Binder.getCallingUid(), Process.SHELL_UID)", pim_text)
+        ccl_text = (self.root / "packages/services/Telephony/src/com/android/phone/CarrierConfigLoader.java").read_text()
+        self.assertIn("UserHandle.isSameApp(getBinderCallingUid(), Process.SHELL_UID)", ccl_text)
+        self.assertIn("PhoneConfigurationManager.getInstance()", ccl_text)
 
         # Second invocation must be an exact no-op
         before = super_go
         before_kernel_mk = kernel_mk
+        before_ccl = ccl_text
         patcher["apply_all"](self.root)
         self.assertEqual((self.root / "build/soong/fsgen/super_img.go").read_text(), before)
         self.assertEqual((self.root / "vendor/infinity/config/BoardConfigKernel.mk").read_text(), before_kernel_mk)
+        self.assertEqual((self.root / "packages/services/Telephony/src/com/android/phone/CarrierConfigLoader.java").read_text(), before_ccl)
 
 
 if __name__ == "__main__":

@@ -154,12 +154,51 @@ def patch_kernel_build_out_prefix(src: Path) -> None:
         _patch_text(src / rel, lambda text: text.replace(old, new, 1) if old in text else text)
 
 
+def patch_telephony_framework_compat(src: Path) -> None:
+    """Bridge newer Lineage Telephony security checks onto Infinity-X frameworks/base."""
+    tp_java = src / "frameworks/base/telephony/common/com/android/internal/telephony/TelephonyPermissions.java"
+    tm_java = src / "frameworks/base/telephony/java/android/telephony/TelephonyManager.java"
+    pim_java = src / "packages/services/Telephony/src/com/android/phone/PhoneInterfaceManager.java"
+    ccl_java = src / "packages/services/Telephony/src/com/android/phone/CarrierConfigLoader.java"
+
+    if tp_java.is_file() and "boolean isShell(" not in tp_java.read_text(encoding="utf-8"):
+        _patch_text(
+            pim_java,
+            lambda text: text.replace(
+                "TelephonyPermissions.isShell(Binder.getCallingUid())",
+                "UserHandle.isSameApp(Binder.getCallingUid(), Process.SHELL_UID)",
+            ),
+        )
+        _patch_text(
+            ccl_java,
+            lambda text: text.replace(
+                "TelephonyPermissions.isShell(getBinderCallingUid())",
+                "UserHandle.isSameApp(getBinderCallingUid(), Process.SHELL_UID)",
+            ),
+        )
+
+    if tm_java.is_file() and "String getModemService(" not in tm_java.read_text(encoding="utf-8"):
+        old_modem = (
+            "            TelephonyManager tm = mContext.getSystemService(TelephonyManager.class);\n"
+            "            String modemService = tm.getModemService();"
+        )
+        new_modem = (
+            "            PhoneConfigurationManager pcm = PhoneConfigurationManager.getInstance();\n"
+            "            String modemService = pcm != null ? pcm.getModemService() : null;"
+        )
+        _patch_text(
+            ccl_java,
+            lambda text: text.replace(old_modem, new_modem, 1) if old_modem in text else text,
+        )
+
+
 def apply_all(src: Path) -> None:
     patch_simple_settings_config(src)
     patch_infinity_livedisplay_and_matrix(src)
     patch_soong_custom_super_partitions(src)
     patch_dangling_kernel_include_symlinks(src)
     patch_kernel_build_out_prefix(src)
+    patch_telephony_framework_compat(src)
 
 
 def main(argv: list[str]) -> int:
