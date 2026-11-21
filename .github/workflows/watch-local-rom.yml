@@ -1,0 +1,60 @@
+name: Local Infinity-X build live
+run-name: Local GT5 / Infinity-X 15 / Pure-OGKI 5.15.149
+
+on:
+  workflow_dispatch:
+    inputs:
+      invocation_id:
+        description: Systemd invocation ID of the already-running local build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-ossi-build-monitor
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    if: github.actor == github.repository_owner && github.ref == 'refs/heads/5.15.149'
+    runs-on: [bianyi-monitor]
+    timeout-minutes: 4320
+    env:
+      BIANYI_ROOT: /home/buguj/下载/新建文件夹/新建文件夹/bianyi
+      BUILD_INVOCATION: ${{ inputs.invocation_id }}
+      CONTROL_SHA: ${{ github.sha }}
+      CONTROL_REPOSITORY: ${{ github.repository }}
+      https_proxy: http://127.0.0.1:7890
+      http_proxy: http://127.0.0.1:7890
+      no_proxy: localhost,127.0.0.1,::1
+      PYTHONUNBUFFERED: '1'
+      PYTHONPYCACHEPREFIX: /home/buguj/下载/新建文件夹/新建文件夹/bianyi/cache/pycache
+    steps:
+      - name: Load monitor at workflow commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BUILD_INVOCATION" =~ ^[0-9a-f]{32}$ ]]
+          [[ "$CONTROL_SHA" =~ ^[0-9a-f]{40}$ ]]
+          CONTROL_DIR="$RUNNER_TEMP/control-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          git init --quiet "$CONTROL_DIR"
+          git -C "$CONTROL_DIR" -c http.lowSpeedLimit=1024 -c http.lowSpeedTime=120 \
+            fetch --quiet --depth=1 "https://github.com/$CONTROL_REPOSITORY.git" "$CONTROL_SHA"
+          git -C "$CONTROL_DIR" checkout --quiet --detach FETCH_HEAD
+          echo "MONITOR_SCRIPT=$CONTROL_DIR/scripts/rom-watch-local.py" >> "$GITHUB_ENV"
+          echo "MONITOR_REPORT=$RUNNER_TEMP/local-build-$GITHUB_RUN_ID.json" >> "$GITHUB_ENV"
+      - name: Initial build snapshot
+        shell: bash
+        run: python3 "$MONITOR_SCRIPT" --root "$BIANYI_ROOT" --invocation "$BUILD_INVOCATION" --report "$MONITOR_REPORT" --once
+      - name: Stream local build (15s)
+        shell: bash
+        run: python3 "$MONITOR_SCRIPT" --root "$BIANYI_ROOT" --invocation "$BUILD_INVOCATION" --report "$MONITOR_REPORT" --interval 15
+      - name: Final build snapshot
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${MONITOR_SCRIPT:-}" ]; then
+            python3 "$MONITOR_SCRIPT" --root "$BIANYI_ROOT" --invocation "$BUILD_INVOCATION" --report "$MONITOR_REPORT" --summary-only
+          fi
