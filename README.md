@@ -58,10 +58,19 @@ scripts/fetch-stock.sh --mode full     # Full partition set for ROM staging & ex
 GitHub Actions workflows default to `self-hosted` (`MIRROR_MODE=cn`) with `ubuntu-latest` selectable as an input:
 - [`.github/workflows/build-kernel-gt5.yml`](.github/workflows/build-kernel-gt5.yml) (`Build Realme GT5 OGKI (5.15.149)`)
 - [`.github/workflows/build-infinity-rom.yml`](.github/workflows/build-infinity-rom.yml) (`Build Project Infinity-X (ossi)`)
+- [`.github/workflows/build-infinity-gsi.yml`](.github/workflows/build-infinity-gsi.yml) (`Build Project Infinity-X Treble GSI (DSU)`)
 - [`.github/workflows/cleanup.yml`](.github/workflows/cleanup.yml) (`Workflow and Cache Cleanup`)
+
+## Published Releases (`5.15.149`)
+
+- **Kernel**: [`kernel-5.15.149-pure-ogki-gt5`](https://github.com/buguj23/realme-gt5-kernel-builder/releases/tag/kernel-5.15.149-pure-ogki-gt5) (`Pure-OGKI` `5.15.149-o-gb285e01d0605` + fastboot `boot.img`)
+- **Full ROM**: [`infinity-x-2.9-ossi-5.15.149`](https://github.com/buguj23/realme-gt5-kernel-builder/releases/tag/infinity-x-2.9-ossi-5.15.149) (Verified A/B OTA with OPLUS Phoenix watchdog & `property_contexts` fixes)
+- **DSU GSI**: [`infinity-x-2.9-gsi-arm64-dsu`](https://github.com/buguj23/realme-gt5-kernel-builder/releases/tag/infinity-x-2.9-gsi-arm64-dsu) (Zero-flash Treble GSI `.img.gz` for DSU-Sideloader-Plus, Enforcing SELinux verified on hardware)
+- **Build Cache**: [`rom-cache-5.15.149-infinity`](https://github.com/buguj23/realme-gt5-kernel-builder/releases/tag/rom-cache-5.15.149-infinity) (3-tier chunked incremental build cache)
 
 ## Documentation
 
+- [**全链路构建、排障、无损实测与发布实战手册（中文详版）**](docs/PLAYBOOK_CN.md)
 - [ROM Build & Staging Guide](docs/ROM_BUILD.md)
 - [KMI & Partition Verification](docs/ROM_KMI.md)
 - [YukiSU `CONFIG_KSU=m` Adaptation Guide](docs/YUKISU_GUIDE.md)
