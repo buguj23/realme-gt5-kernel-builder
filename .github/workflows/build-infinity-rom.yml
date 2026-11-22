@@ -36,6 +36,20 @@ on:
         description: "Build and verify a userdebug ROM on the runner"
         type: boolean
         default: false
+      mirror_mode:
+        description: "Source/download mirror mode (direct avoids domestic mirror lag)"
+        type: choice
+        required: true
+        default: auto
+        options: [auto, direct, cn]
+      restore_cache_tag:
+        description: "Optional GitHub Release cache tag to restore before building (e.g. rom-cache-5.15.149-infinity)"
+        required: false
+        default: ""
+      build_gsi:
+        description: "Also build verified Treble GSI (infinity_gsi_arm64-userdebug) after ROM build"
+        type: boolean
+        default: false
       upload_mode:
         description: "Artifact upload scope (metadata-only preserves ECS ¥0.8/GB outbound)"
         type: choice
@@ -153,12 +167,28 @@ jobs:
           git -C "$GITHUB_WORKSPACE" fetch --depth=1 origin "${{ github.sha }}"
           git -C "$GITHUB_WORKSPACE" checkout -f FETCH_HEAD
       - name: Configure mirror mode
+        env:
+          INPUT_MIRROR_MODE: ${{ inputs.mirror_mode }}
         run: |
-          if [ "${RUNNER_ENVIRONMENT:-}" = "github-hosted" ]; then
+          if [ "$INPUT_MIRROR_MODE" != "auto" ]; then
+            echo "MIRROR_MODE=$INPUT_MIRROR_MODE" >> "$GITHUB_ENV"
+          elif [ "${RUNNER_ENVIRONMENT:-}" = "github-hosted" ]; then
             echo "MIRROR_MODE=direct" >> "$GITHUB_ENV"
           else
             echo "MIRROR_MODE=cn" >> "$GITHUB_ENV"
           fi
+      - name: Restore incremental ROM build cache (optional)
+        if: ${{ inputs.restore_cache_tag != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ inputs.kernel_file }}
+          ROM_SOURCE: ${{ inputs.source_dir }}
+          CACHE_TAG: ${{ inputs.restore_cache_tag }}
+        run: |
+          SRC="${ROM_SOURCE:-$HOME/gt5-rom/$BRANCH}"
+          python3 scripts/rom-cache-sync.py restore \
+            --repo "$GITHUB_REPOSITORY" --tag "$CACHE_TAG" \
+            --out-dir "$SRC/out/ossi/$BRANCH"
       - name: Ensure domestic runner tools and ROM dependencies
         run: |
           if ! command -v aria2c >/dev/null 2>&1 || ! command -v fsck.erofs >/dev/null 2>&1 || ! command -v repo >/dev/null 2>&1 || ! command -v avbtool >/dev/null 2>&1 || ! command -v mkbootimg >/dev/null 2>&1 || ! command -v dtc >/dev/null 2>&1; then
@@ -221,6 +251,15 @@ jobs:
           fi
           echo "OSSI_DELIVERY_DIR=$DELIVERY_DIR" >> "$GITHUB_ENV"
           echo "OSSI_UPLOAD_DIR=$UPLOAD_DIR" >> "$GITHUB_ENV"
+      - name: Build and verify Treble GSI (optional)
+        if: ${{ inputs.build_gsi }}
+        env:
+          BRANCH: ${{ inputs.kernel_file }}
+          ROM_SOURCE: ${{ inputs.source_dir }}
+        run: |
+          SRC="${ROM_SOURCE:-$HOME/gt5-rom/$BRANCH}"
+          GSI_OUT="${OSSI_DELIVERY_DIR:?}/gsi-dsu"
+          bash scripts/rom-build-gsi.sh --src "$SRC" --output "$GSI_OUT"
       - name: Publish delivery metadata and summary
         env:
           UPLOAD_MODE: ${{ inputs.upload_mode }}

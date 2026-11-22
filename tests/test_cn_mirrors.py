@@ -242,7 +242,7 @@ class ChinaMirrorTests(unittest.TestCase):
 
     def test_workflows_support_self_hosted_and_cn_mirrors(self):
         import yaml
-        for wf_name in ("build-kernel-gt5.yml", "build-infinity-rom.yml", "cleanup.yml"):
+        for wf_name in ("build-kernel-gt5.yml", "build-infinity-rom.yml", "build-infinity-gsi.yml", "cleanup.yml"):
             wf_path = ROOT / ".github" / "workflows" / wf_name
             data = yaml.safe_load(wf_path.read_text(encoding="utf-8"))
             self.assertIn("jobs", data)
@@ -257,6 +257,13 @@ class ChinaMirrorTests(unittest.TestCase):
             if wf_name == "build-infinity-rom.yml":
                 for step in data["jobs"]["build"]["steps"]:
                     self.assertNotIn("uses", step, "build-infinity-rom build job must not stall Set up job on codeload.github.com")
+            if wf_name == "build-infinity-gsi.yml":
+                for step in data["jobs"]["build-gsi"]["steps"]:
+                    self.assertNotIn("uses", step, "build-infinity-gsi job must not stall Set up job on codeload.github.com")
+        gsi_script = (SCRIPTS / "rom-build-gsi.sh").read_text(encoding="utf-8")
+        self.assertIn("SET_BOOTSTAGE@ANDROID_BOOT_COMPLETED", gsi_script)
+        self.assertIn("proc_phoenix", gsi_script)
+        self.assertIn("check_property_contexts", gsi_script)
         kernel_wf = (ROOT / ".github" / "workflows" / "build-kernel-gt5.yml").read_text(encoding="utf-8")
         self.assertIn("runner.environment == 'github-hosted'", kernel_wf)
         self.assertIn("mirror_helper.py ensure-repo", kernel_wf)

@@ -1,0 +1,135 @@
+name: Build Project Infinity-X Treble GSI (DSU arm64-ab)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Baseline branch for source tree (default: 5.15.149)"
+        type: choice
+        required: true
+        default: "5.15.149"
+        options: ["5.15.149"]
+      source_dir:
+        description: "Android checkout on the runner (default: ~/gt5-rom/5.15.149)"
+        required: false
+        default: ""
+      mirror_mode:
+        description: "Source/download mirror mode (direct recommended when proxy/overseas is available)"
+        type: choice
+        required: true
+        default: auto
+        options: [auto, direct, cn]
+      publish_release:
+        description: "Upload verified GSI .img.gz to GitHub Release infinity-x-2.9-gsi-arm64-dsu"
+        type: boolean
+        default: false
+      rom_runner:
+        description: "Runner label for GSI build job"
+        type: choice
+        required: true
+        default: self-hosted
+        options:
+          - self-hosted
+          - gt5-rom
+          - ubuntu-latest
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  build-gsi:
+    runs-on: ${{ fromJSON(inputs.rom_runner == 'gt5-rom' && '["self-hosted","linux","x64","gt5-rom"]' || (inputs.rom_runner == 'ubuntu-latest' && '["ubuntu-latest"]' || '["self-hosted","linux","x64"]')) }}
+    concurrency:
+      group: ossi-self-hosted-gsi
+      cancel-in-progress: false
+    timeout-minutes: 360
+    steps:
+      - name: Checkout repository (self-hosted multi-mirror)
+        if: runner.environment != 'github-hosted'
+        run: |
+          rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
+          REPO_URL="https://github.com/${{ github.repository }}.git"
+          OK=0
+          for prefix in "" "https://cdn.gh-proxy.org/" "https://edgeone.gh-proxy.org/" "https://gh-proxy.org/" "https://v6.gh-proxy.org/" "https://gh-proxy.com/"; do
+            echo "Trying checkout: ${prefix:-direct}${REPO_URL} @ ${{ github.sha }}"
+            if GIT_TERMINAL_PROMPT=0 git -c http.lowSpeedLimit=1024 -c http.lowSpeedTime=20 clone --depth=1 --branch "${{ github.ref_name }}" "${prefix}${REPO_URL}" "$GITHUB_WORKSPACE" && \
+               GIT_TERMINAL_PROMPT=0 git -C "$GITHUB_WORKSPACE" -c http.lowSpeedLimit=1024 -c http.lowSpeedTime=20 fetch --depth=1 "${prefix}${REPO_URL}" "${{ github.sha }}" && \
+               git -C "$GITHUB_WORKSPACE" checkout -f FETCH_HEAD; then
+              OK=1
+              break
+            fi
+            rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
+          done
+          [ "$OK" = 1 ] || exit 1
+      - name: Checkout repository (GitHub-hosted)
+        if: runner.environment == 'github-hosted'
+        run: |
+          rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
+          git clone --depth=1 --branch "${{ github.ref_name }}" "https://github.com/${{ github.repository }}.git" "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" fetch --depth=1 origin "${{ github.sha }}"
+          git -C "$GITHUB_WORKSPACE" checkout -f FETCH_HEAD
+      - name: Configure mirror mode
+        env:
+          INPUT_MIRROR_MODE: ${{ inputs.mirror_mode }}
+        run: |
+          if [ "$INPUT_MIRROR_MODE" != "auto" ]; then
+            echo "MIRROR_MODE=$INPUT_MIRROR_MODE" >> "$GITHUB_ENV"
+          elif [ "${RUNNER_ENVIRONMENT:-}" = "github-hosted" ]; then
+            echo "MIRROR_MODE=direct" >> "$GITHUB_ENV"
+          else
+            echo "MIRROR_MODE=cn" >> "$GITHUB_ENV"
+          fi
+      - name: Run ROM unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Build and verify Treble GSI (with ColorOS property_contexts & Phoenix fixes)
+        env:
+          BRANCH: ${{ inputs.branch }}
+          ROM_SOURCE: ${{ inputs.source_dir }}
+        run: |
+          set -euo pipefail
+          SRC="${ROM_SOURCE:-$HOME/gt5-rom/$BRANCH}"
+          if [ "${RUNNER_ENVIRONMENT:-}" != "github-hosted" ] && [ -w "$HOME" ]; then
+            GSI_OUT="$HOME/ossi-gsi-deliveries/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          else
+            GSI_OUT="$RUNNER_TEMP/ossi-gsi-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          fi
+          rm -rf "$GSI_OUT"
+          mkdir -p "$GSI_OUT"
+          bash scripts/rom-build-gsi.sh --src "$SRC" --output "$GSI_OUT"
+          echo "OSSI_GSI_OUT=$GSI_OUT" >> "$GITHUB_ENV"
+      - name: Publish GSI Release (optional)
+        if: ${{ inputs.publish_release }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="infinity-x-2.9-gsi-arm64-dsu"
+          GSI_OUT="${OSSI_GSI_OUT:?}"
+          if ! gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" \
+              --title "Project Infinity-X 2.9 (Android 15) Treble GSI arm64-ab (DSU-Sideloader-Plus)" \
+              --notes "Automated verified Treble GSI build (ColorOS property_contexts collision & OPLUS Phoenix watchdog fixed)."
+          fi
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber \
+            "$GSI_OUT/Infinity-X-2.9-gsi_arm64-ab.img.gz" \
+            "$GSI_OUT/gsi-verify.txt" \
+            "$GSI_OUT/SHA256SUMS.txt"
+      - name: Publish GSI build summary
+        run: |
+          GSI_OUT="${OSSI_GSI_OUT:?}"
+          {
+            echo "## Project Infinity-X 2.9 Treble GSI (DSU arm64-ab)"
+            echo ""
+            echo "- Delivery Directory: \`$GSI_OUT\`"
+            echo ""
+            echo "### SHA256SUMS.txt"
+            echo '```text'
+            cat "$GSI_OUT/SHA256SUMS.txt"
+            echo '```'
+            echo ""
+            echo "### gsi-verify.txt"
+            echo '```text'
+            cat "$GSI_OUT/gsi-verify.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
