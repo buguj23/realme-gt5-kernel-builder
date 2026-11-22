@@ -221,6 +221,89 @@ def check_avb(images, avb_key, work, boot_patch, platform_patch):
     return {"public_key_sha256": sha256(chain_key), "rollback_indices": indices}
 
 
+def check_property_contexts(contexts_by_file):
+    """Simulate AOSP TrieBuilder::AddToTrie to reject duplicate property_contexts keys."""
+    root = {"context": None, "children": {}, "prefixes": {}, "exacts": {}}
+    for label, text in contexts_by_file:
+        for lineno, raw in enumerate(text.splitlines(), 1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            require(len(parts) >= 2, f"{label}:{lineno}: malformed property_contexts entry")
+            name, ctx = parts[0], parts[1]
+            if name == "*":
+                continue
+            exact = len(parts) >= 3 and parts[2] == "exact"
+            pieces = name.split(".")
+            ends_dot = False
+            if pieces[-1] == "":
+                ends_dot = True
+                pieces.pop()
+            node = root
+            for piece in pieces[:-1]:
+                node = node["children"].setdefault(
+                    piece, {"context": None, "children": {}, "prefixes": {}, "exacts": {}}
+                )
+            last = pieces[-1]
+            src = f"{label}:{lineno} ({ctx})"
+            if exact:
+                require(last not in node["exacts"],
+                        f"duplicate exact property_contexts key '{name}': {node['exacts'].get(last)} vs {src}")
+                node["exacts"][last] = src
+            elif not ends_dot:
+                require(last not in node["prefixes"],
+                        f"duplicate prefix property_contexts key '{name}': {node['prefixes'].get(last)} vs {src}")
+                node["prefixes"][last] = src
+            else:
+                child = node["children"].setdefault(
+                    last, {"context": None, "children": {}, "prefixes": {}, "exacts": {}}
+                )
+                require(child["context"] is None,
+                        f"duplicate prefix property_contexts key '{name}': {child['context']} vs {src}")
+                child["context"] = src
+
+
+def check_target_files_runtime_guards(archive):
+    """Verify target-files will not hit PropertyInit TrieBuilder or OPLUS Phoenix watchdog failures."""
+    names = set(archive.namelist())
+    pc_paths = (
+        "SYSTEM/etc/selinux/plat_property_contexts",
+        "SYSTEM_EXT/etc/selinux/system_ext_property_contexts",
+        "PRODUCT/etc/selinux/product_property_contexts",
+        "VENDOR/etc/selinux/vendor_property_contexts",
+        "ODM/etc/selinux/odm_property_contexts",
+    )
+    contexts = [(p, archive.read(p).decode("utf-8", errors="replace")) for p in pc_paths if p in names]
+    if contexts:
+        check_property_contexts(contexts)
+
+    modules_load = "VENDOR_BOOT/RAMDISK/lib/modules/modules.load"
+    if modules_load in names and "oplus_phoenix.ko" in archive.read(modules_load).decode("utf-8", errors="replace").split():
+        rc_texts = "\n".join(
+            archive.read(n).decode("utf-8", errors="replace")
+            for n in sorted(names)
+            if n.endswith(".rc") and (n.startswith("SYSTEM/") or n.startswith("SYSTEM_EXT/") or n.startswith("VENDOR/") or n.startswith("ODM/"))
+        )
+        require(
+            'write /proc/phoenix "SET_BOOTSTAGE@ANDROID_BOOT_COMPLETED"' in rc_texts,
+            "oplus_phoenix.ko is loaded in vendor_boot without /proc/phoenix ANDROID_BOOT_COMPLETED disarm",
+        )
+        cil_texts = "\n".join(
+            archive.read(n).decode("utf-8", errors="replace")
+            for n in sorted(names)
+            if n.endswith(".cil") and n.startswith(("SYSTEM/etc/selinux/", "SYSTEM_EXT/etc/selinux/", "VENDOR/etc/selinux/", "ODM/etc/selinux/"))
+        )
+        genfs = re.search(r'\(genfscon\s+proc\s+"/phoenix"\s+\(u\s+object_r\s+(\S+)\s+', cil_texts)
+        require(genfs is not None, "oplus_phoenix.ko is loaded without genfscon proc /phoenix SELinux label")
+        label = genfs.group(1)
+        require(
+            re.search(rf'\(allow\s+(?:init(?:_[0-9_]+)?|vendor_init(?:_[0-9_]+)?)\s+{re.escape(label)}\s+\(file\s+\([^)]*\bwrite\b', cil_texts)
+            is not None,
+            f"SELinux policy labels /proc/phoenix as {label} without granting init write access",
+        )
+
+
 def verify(target, ota, pre, stock, key, dest, source_manifest, ota_cert, delta_generator, platform_patch):
     staged = json.loads((pre / "stage-report.json").read_text())
     oem = json.loads((pre / "oem-partitions.json").read_text())
@@ -232,6 +315,7 @@ def verify(target, ota, pre, stock, key, dest, source_manifest, ota_cert, delta_
         images = work / "images"
         images.mkdir()
         with ZipFile(target) as archive:
+            check_target_files_runtime_guards(archive)
             dynamic = key_values(archive.read("META/dynamic_partitions_info.txt").decode("utf-8"))
             parts = check_partition_lists(dynamic, archive.read("META/ab_partitions.txt").decode("utf-8"), oem)
             expected = parts | BOOT_PARTS

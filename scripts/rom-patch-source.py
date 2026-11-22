@@ -357,6 +357,19 @@ def patch_releasetools_mkbootimg_arg_order(src: Path) -> None:
     _patch_text(common_py, reorder)
 
 
+def patch_lineage_vendor_property_contexts(src: Path) -> None:
+    """Drop ro.vendor.dolby.dax.version from system_ext property_contexts to prevent ColorOS vendor TrieBuilder collisions."""
+    pc = src / "device/lineage/sepolicy/common/private/property_contexts"
+    if not pc.is_file():
+        return
+
+    def drop_dolby_collision(text: str) -> str:
+        lines = [line for line in text.splitlines(keepends=True) if not line.lstrip().startswith("ro.vendor.dolby.dax.version")]
+        return "".join(lines)
+
+    _patch_text(pc, drop_dolby_collision)
+
+
 def apply_all(src: Path) -> None:
     patch_soong_runtime_memory(src)
     patch_simple_settings_config(src)
@@ -368,6 +381,7 @@ def apply_all(src: Path) -> None:
     patch_oplus_vendor_init_hook(src)
     patch_oplus_richtap_libaacvibrator(src)
     patch_releasetools_mkbootimg_arg_order(src)
+    patch_lineage_vendor_property_contexts(src)
 
 
 def main(argv: list[str]) -> int:

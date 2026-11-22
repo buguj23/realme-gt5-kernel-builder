@@ -723,6 +723,26 @@ class RomInputTests(unittest.TestCase):
         )
         self.assertNotIn("DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE", device_mk)
 
+        init_ossi = (SCRIPTS.parent / "rom/device/realme/ossi/init.ossi.rc").read_text()
+        self.assertIn('write /proc/phoenix "SET_BOOTSTAGE@ANDROID_BOOT_COMPLETED"', init_ossi)
+        self.assertIn('write /proc/phoenix "SET_BOOTSTAGE@PHOENIX_BOOT_COMPLETED"', init_ossi)
+        sepolicy_dir = SCRIPTS.parent / "rom/device/realme/ossi/sepolicy/vendor"
+        self.assertIn("type vendor_proc_phoenix", (sepolicy_dir / "file.te").read_text())
+        self.assertIn("genfscon proc /phoenix u:object_r:vendor_proc_phoenix:s0", (sepolicy_dir / "genfs_contexts").read_text())
+        self.assertIn("allow init vendor_proc_phoenix:file w_file_perms;", (sepolicy_dir / "init.te").read_text())
+        self.assertIn("allow vendor_init vendor_proc_phoenix:file w_file_perms;", (sepolicy_dir / "vendor_init.te").read_text())
+
+        # Verify patch_lineage_vendor_property_contexts removes ColorOS colliding key idempotently
+        lineage_pc = self.root / "device/lineage/sepolicy/common/private/property_contexts"
+        lineage_pc.parent.mkdir(parents=True, exist_ok=True)
+        lineage_pc.write_text(
+            "ro.vendor.dolby.dax.version u:object_r:exported_system_prop:s0\n"
+            "persist.sys.bootanimation_style u:object_r:bootanim_system_prop:s0 exact int\n"
+        )
+        patcher["apply_all"](self.root)
+        self.assertNotIn("ro.vendor.dolby.dax.version", lineage_pc.read_text())
+        self.assertIn("persist.sys.bootanimation_style", lineage_pc.read_text())
+
         # Second invocation must be an exact no-op
         before = super_go
         before_soong_go = soong_go
@@ -733,6 +753,7 @@ class RomInputTests(unittest.TestCase):
         before_oplus_ns = oplus_ns
         before_richtap_bp = richtap_bp
         before_rt_common = rt_common
+        before_lineage_pc = lineage_pc.read_text()
         patcher["apply_all"](self.root)
         self.assertEqual((self.root / "build/soong/fsgen/super_img.go").read_text(), before)
         self.assertEqual((self.root / "build/soong/ui/build/soong.go").read_text(), before_soong_go)
@@ -743,6 +764,49 @@ class RomInputTests(unittest.TestCase):
         self.assertEqual((self.root / "hardware/oplus/Android.bp").read_text(), before_oplus_ns)
         self.assertEqual((self.root / "hardware/oplus/aidl/vibrator/richtap/Android.bp").read_text(), before_richtap_bp)
         self.assertEqual((self.root / "build/make/tools/releasetools/common.py").read_text(), before_rt_common)
+        self.assertEqual(lineage_pc.read_text(), before_lineage_pc)
+
+    def test_runtime_guards_catch_property_context_collision_and_phoenix_watchdog(self):
+        check = DELIVERY["check_target_files_runtime_guards"]
+
+        def make_tf(name, entries):
+            path = self.root / name
+            with ZipFile(path, "w") as zf:
+                for k, v in entries.items():
+                    zf.writestr(k, v)
+            return path
+
+        good = {
+            "SYSTEM/etc/selinux/plat_property_contexts": "ro.build.id u:object_r:build_prop:s0 exact string\n",
+            "SYSTEM_EXT/etc/selinux/system_ext_property_contexts": "persist.sys.bootanimation_style u:object_r:bootanim_system_prop:s0 exact int\n",
+            "VENDOR/etc/selinux/vendor_property_contexts": "ro.vendor.dolby.dax.version u:object_r:vendor_oplus_prop:s0\n",
+            "VENDOR_BOOT/RAMDISK/lib/modules/modules.load": "qcom_hwspinlock.ko\noplus_phoenix.ko\n",
+            "VENDOR/etc/init/init.ossi.rc": 'on property:sys.boot_completed=1\n    write /proc/phoenix "SET_BOOTSTAGE@ANDROID_BOOT_COMPLETED"\n',
+            "VENDOR/etc/selinux/vendor_sepolicy.cil": (
+                '(genfscon proc "/phoenix" (u object_r vendor_proc_phoenix ((s0) (s0))))\n'
+                '(allow init_202404 vendor_proc_phoenix (file (write lock append map open)))\n'
+            ),
+        }
+        with ZipFile(make_tf("good.zip", good)) as zf:
+            check(zf)
+
+        dup = dict(good)
+        dup["SYSTEM_EXT/etc/selinux/system_ext_property_contexts"] += "ro.vendor.dolby.dax.version u:object_r:exported_system_prop:s0\n"
+        with ZipFile(make_tf("dup.zip", dup)) as zf:
+            with self.assertRaisesRegex(ValueError, "duplicate prefix property_contexts key 'ro.vendor.dolby.dax.version'"):
+                check(zf)
+
+        no_rc = dict(good)
+        no_rc["VENDOR/etc/init/init.ossi.rc"] = "on early-init\n    write /proc/sys/kernel/sched_tunable_scaling 0\n"
+        with ZipFile(make_tf("no_rc.zip", no_rc)) as zf:
+            with self.assertRaisesRegex(ValueError, "ANDROID_BOOT_COMPLETED disarm"):
+                check(zf)
+
+        no_selinux = dict(good)
+        no_selinux["VENDOR/etc/selinux/vendor_sepolicy.cil"] = ""
+        with ZipFile(make_tf("no_se.zip", no_selinux)) as zf:
+            with self.assertRaisesRegex(ValueError, "genfscon proc /phoenix"):
+                check(zf)
 
 
 if __name__ == "__main__":
