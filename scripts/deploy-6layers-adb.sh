@@ -55,7 +55,7 @@ find_file() {
 
 run_root() {
   local cmd="$1"
-  "${ADB[@]}" shell "su -c '$cmd'" 2>/dev/null || "${ADB[@]}" shell "su 0 sh -c '$cmd'"
+  printf '%s\n' "$cmd" | "${ADB[@]}" shell "/system/bin/su -c sh"
 }
 
 wait_for_boot() {
@@ -125,11 +125,20 @@ run_stage1() {
   local ksud
   ksud=$(check_ksud)
   echo "=== Layer 1: YukiSU + built-in Kasumi/Kagami + UTS View ==="
-  # Disable built-in YukiZygisk before installing standalone YukiZygisk
-  run_root "$ksud feature set yukizygisk 0 2>/dev/null || $ksud feature set embedded_yukizygisk 0 2>/dev/null || true"
-  # Configure UTS View to official Qualcomm GKI release & version
-  run_root "$ksud uts-view set-global --release='$UTS_RELEASE' --version='$UTS_VERSION' 2>/dev/null || true"
-  run_root "$ksud feature list 2>/dev/null || true"
+  # Enable kernel-level stealth features (some like kasumi activate via kagami/on boot)
+  for feat in unshare_mnt selinux_hide kernel_umount hide_bootloader kasumi; do
+    run_root "$ksud feature set-save $feat 1 2>&1 || true"
+  done
+  # Configure Kagami + Kasumi zero-mount stealth backend
+  run_root "$ksud kagami config merge-json '{\"kasumi_enabled\":true,\"enable_stealth\":true,\"enable_mount_hide\":true,\"enable_overlay_xattr_hide\":true,\"enable_statfs_spoof\":true,\"enable_maps_spoof\":true}' 2>&1 || true"
+  run_root "$ksud kagami kasumi enable 2>&1 || true"
+  # Disable built-in YukiZygisk before installing standalone YukiZygisk (strict mutual exclusion!)
+  run_root "$ksud feature set-save yukizygisk 0"
+  # Configure & enable global UTS View to official Qualcomm GKI release & version
+  run_root "$ksud uts-view set-global --release '$UTS_RELEASE' --version '$UTS_VERSION'"
+  run_root "$ksud uts-view enable-global"
+  run_root "$ksud uts-view status"
+  run_root "$ksud feature list"
 
   echo "=== Batch 1 (Layer 2 + Layer 3): YukiZygisk + TEESimulator-RS + Specter ==="
   for pat in "YukiZygisk-*.zip" "TEESimulator-RS-*.zip" "specter-*.zip"; do
