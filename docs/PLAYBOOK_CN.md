@@ -289,4 +289,51 @@ fastboot boot yukisu_v1.9.0_gt5_15.0.0.320_directlkm_boot.img
 python3 -m unittest discover -s tests -v
 ```
 
-覆盖 7 个测试套件（`test_cn_mirrors.py`、`test_module_delivery.py`、`test_repo_retry_depth.py`、`test_rom_cache_sync.py`、`test_rom_inputs_and_delivery.py`、`test_rom_source_preflight.py`、`test_rom_watch_local.py`），包含 `TrieBuilder::AddToTrie()` 冲突拦截与 `oplus_phoenix.ko` 喂狗 + SELinux 写权限门禁回归用例。
+覆盖 8 个测试套件（`test_cn_mirrors.py`、`test_module_delivery.py`、`test_repo_retry_depth.py`、`test_rom_cache_sync.py`、`test_rom_inputs_and_delivery.py`、`test_rom_source_preflight.py`、`test_rom_watch_local.py`、`test_zh_cn_translations.py`），包含 `TrieBuilder::AddToTrie()` 冲突拦截、`oplus_phoenix.ko` 喂狗与 SELinux 写权限、881 条 `zh-rCN` 汉化 XML 完整性与 GT5 原厂自动亮度曲线单调性回归用例。
+
+---
+
+## 6. 彻底汉化（881 条简体中文补全）、硬件收尾修复与 6 层隐匿架构施工
+
+### 6.1 简体中文彻底汉化（解决选中文后仍有英文）
+
+- **根因**：Project Infinity-X 2.9 仅翻译了部分上游资源，五大核心组件累计缺失 **881 条** `values-zh-rCN` 字符串/数组/复数：
+  - `packages/apps/InfinitySuite`：**341 条**
+  - `packages/apps/Settings`：**327 条**
+  - `frameworks/base/packages/SystemUI`：**190 条**（原 `values/infinity_strings.xml` 整份缺失中文）
+  - `packages/apps/Launcher3`：**12 条**
+  - `frameworks/base/core/res`：**11 条**
+- **永久方案**：
+  - 全部 881 条经 XML 解析、`%1$s`/`%d`/`xliff:g` 占位符与转义严格校验后固化在 [`rom/translations/zh-rCN/`](../rom/translations/zh-rCN/)；
+  - `scripts/rom-patch-source.py`（`patch_infinity_zh_cn_translations`）与 `scripts/rom-build-gsi.sh` 均自动合并这些 `infinity_zh_cn_extra.xml`，并**动态剔除上游已新增的同名键**，永不触发 `aapt2` 重复资源报错。
+
+### 6.2 DSU 实测挖出的硬件适配收尾修复
+
+1. **GT5 原厂自动亮度曲线**：已从原厂 `ColorOS 15.0.0.320` `display_brightness_config_common.xml`（`lux_table id="3"` + `hbm_lux_table id="3"`）提取 `0~80101 lux -> 2.5~800 nits` 完整单调曲线，写入 [`rom/device/realme/ossi/overlay/frameworks/base/core/res/res/values/config.xml`](../rom/device/realme/ossi/overlay/frameworks/base/core/res/res/values/config.xml)（开启 `config_automatic_brightness_available=true`）。
+2. **屏下指纹 feature 声明**：完整 ROM 已由 `device/oneplus/sm8550-common/common.mk` 拷贝 `android.hardware.fingerprint.xml` 至 `vendor/etc/permissions/`；同时在 `scripts/rom-build-gsi.sh` 为 Treble GSI 补齐 `system_ext/etc/permissions/android.hardware.fingerprint.xml`，使独立 DSU 也能拉起 `FingerprintService`。
+
+### 6.3 2026 六层隐匿架构与一键部署脚本（`scripts/deploy-6layers-adb.sh`）
+
+| 层级 | 核心组件 | 技术形态 | 主要职责与配置要点 |
+|---|---|---|---|
+| **第 1 层** | **YukiSU v1.9.0 + 内置 Kasumi/Kagami** | 内核 LKM + VFS 隐匿 | 匿名 fd + ioctl 零挂载点污染（`/proc/mounts` 保持纯净；**严禁混用 NoMount**）；开启 **UTS View** 将 `uname` 伪装为高通官方 GKI 标准格式 |
+| **第 2 层** | **YukiZygisk (独立版)** | 内核态 Zygisk 引擎 | 刷入前**先在 YukiSU 关闭内置 YukiZygisk 开关**；匹配 `android13-5.15_yukizygisk.ko`，严禁与 ZN/ReZygisk 混装 |
+| **第 3 层** | **TEESimulator-RS + Specter** | Rust `kmr-ta` + 属性调度大脑 | TEE 硬件证书链模拟（Strong Integrity 3/3 + DuckDetector 0 检出）；Specter 开启 `Boot Spoofing`、`ROM Cleaner`（剥离类原生残留 + 修复 Widevine L1）、`PIF Props`，保持 `ADB Lock = OFF` |
+| **第 4 层** | **Yukari + FuseHide** | 纯 Zygisk 插件 | Yukari 过滤类原生专属 Binder 服务；FuseHide 注入 `MediaProvider` 按 UID 隔离 `/sdcard` 并阻断 CVE-2024-43093 零宽字符越权扫描 |
+| **第 5 层** | **HMA-OSS (Zygisk 版)** | 纯 Zygisk 应用列表隔离 | 摆脱 LSPosed 依赖；由 Specter 自动同步黑名单规则（`Set HMA-OSS Configs`），并在 HMA-OSS 开启 **Vold Isolation** |
+| **第 6 层** | **Vector v2.2+** | 现代 Hook 框架 | **黄金最小作用域**：仅勾选微信/QQ/系统增强等非敏感应用，**银行/政务/检测/反作弊应用绝对不勾选** |
+
+#### 一键自动化部署命令（同时支持完整 ROM 与零刷写 Sticky DSU 沙箱实测）
+
+```bash
+# 前置：在手机 YukiSU Manager → 超级用户 中给 Shell (com.android.shell) 授权 Root
+
+# 方式 1：在零刷写 Sticky DSU 沙箱中全自动完成 6 层部署、分批重启与验证
+scripts/deploy-6layers-adb.sh \
+  --pack-dir /path/to/yuki_6layers \
+  --directlkm-boot /path/to/yukisu_v1.9.0_gt5_15.0.0.320_directlkm_boot.img
+
+# 方式 2：在已刷好的完整类原生 ROM 上全自动部署 6 层并验证
+scripts/deploy-6layers-adb.sh --pack-dir /path/to/yuki_6layers
+```
+

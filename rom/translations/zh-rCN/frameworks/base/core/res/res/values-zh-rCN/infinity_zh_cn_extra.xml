@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-verified Simplified Chinese (zh-rCN) supplement for Project Infinity-X 2.9 -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="system_restart_title">需要重启系统</string>
+    <string name="system_restart_message">需要重启系统才能使所有更改生效。是否立即重启系统？</string>
+    <string name="volume_dialog_ringer_guidance_normal">来电和通知将会响铃</string>
+    <string name="unlock_application">解锁 <xliff:g id="label" example="Telegram">%1$s</xliff:g></string>
+    <string name="notification_channel_sleep">睡眠模式</string>
+    <string name="sleep_mode_notification_title">睡眠模式已开启</string>
+    <string name="sleep_mode_notification_content">点按可关闭睡眠模式</string>
+    <string name="sleep_mode_enabled_toast">睡眠模式已开启</string>
+    <string name="sleep_mode_disabled_toast">睡眠模式已关闭</string>
+    <string name="settings_restart_title">需要重启设置</string>
+    <string name="settings_restart_message">需要重启“设置”应用才能使所有更改生效。是否立即重启“设置”应用？</string>
+</resources>

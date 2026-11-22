@@ -98,6 +98,12 @@ sed -n '1,64p' "$BACKUP_DIR/files/build/make/target/product/gsi/Android.bp" \
   > "$SRC/build/make/target/product/gsi/Android.bp"
 grep -v 'device/sample/etc/apns-full-conf.xml' "$BACKUP_DIR/files/device/generic/common/gsi_product.mk" \
   | sed '/^PRODUCT_COPY_FILES += \\$/d' > "$SRC/device/generic/common/gsi_product.mk"
+# Expose android.hardware.fingerprint feature on ColorOS/OPLUS devices where OEM puts it in /my_product
+cat >> "$SRC/device/generic/common/gsi_product.mk" <<'EOF'
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/android.hardware.fingerprint.xml
+EOF
 sed 's/^PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := true$/PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false/' \
   "$BACKUP_DIR/files/device/generic/common/gsi_arm64.mk" > "$SRC/device/generic/common/gsi_arm64.mk"
 grep -v 'ro\.infinity\.device=\$(INFINITY_BUILD)' \
@@ -125,6 +131,14 @@ EOF
 printf '\ntype proc_phoenix, fs_type, proc_type;\n' >> "$SRC/device/lineage/sepolicy/common/private/file.te"
 printf '\ngenfscon proc /phoenix u:object_r:proc_phoenix:s0\n' >> "$SRC/device/lineage/sepolicy/common/private/genfs_contexts"
 printf '\nallow init proc_phoenix:file w_file_perms;\n' >> "$SRC/device/lineage/sepolicy/common/private/init.te"
+
+# 5) Merge Simplified Chinese (zh-rCN) supplement translations for InfinitySuite/Settings/SystemUI/Launcher3/framework-res
+python3 - "$HERE/rom-patch-source.py" "$SRC" <<'PY'
+import pathlib, runpy, sys
+mod = runpy.run_path(sys.argv[1])
+count = mod["patch_infinity_zh_cn_translations"](pathlib.Path(sys.argv[2]))
+print(f"Merged {count} Simplified Chinese (zh-rCN) supplement entries into GSI source tree")
+PY
 
 mkdir -p "$OUT"
 (

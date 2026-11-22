@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -370,6 +371,65 @@ def patch_lineage_vendor_property_contexts(src: Path) -> None:
     _patch_text(pc, drop_dolby_collision)
 
 
+def patch_infinity_zh_cn_translations(src: Path, translations_root: Path | None = None) -> int:
+    """Install Simplified Chinese (zh-rCN) supplement XMLs while filtering any keys already defined upstream."""
+    if translations_root is None:
+        translations_root = Path(__file__).resolve().parent.parent / "rom/translations/zh-rCN"
+    if not translations_root.is_dir():
+        return 0
+
+    ET.register_namespace("xliff", "urn:oasis:names:tc:xliff:document:1.2")
+    installed = 0
+    for extra_xml in sorted(translations_root.rglob("infinity_zh_cn_extra.xml")):
+        rel = extra_xml.relative_to(translations_root)
+        target_xml = src / rel
+        res_dir = target_xml.parent.parent  # .../res
+        if not res_dir.is_dir():
+            continue
+
+        # Collect existing zh-rCN keys from other XML files so upstream additions never trigger aapt2 duplicates.
+        existing_keys: set[tuple[str, str]] = set()
+        zh_dir = target_xml.parent
+        if zh_dir.is_dir():
+            for peer in sorted(zh_dir.glob("*.xml")):
+                if peer.name == target_xml.name:
+                    continue
+                try:
+                    peer_root = ET.parse(peer).getroot()
+                except ET.ParseError:
+                    continue
+                for el in peer_root:
+                    name = el.attrib.get("name")
+                    if name:
+                        existing_keys.add((el.tag, name))
+
+        src_root = ET.parse(extra_xml).getroot()
+        kept_elements = [
+            el for el in src_root
+            if (el.tag, el.attrib.get("name", "")) not in existing_keys
+        ]
+        if not kept_elements:
+            if target_xml.is_file():
+                target_xml.unlink()
+            continue
+
+        zh_dir.mkdir(parents=True, exist_ok=True)
+        lines = [
+            '<?xml version="1.0" encoding="utf-8"?>',
+            '<!-- Auto-merged Simplified Chinese (zh-rCN) supplement for Project Infinity-X 2.9 -->',
+            '<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">',
+        ]
+        for el in kept_elements:
+            frag = ET.tostring(el, encoding="unicode").strip()
+            frag = frag.replace(' xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"', "")
+            for line in frag.splitlines():
+                lines.append("    " + line)
+        lines.append("</resources>")
+        target_xml.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        installed += len(kept_elements)
+    return installed
+
+
 def apply_all(src: Path) -> None:
     patch_soong_runtime_memory(src)
     patch_simple_settings_config(src)
@@ -382,6 +442,7 @@ def apply_all(src: Path) -> None:
     patch_oplus_richtap_libaacvibrator(src)
     patch_releasetools_mkbootimg_arg_order(src)
     patch_lineage_vendor_property_contexts(src)
+    patch_infinity_zh_cn_translations(src)
 
 
 def main(argv: list[str]) -> int:
