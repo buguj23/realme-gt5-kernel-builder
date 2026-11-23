@@ -430,6 +430,53 @@ def patch_infinity_zh_cn_translations(src: Path, translations_root: Path | None 
     return installed
 
 
+def patch_cn_captive_portal(src: Path) -> None:
+    """Use Mainland China reachable captive-portal validation URLs by default (even without SIM inserted)."""
+    ns_res = src / "packages/modules/NetworkStack/res"
+    val_cfg = ns_res / "values/config.xml"
+    mcc_cfg = ns_res / "values-mcc460/config.xml"
+
+    def update_values(text: str) -> str:
+        text = text.replace(
+            '<string name="default_captive_portal_http_url" translatable="false">http://connectivitycheck.gstatic.com/generate_204</string>',
+            '<string name="default_captive_portal_http_url" translatable="false">http://connect.rom.miui.com/generate_204</string>',
+        )
+        text = text.replace(
+            '<string name="default_captive_portal_https_url" translatable="false">https://www.google.com/generate_204</string>',
+            '<string name="default_captive_portal_https_url" translatable="false">https://connect.rom.miui.com/generate_204</string>',
+        )
+        text = text.replace(
+            "        <item>http://www.google.com/gen_204</item>\n"
+            "        <item>http://play.googleapis.com/generate_204</item>",
+            "        <item>http://connectivitycheck.qualcomm.cn/generate_204</item>\n"
+            "        <item>http://connectivitycheck.gstatic.cn/generate_204</item>",
+        )
+        text = text.replace(
+            '<bool name="config_no_sim_card_uses_neighbor_mcc">false</bool>',
+            '<bool name="config_no_sim_card_uses_neighbor_mcc">true</bool>',
+        )
+        return text
+
+    def update_mcc460(text: str) -> str:
+        text = text.replace(
+            '<string name="default_captive_portal_http_url" translatable="false">http://connectivitycheck.gstatic.cn/generate_204</string>',
+            '<string name="default_captive_portal_http_url" translatable="false">http://connect.rom.miui.com/generate_204</string>',
+        )
+        text = text.replace(
+            '<string name="default_captive_portal_https_url" translatable="false">https://connectivitycheck.gstatic.cn/generate_204</string>',
+            '<string name="default_captive_portal_https_url" translatable="false">https://connect.rom.miui.com/generate_204</string>',
+        )
+        text = text.replace(
+            "        <item>http://www.googleapis.cn/generate_204</item>",
+            "        <item>http://connectivitycheck.qualcomm.cn/generate_204</item>\n"
+            "        <item>http://connectivitycheck.gstatic.cn/generate_204</item>",
+        )
+        return text
+
+    _patch_text(val_cfg, update_values)
+    _patch_text(mcc_cfg, update_mcc460)
+
+
 def apply_all(src: Path) -> None:
     patch_soong_runtime_memory(src)
     patch_simple_settings_config(src)
@@ -443,6 +490,7 @@ def apply_all(src: Path) -> None:
     patch_releasetools_mkbootimg_arg_order(src)
     patch_lineage_vendor_property_contexts(src)
     patch_infinity_zh_cn_translations(src)
+    patch_cn_captive_portal(src)
 
 
 def main(argv: list[str]) -> int:

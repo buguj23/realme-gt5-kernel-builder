@@ -75,7 +75,7 @@ restore_tree() {
       mv "$HIDDEN_DIR/$rel" "$SRC/$rel" || true
     fi
   done
-  rm -rf "$BACKUP_DIR"
+  rm -rf "$SRC/device/generic/common/overlay_gt5_brightness" "$BACKUP_DIR"
 }
 trap restore_tree EXIT
 
@@ -98,8 +98,15 @@ sed -n '1,64p' "$BACKUP_DIR/files/build/make/target/product/gsi/Android.bp" \
   > "$SRC/build/make/target/product/gsi/Android.bp"
 grep -v 'device/sample/etc/apns-full-conf.xml' "$BACKUP_DIR/files/device/generic/common/gsi_product.mk" \
   | sed '/^PRODUCT_COPY_FILES += \\$/d' > "$SRC/device/generic/common/gsi_product.mk"
-# Expose android.hardware.fingerprint feature on ColorOS/OPLUS devices where OEM puts it in /my_product
+# Expose android.hardware.fingerprint feature on ColorOS/OPLUS devices where OEM puts it in /my_product,
+# and apply Realme GT5 factory auto-brightness lux-to-nits curve overlay.
+mkdir -p "$SRC/device/generic/common/overlay_gt5_brightness/frameworks/base/core/res/res/values"
+cp -f "$HERE/../rom/device/realme/ossi/overlay/frameworks/base/core/res/res/values/config.xml" \
+      "$SRC/device/generic/common/overlay_gt5_brightness/frameworks/base/core/res/res/values/config.xml"
 cat >> "$SRC/device/generic/common/gsi_product.mk" <<'EOF'
+
+PRODUCT_PACKAGE_OVERLAYS += \
+    device/generic/common/overlay_gt5_brightness
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/android.hardware.fingerprint.xml
@@ -132,12 +139,14 @@ printf '\ntype proc_phoenix, fs_type, proc_type;\n' >> "$SRC/device/lineage/sepo
 printf '\ngenfscon proc /phoenix u:object_r:proc_phoenix:s0\n' >> "$SRC/device/lineage/sepolicy/common/private/genfs_contexts"
 printf '\nallow init proc_phoenix:file w_file_perms;\n' >> "$SRC/device/lineage/sepolicy/common/private/init.te"
 
-# 5) Merge Simplified Chinese (zh-rCN) supplement translations for InfinitySuite/Settings/SystemUI/Launcher3/framework-res
+# 5) Merge Simplified Chinese (zh-rCN) supplement translations & Mainland China captive-portal defaults
 python3 - "$HERE/rom-patch-source.py" "$SRC" <<'PY'
 import pathlib, runpy, sys
 mod = runpy.run_path(sys.argv[1])
-count = mod["patch_infinity_zh_cn_translations"](pathlib.Path(sys.argv[2]))
-print(f"Merged {count} Simplified Chinese (zh-rCN) supplement entries into GSI source tree")
+src = pathlib.Path(sys.argv[2])
+count = mod["patch_infinity_zh_cn_translations"](src)
+mod["patch_cn_captive_portal"](src)
+print(f"Merged {count} Simplified Chinese (zh-rCN) supplement entries + CN captive-portal config into GSI source tree")
 PY
 
 mkdir -p "$OUT"

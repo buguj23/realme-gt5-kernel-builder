@@ -165,8 +165,15 @@ run_stage2() {
 }
 
 run_config() {
-  echo "=== Phase 5: Configure Specter (Boot Spoofing ON, ROM Cleaner ON, ADB Lock OFF) + HMA-OSS ==="
+  echo "=== Phase 5: Configure Mainland China Captive Portal + Specter + HMA-OSS ==="
   run_root '
+    # Switch Android NetworkMonitor captive-portal URLs to Mainland China reachable endpoints
+    settings put global captive_portal_mode 1
+    settings put global captive_portal_http_url http://connect.rom.miui.com/generate_204
+    settings put global captive_portal_https_url https://connect.rom.miui.com/generate_204
+    settings put global captive_portal_fallback_url http://connectivitycheck.qualcomm.cn/generate_204
+    settings put global captive_portal_other_fallback_urls http://connect.rom.miui.com/generate_204
+
     CFG=/data/adb/specter/config/val
     mkdir -p "$CFG"
     printf 1 > "$CFG/toggle_prop_handler.val"
@@ -180,6 +187,9 @@ run_config() {
     printf 1 > "$CFG/toggle_pif_props.val"
     printf 0 > "$CFG/toggle_adb_disabler.val"
     printf 1 > "$CFG/toggle_action_hma.val"
+    if [ -f /data/adb/modules/specter/features/keybox.sh ]; then
+      sh /data/adb/modules/specter/features/keybox.sh || true
+    fi
     if [ -f /data/adb/modules/specter/features/widevine.sh ]; then
       sh /data/adb/modules/specter/features/widevine.sh || true
     fi
