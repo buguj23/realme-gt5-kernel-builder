@@ -19,8 +19,8 @@
 ### A. Android 16 / Infinity-X 3.12 GSI 上游修复
 1. 修复上游 `vendor/infinity/build/target/product/infinity_gsi_arm64.mk` 中 `lineage_generic_target.mk` 不存在及 `PRODUCT_NAME := lineage_gsi_arm64` 命名错位问题，并设置 `soong_config_set_bool,gsi,building_lineage_gsi,true`。
 2. 修复 `device/generic/common/gsi_system_ext.mk`：仅在 `userdebug`/`eng` 构建时安装 `system_ext_userdebug_plat_sepolicy.cil`；**`user` 构建彻底剥离该调试策略**，杜绝 `shell -> su` / `adbd -> adbroot` SELinux Policy 检测异常。
-3. 注释 `device/lineage/sepolicy/common/private/backuptool.te` 中的 `permissive backuptool;`，使 `infinity_gsi_arm64-bp4a-user` 严格通过 Android 16 `user` 模式 SELinux 检查。
-4. 在 `build/make/target/product/gsi/Android.bp` 为 `android_gsi` 增加 `building_lineage_gsi` 守卫，避免与 Make `systemimage` 冲突。
+3. 注释 `device/lineage/sepolicy/common/private/backuptool.te` 中的 `permissive backuptool;`，并将 `adbd.te` 中的 `adbroot` 规则限定在 `userdebug_or_eng(...)`，使 `infinity_gsi_arm64-user`（自动识别 `bp4a`）严格通过 Android 16 `user` 模式 SELinux 检查且零调试策略残留。
+4. 修复 `build/make/target/product/gsi_release.mk` 中 `BUILDING_LINEAGE_GSI` 未匹配 `infinity_gsi_%` 的上游漏改，并将 `BoardConfigGsiCommon.mk` 的 `gsi_dynamic_partitions` 上限从 3.0 GiB 提升至 9.0 GiB（配合 `PRODUCT_USE_DYNAMIC_PARTITION_SIZE=true` 按实际内容动态收缩镜像），同时支持 Vanilla 与 GApps 构建。
 
 ### B. Realme GT5 (`RMX3820_15.0.0.320`) 硬件与国内网络修复
 1. **ColorOS `property_contexts` 冲突清理**：剥离 `system_ext` 中的 `ro.vendor.*` / `vendor.*` / `persist.vendor.*` / `ro.odm.*`，并用 [`scripts/gsi_verify.py`](../scripts/gsi_verify.py) 模拟 `TrieBuilder::AddToTrie` 校验 0 冲突。

@@ -113,11 +113,52 @@ def patch_infinity_gsi_product(src: Path, *, with_gapps: str | None = None) -> N
         if "building_lineage_gsi" not in text:
             text = text.rstrip() + (
                 "\n\n# Disable AOSP Soong-defined GSI system images in favor of Make-based Infinity-X GSI\n"
+                "INFINITY_BUILD := gsi_arm64\n"
+                "BUILDING_LINEAGE_GSI := true\n"
                 "$(call soong_config_set_bool,gsi,building_lineage_gsi,true)\n"
                 "PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false\n"
             )
         return text
     _patch_text(gsi_mk, fix_infinity_gsi_mk)
+
+    # 1b. vendor/infinity/build/target/product/AndroidProducts.mk — expose infinity_gsi_arm64-user choice
+    products_mk = src / "vendor/infinity/build/target/product/AndroidProducts.mk"
+    _patch_text(
+        products_mk,
+        lambda t: t if "infinity_gsi_arm64-user \\" in t or "infinity_gsi_arm64-user\n" in t else t.replace(
+            "    infinity_gsi_arm64-userdebug \\",
+            "    infinity_gsi_arm64-user \\\n    infinity_gsi_arm64-userdebug \\",
+            1,
+        ),
+    )
+
+    # 1c. build/make/target/product/gsi_release.mk — ensure BUILDING_LINEAGE_GSI=true for infinity_gsi_%
+    #     so build/make/core/android_soong_config_vars.mk does not overwrite building_lineage_gsi to false!
+    gsi_rel_mk = src / "build/make/target/product/gsi_release.mk"
+    _patch_text(
+        gsi_rel_mk,
+        lambda t: t if "infinity_gsi_%" in t else t.replace(
+            "ifneq ($(filter lineage_gsi_%,$(TARGET_PRODUCT)),)",
+            "ifneq ($(filter lineage_gsi_% infinity_gsi_%,$(TARGET_PRODUCT)),)",
+            1,
+        ),
+    )
+
+    # 1d. build/make/target/board/BoardConfigGsiCommon.mk — raise 3.0 GiB gsi_dynamic_partitions ceiling
+    #     to 9.0 GiB so Vanilla & GApps Infinity-X 3.12 GSIs pass check-all-partition-sizes
+    #     (PRODUCT_USE_DYNAMIC_PARTITION_SIZE=true still shrinks system.img to actual contents + 64 MiB).
+    board_gsi_mk = src / "build/make/target/board/BoardConfigGsiCommon.mk"
+    def raise_gsi_super_cap(text: str) -> str:
+        text = text.replace(
+            "BOARD_SUPER_PARTITION_SIZE := 3229614080",
+            "BOARD_SUPER_PARTITION_SIZE := 9672065024",
+        )
+        text = text.replace(
+            "BOARD_GSI_DYNAMIC_PARTITIONS_SIZE := 3221225472",
+            "BOARD_GSI_DYNAMIC_PARTITIONS_SIZE := 9663676416",
+        )
+        return text
+    _patch_text(board_gsi_mk, raise_gsi_super_cap)
 
     # 2. device/generic/common/gsi_arm64.mk
     arm64_mk = src / "device/generic/common/gsi_arm64.mk"
@@ -284,22 +325,38 @@ def patch_yokeshiq_drop_ro_modversion(src: Path) -> None:
 
 
 def patch_yokeshiq_bionic_lineage_hide(src: Path) -> None:
-    """Enhance Infinity-X 16 bionic custom_rom_hide.cpp with yokeshiq's anti-detection rules.
+    """Enhance Infinity-X 16 bionic custom_rom_hide.{h,cpp} + open.cpp with yokeshiq's anti-detection rules.
 
     Covers:
-      - SystemUI / Settings / Launcher / Shell / org.lineageos.* allowlist
+      - SystemUI / Settings / Launcher / Shell / org.lineageos.* allowlist (Zygote-safe, atomic, errno-clean)
       - Blocking /data/resource-cache/*lineage* idmap caches
-      - Blocking /etc/selinux/ probes (ROM detected (a)) consistently across stat/lstat/faccessat/open
+      - Blocking /etc/selinux/ probes (ROM detected (a)) consistently across stat/lstat/faccessat/open/openat
       - Blocking & dirent-filtering lineage / addon.d / hwservice_contexts / platform-infinity
       - Filtering */etc/sysconfig/*.xml (preinstalled-packages-platform-list-product.xml -> LineageOS (17))
+        across BOTH open() AND relative-dirfd / non-AT_FDCWD openat()!
       - Hiding all lineage / ro.modversion / ro.cm.* / ro.infinity.* properties via bionic prop APIs
     """
+    hide_h = src / "bionic/libc/bionic/custom_rom_hide.h"
     hide_cpp = src / "bionic/libc/bionic/custom_rom_hide.cpp"
+    open_cpp = src / "bionic/libc/bionic/open.cpp"
     if not hide_cpp.is_file():
         return
 
+    if hide_h.is_file():
+        _patch_text(
+            hide_h,
+            lambda t: _replace_once_or_checked(
+                t,
+                "int custom_rom_hide_filter_sepolicy(const char* path);",
+                "int custom_rom_hide_filter_sepolicy(const char* path);\n"
+                "int custom_rom_hide_filter_at(int dirfd, const char* path);",
+                marker="int custom_rom_hide_filter_at(int dirfd, const char* path);",
+                label="bionic/custom_rom_hide.h:filter_at",
+            ),
+        )
+
     def transform(text: str) -> str:
-        # 1. Add system UI/settings/launcher/lineageos allowlist + Zygote/USAP fork-race guard
+        # 1. Add system UI/settings/launcher/lineageos allowlist + Zygote/USAP guard + errno & ARM64 atomic safety
         text = _replace_once_or_checked(
             text,
             'static bool compute_allowlisted() {\n'
@@ -332,13 +389,15 @@ def patch_yokeshiq_bionic_lineage_hide(src: Path) -> None:
             '    return result;\n'
             '}',
             'static bool compute_allowlisted(bool* should_cache) {\n'
+            '    int saved_errno = errno;\n'
             '    *should_cache = false;\n'
             '    int fd = raw_openat("/proc/self/cmdline", O_RDONLY);\n'
-            '    if (fd < 0) return false;\n'
+            '    if (fd < 0) { errno = saved_errno; return false; }\n'
             '\n'
             '    char cmdline[256];\n'
             '    ssize_t n = raw_read(fd, cmdline, sizeof(cmdline) - 1);\n'
             '    raw_close(fd);\n'
+            '    errno = saved_errno;\n'
             '    if (n <= 0) return false;\n'
             '    cmdline[n] = \'\\0\';\n'
             '\n'
@@ -370,17 +429,53 @@ def patch_yokeshiq_bionic_lineage_hide(src: Path) -> None:
             '    static pid_t cached_pid = -1;\n'
             '    static bool cached_value = false;\n'
             '    pid_t cur = getpid();\n'
-            '    if (cur == cached_pid) return cached_value;\n'
+            '    if (__atomic_load_n(&cached_pid, __ATOMIC_ACQUIRE) == cur) {\n'
+            '        return __atomic_load_n(&cached_value, __ATOMIC_RELAXED);\n'
+            '    }\n'
             '    bool should_cache = false;\n'
             '    bool result = compute_allowlisted(&should_cache);\n'
             '    if (should_cache) {\n'
-            '        cached_value = result;\n'
-            '        cached_pid = cur;\n'
+            '        __atomic_store_n(&cached_value, result, __ATOMIC_RELAXED);\n'
+            '        __atomic_store_n(&cached_pid, cur, __ATOMIC_RELEASE);\n'
             '    }\n'
             '    return result;\n'
             '}',
             marker='strncmp(cmdline, "org.lineageos.", 14) == 0',
             label="bionic/custom_rom_hide.cpp:compute_allowlisted",
+        )
+
+        # 1b. Also resolve AT_FDCWD relative paths via /proc/self/cwd in custom_rom_hide_should_block_at()
+        text = _replace_once_or_checked(
+            text,
+            '    if (path[0] == \'/\') {\n'
+            '        result = custom_rom_hide_should_block(path);\n'
+            '    } else if (dirfd != AT_FDCWD) {\n'
+            '        char dir_path[256];\n'
+            '        if (resolve_fd_path(dirfd, dir_path, sizeof(dir_path))) {\n'
+            '            char full_path[512];\n'
+            '            snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, path);\n'
+            '            result = custom_rom_hide_should_block(full_path);\n'
+            '        }\n'
+            '    }',
+            '    if (path[0] == \'/\') {\n'
+            '        result = custom_rom_hide_should_block(path);\n'
+            '    } else {\n'
+            '        char dir_path[256];\n'
+            '        bool ok = false;\n'
+            '        if (dirfd != AT_FDCWD) {\n'
+            '            ok = resolve_fd_path(dirfd, dir_path, sizeof(dir_path));\n'
+            '        } else {\n'
+            '            ssize_t n = raw_readlinkat("/proc/self/cwd", dir_path, sizeof(dir_path) - 1);\n'
+            '            if (n > 0) { dir_path[n] = \'\\0\'; ok = true; }\n'
+            '        }\n'
+            '        if (ok) {\n'
+            '            char full_path[512];\n'
+            '            snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, path);\n'
+            '            result = custom_rom_hide_should_block(full_path);\n'
+            '        }\n'
+            '    }',
+            marker='raw_readlinkat("/proc/self/cwd"',
+            label="bionic/custom_rom_hide.cpp:should_block_at_cwd",
         )
 
         # 2. Expand is_rom_path() with yokeshiq's static node / selinux / idmap rules
@@ -565,9 +660,87 @@ def patch_yokeshiq_bionic_lineage_hide(src: Path) -> None:
             label="bionic/custom_rom_hide.cpp:is_hidden_rom_prop",
         )
 
+        # 5b. Add custom_rom_hide_filter_at(dirfd, path) right after custom_rom_hide_filter_vintf()
+        text = _replace_once_or_checked(
+            text,
+            '    free(content);\n'
+            '    raw_lseek(mem_fd, 0, SEEK_SET);\n'
+            '    errno = saved_errno;\n'
+            '    return mem_fd;\n'
+            '}\n'
+            '\n'
+            'static const char* const kSpoofedEmptyProps[] = {',
+            '    free(content);\n'
+            '    raw_lseek(mem_fd, 0, SEEK_SET);\n'
+            '    errno = saved_errno;\n'
+            '    return mem_fd;\n'
+            '}\n'
+            '\n'
+            'int custom_rom_hide_filter_at(int dirfd, const char* path) {\n'
+            '    if (!path || reinterpret_cast<uintptr_t>(path) < 0x1000000) return -1;\n'
+            '    if (!is_app_process()) return -1;\n'
+            '    int saved_errno = errno;\n'
+            '    const char* target = nullptr;\n'
+            '    char full_path[512];\n'
+            '    if (path[0] == \'/\') {\n'
+            '        target = path;\n'
+            '    } else {\n'
+            '        char dir_path[256];\n'
+            '        bool ok = false;\n'
+            '        if (dirfd != AT_FDCWD) {\n'
+            '            ok = resolve_fd_path(dirfd, dir_path, sizeof(dir_path));\n'
+            '        } else {\n'
+            '            ssize_t n = raw_readlinkat("/proc/self/cwd", dir_path, sizeof(dir_path) - 1);\n'
+            '            if (n > 0) { dir_path[n] = \'\\0\'; ok = true; }\n'
+            '        }\n'
+            '        if (ok) {\n'
+            '            snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, path);\n'
+            '            target = full_path;\n'
+            '        }\n'
+            '    }\n'
+            '    int mfd = -1;\n'
+            '    if (target) {\n'
+            '        mfd = custom_rom_hide_filter_proc(target);\n'
+            '        if (mfd < 0) mfd = custom_rom_hide_filter_vintf(target);\n'
+            '        if (mfd < 0) mfd = custom_rom_hide_filter_sepolicy(target);\n'
+            '    }\n'
+            '    errno = saved_errno;\n'
+            '    return mfd;\n'
+            '}\n'
+            '\n'
+            'static const char* const kSpoofedEmptyProps[] = {',
+            marker='int custom_rom_hide_filter_at(int dirfd, const char* path)',
+            label="bionic/custom_rom_hide.cpp:filter_at",
+        )
+
         return text
 
     _patch_text(hide_cpp, transform)
+
+    if open_cpp.is_file():
+        def patch_open_cpp(t: str) -> str:
+            if "custom_rom_hide_filter_at(fd, pathname)" in t:
+                return t
+            old_block = (
+                '  if (fd == AT_FDCWD && pathname && pathname[0] == \'/\') {\n'
+                '    int filtered_fd = custom_rom_hide_filter_proc(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '    filtered_fd = custom_rom_hide_filter_vintf(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '    filtered_fd = custom_rom_hide_filter_sepolicy(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '  }'
+            )
+            new_block = (
+                '  {\n'
+                '    int filtered_fd = custom_rom_hide_filter_at(fd, pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '  }'
+            )
+            if t.count(old_block) != 2:
+                raise RuntimeError(f"bionic/open.cpp: expected 2 openat filter blocks, found {t.count(old_block)}")
+            return t.replace(old_block, new_block)
+        _patch_text(open_cpp, patch_open_cpp)
 
 
 def patch_yokeshiq_frameworks_base_lineage_hide(src: Path) -> int:

@@ -48,9 +48,7 @@ if [ -n "$LOCAL_DIR" ]; then
       [ -f "$LOCAL_DIR/$f" ] && ln -sf "$(realpath "$LOCAL_DIR/$f")" "$DEST/$f" || true
     done
   fi
-  python3 "$REPO_DIR/scripts/rom-check-inputs.py" --branch 5.15.149 --stock "$DEST" \
-    $([ "$MODE" = "full" ] && printf '%s' "--rom-partitions" || printf '%s' "--kernel-only") 2>/dev/null || \
-    python3 -c "import sys; sys.path.insert(0, '$REPO_DIR/scripts'); import rom_inputs; rom_inputs.stock_payload('$DEST', '5.15.149'); print('Verified payload_metadata.bin')"
+  python3 "$REPO_DIR/scripts/rom-check-inputs.py" stock --branch 5.15.149 --stock-images "$DEST"
   exit 0
 fi
 

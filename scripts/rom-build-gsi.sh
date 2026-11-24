@@ -96,11 +96,14 @@ BACKUP_DIR=$(mktemp -d -p "${TMPDIR:-/tmp}" gt5-gsi312-backup.XXXXXXXX)
 PATCHED_FILES=(
   "build/soong/ui/build/soong.go"
   "build/blueprint/bootstrap/command.go"
+  "build/make/target/board/BoardConfigGsiCommon.mk"
+  "build/make/target/product/gsi_release.mk"
   "build/make/target/product/gsi/Android.bp"
   "build/make/target/product/gsi/init.gsi.rc"
   "device/generic/common/gsi_product.mk"
   "device/generic/common/gsi_arm64.mk"
   "device/generic/common/gsi_system_ext.mk"
+  "vendor/infinity/build/target/product/AndroidProducts.mk"
   "vendor/infinity/build/target/product/infinity_gsi_arm64.mk"
   "vendor/infinity/config/version.mk"
   "device/lineage/sepolicy/common/private/property_contexts"
@@ -113,7 +116,9 @@ PATCHED_FILES=(
   "packages/modules/NetworkStack/res/values/config.xml"
   "packages/modules/NetworkStack/res/values-mcc460/config.xml"
   "packages/apps/Updater/app/src/main/java/com/infinity/updater/misc/Constants.java"
+  "bionic/libc/bionic/custom_rom_hide.h"
   "bionic/libc/bionic/custom_rom_hide.cpp"
+  "bionic/libc/bionic/open.cpp"
   "frameworks/base/core/java/android/content/res/ApkAssets.java"
   "frameworks/base/core/java/android/content/res/AssetManager.java"
   "frameworks/base/core/java/android/content/res/Resources.java"
@@ -204,9 +209,11 @@ printf '\nallow init proc_phoenix:file w_file_perms;\n' >> "$SRC/device/lineage/
 mkdir -p "$OUT"
 FLAVOR="vanilla"
 [ "$WITH_GAPPS" = "true" ] && FLAVOR="gapps"
-LUNCH_TARGET="infinity_gsi_arm64-${TARGET_RELEASE}-${VARIANT}"
+# Infinity-X 16 build/envsetup.sh parses single-arg hyphenated targets as `<product>-<variant>`
+# and auto-selects `TARGET_RELEASE=bp4a` from `build/make/core/build_id.mk` + sets `INFINITY_BUILD=gsi_arm64`.
+LUNCH_TARGET="infinity_gsi_arm64-${VARIANT}"
 
-echo "=== Building Project Infinity-X 3.12 GSI: ${LUNCH_TARGET} (WITH_GAPPS=${WITH_GAPPS}, LINEAGE_HIDE=${LINEAGE_HIDE}, JOBS=${JOBS}) ==="
+echo "=== Building Project Infinity-X 3.12 GSI: ${LUNCH_TARGET} (release=${TARGET_RELEASE}, WITH_GAPPS=${WITH_GAPPS}, LINEAGE_HIDE=${LINEAGE_HIDE}, JOBS=${JOBS}) ==="
 (
   cd "$SRC"
   export OUT_DIR="$GSI_OUT_DIR"

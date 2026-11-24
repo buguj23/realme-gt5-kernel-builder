@@ -21,13 +21,37 @@ class Infinity312GsiPatchTests(unittest.TestCase):
     def test_gsi_product_and_user_sepolicy_and_udfps_patches(self):
         with tempfile.TemporaryDirectory() as td:
             src = Path(td)
-            # 1. Upstream broken infinity_gsi_arm64.mk
+            # 1. Upstream broken infinity_gsi_arm64.mk + AndroidProducts.mk
             gsi_mk = src / "vendor/infinity/build/target/product/infinity_gsi_arm64.mk"
             gsi_mk.parent.mkdir(parents=True)
             gsi_mk.write_text(
                 "$(call inherit-product, device/generic/common/gsi_arm64.mk)\n"
                 "include vendor/infinity/build/target/product/lineage_generic_target.mk\n"
                 "PRODUCT_NAME := lineage_gsi_arm64\n",
+                encoding="utf-8",
+            )
+            products_mk = src / "vendor/infinity/build/target/product/AndroidProducts.mk"
+            products_mk.write_text(
+                "COMMON_LUNCH_CHOICES := \\\n"
+                "    infinity_gsi_arm64-userdebug \\\n"
+                "    infinity_gsi_x86_64-userdebug\n",
+                encoding="utf-8",
+            )
+            # 1b. gsi_release.mk & BoardConfigGsiCommon.mk
+            gsi_rel = src / "build/make/target/product/gsi_release.mk"
+            gsi_rel.parent.mkdir(parents=True)
+            gsi_rel.write_text(
+                "BUILDING_GSI := true\n"
+                "ifneq ($(filter lineage_gsi_%,$(TARGET_PRODUCT)),)\n"
+                "BUILDING_LINEAGE_GSI := true\n"
+                "endif\n",
+                encoding="utf-8",
+            )
+            board_gsi = src / "build/make/target/board/BoardConfigGsiCommon.mk"
+            board_gsi.parent.mkdir(parents=True)
+            board_gsi.write_text(
+                "BOARD_SUPER_PARTITION_SIZE := 3229614080\n"
+                "BOARD_GSI_DYNAMIC_PARTITIONS_SIZE := 3221225472\n",
                 encoding="utf-8",
             )
             # 2. gsi_system_ext.mk with unconditional debug policy
@@ -141,7 +165,12 @@ class Infinity312GsiPatchTests(unittest.TestCase):
             self.assertIn("WITH_GAPPS := false\ninclude vendor/infinity/build/target/product/infinity_generic_target.mk", gsi_mk_text)
             self.assertEqual(gsi_mk_text.count("WITH_GAPPS :="), 1)
             self.assertIn("PRODUCT_NAME := infinity_gsi_arm64", gsi_mk_text)
+            self.assertIn("INFINITY_BUILD := gsi_arm64", gsi_mk_text)
+            self.assertIn("BUILDING_LINEAGE_GSI := true", gsi_mk_text)
             self.assertIn("building_lineage_gsi,true", gsi_mk_text)
+            self.assertEqual(products_mk.read_text().count("infinity_gsi_arm64-user \\"), 1)
+            self.assertIn("lineage_gsi_% infinity_gsi_%", gsi_rel.read_text())
+            self.assertIn("BOARD_GSI_DYNAMIC_PARTITIONS_SIZE := 9663676416", board_gsi.read_text())
 
             # Switching to with_gapps="true" replaces cleanly without duplicate lines
             PATCH["patch_infinity_gsi_product"](src, with_gapps="true")
@@ -169,11 +198,45 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 self.assertIn("https://connect.rom.miui.com/generate_204", txt)
                 self.assertIn("http://connectivitycheck.qualcomm.cn/generate_204", txt)
 
-    def test_yokeshiq_bionic_patch_idempotent_zygote_safe_and_self_closing_xml(self):
+    def test_yokeshiq_bionic_patch_idempotent_zygote_safe_and_openat_filtered(self):
         with tempfile.TemporaryDirectory() as td:
             src = Path(td)
-            hide_cpp = src / "bionic/libc/bionic/custom_rom_hide.cpp"
-            hide_cpp.parent.mkdir(parents=True)
+            bionic_dir = src / "bionic/libc/bionic"
+            bionic_dir.mkdir(parents=True)
+            hide_h = bionic_dir / "custom_rom_hide.h"
+            hide_cpp = bionic_dir / "custom_rom_hide.cpp"
+            open_cpp = bionic_dir / "open.cpp"
+
+            hide_h.write_text(
+                "int custom_rom_hide_filter_proc(const char* path);\n"
+                "int custom_rom_hide_filter_sepolicy(const char* path);\n",
+                encoding="utf-8",
+            )
+            open_cpp.write_text(
+                'int openat(int fd, const char *pathname, int flags, ...) {\n'
+                '  if (fd == AT_FDCWD && pathname && pathname[0] == \'/\') {\n'
+                '    int filtered_fd = custom_rom_hide_filter_proc(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '    filtered_fd = custom_rom_hide_filter_vintf(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '    filtered_fd = custom_rom_hide_filter_sepolicy(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '  }\n'
+                '  return 0;\n'
+                '}\n'
+                'int __openat_2(int fd, const char* pathname, int flags) {\n'
+                '  if (fd == AT_FDCWD && pathname && pathname[0] == \'/\') {\n'
+                '    int filtered_fd = custom_rom_hide_filter_proc(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '    filtered_fd = custom_rom_hide_filter_vintf(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '    filtered_fd = custom_rom_hide_filter_sepolicy(pathname);\n'
+                '    if (filtered_fd >= 0) return FDTRACK_CREATE_NAME("openat", filtered_fd);\n'
+                '  }\n'
+                '  return 0;\n'
+                '}\n',
+                encoding="utf-8",
+            )
             hide_cpp.write_text(
                 'static bool compute_allowlisted() {\n'
                 '    int fd = raw_openat("/proc/self/cmdline", O_RDONLY);\n'
@@ -208,6 +271,19 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 '    if (is_blocked_dir(clean)) return true;\n'
                 '    return false;\n'
                 '}\n'
+                'bool custom_rom_hide_should_block_at(int dirfd, const char* path) {\n'
+                '    if (path[0] == \'/\') {\n'
+                '        result = custom_rom_hide_should_block(path);\n'
+                '    } else if (dirfd != AT_FDCWD) {\n'
+                '        char dir_path[256];\n'
+                '        if (resolve_fd_path(dirfd, dir_path, sizeof(dir_path))) {\n'
+                '            char full_path[512];\n'
+                '            snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, path);\n'
+                '            result = custom_rom_hide_should_block(full_path);\n'
+                '        }\n'
+                '    }\n'
+                '    return result;\n'
+                '}\n'
                 'bool custom_rom_hide_should_filter_dirent(int dirfd, const char* name) {\n'
                 '    char dir_path[256];\n'
                 '    if (resolve_fd_path(dirfd, dir_path, sizeof(dir_path))) {\n'
@@ -237,8 +313,15 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 '    if (!match) { errno = saved_errno; return -1; }\n'
                 '        bool opens_block  = strstr(pos, "<hal") != nullptr || strstr(pos, "<interface") != nullptr;\n'
                 '        bool closes_block = strstr(pos, "</hal>") != nullptr || strstr(pos, "</interface>") != nullptr;\n'
-                '    return -1;\n'
+                '    free(content);\n'
+                '    raw_lseek(mem_fd, 0, SEEK_SET);\n'
+                '    errno = saved_errno;\n'
+                '    return mem_fd;\n'
                 '}\n'
+                '\n'
+                'static const char* const kSpoofedEmptyProps[] = {\n'
+                '    nullptr\n'
+                '};\n'
                 'bool custom_rom_hide_should_spoof_prop(const char* name, char* value) {\n'
                 '    if (!name || !value) return false;\n'
                 '    if (reinterpret_cast<uintptr_t>(name) < 0x1000000) return false;\n'
@@ -264,8 +347,11 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 encoding="utf-8",
             )
             PATCH["patch_yokeshiq_bionic_lineage_hide"](src)
-            first = hide_cpp.read_text(encoding="utf-8")
+            first_cpp = hide_cpp.read_text(encoding="utf-8")
+            first_h = hide_h.read_text(encoding="utf-8")
+            first_open = open_cpp.read_text(encoding="utf-8")
             for needle in (
+                '__atomic_load_n(&cached_pid, __ATOMIC_ACQUIRE)',
                 'strcmp(cmdline, "<pre-initialized>") == 0',
                 'strncmp(cmdline, "zygote", 6) == 0',
                 'strncmp(cmdline, "org.lineageos.", 14) == 0',
@@ -273,12 +359,19 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 'strstr(path, "/etc/sysconfig/") != nullptr',
                 'strstr(pos, "<install-in-user-type") != nullptr',
                 'bool self_closes  = opens_block && strstr(pos, "/>") != nullptr;',
+                'int custom_rom_hide_filter_at(int dirfd, const char* path)',
                 'static bool is_hidden_rom_prop(const char* name)',
                 'strncasecmp(name, "ro.infinity.", 12) == 0',
             ):
-                self.assertIn(needle, first)
+                self.assertIn(needle, first_cpp)
+            self.assertIn("int custom_rom_hide_filter_at(int dirfd, const char* path);", first_h)
+            self.assertEqual(first_open.count("custom_rom_hide_filter_at(fd, pathname)"), 2)
+
+            # Second pass must be 100% idempotent across all 3 bionic files
             PATCH["patch_yokeshiq_bionic_lineage_hide"](src)
-            self.assertEqual(hide_cpp.read_text(encoding="utf-8"), first)
+            self.assertEqual(hide_cpp.read_text(encoding="utf-8"), first_cpp)
+            self.assertEqual(hide_h.read_text(encoding="utf-8"), first_h)
+            self.assertEqual(open_cpp.read_text(encoding="utf-8"), first_open)
 
     @unittest.skipUnless(shutil.which("clang++"), "requires clang++")
     def test_udfps_extension_compiles_cleanly_under_werror(self):
@@ -326,12 +419,20 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 "ro.vendor.dolby.dax.version u:object_r:vendor_default_prop:s0\n"
             )
 
-    def test_rom_build_gsi_handles_missing_init_te_cleanly(self):
+    def test_rom_build_gsi_handles_missing_init_te_and_lunch_syntax(self):
         script = (SCRIPTS / "rom-build-gsi.sh").read_text(encoding="utf-8")
         self.assertIn("INIT_TE_CREATED=1", script)
         self.assertIn('--gapps "$WITH_GAPPS"', script)
-        self.assertIn("device/lineage/sepolicy/common/private/adbd.te", script)
-        # init.te must NOT be in the required pre-check list (absent on Infinity-X 16)
+        self.assertIn('LUNCH_TARGET="infinity_gsi_arm64-${VARIANT}"', script)
+        for backed_up in (
+            "device/lineage/sepolicy/common/private/adbd.te",
+            "build/make/target/product/gsi_release.mk",
+            "build/make/target/board/BoardConfigGsiCommon.mk",
+            "vendor/infinity/build/target/product/AndroidProducts.mk",
+            "bionic/libc/bionic/custom_rom_hide.h",
+            "bionic/libc/bionic/open.cpp",
+        ):
+            self.assertIn(backed_up, script)
         req_block = script.split("for required in", 1)[1].split("done", 1)[0]
         self.assertNotIn("init.te", req_block)
 

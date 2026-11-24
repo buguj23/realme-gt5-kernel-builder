@@ -9,7 +9,7 @@ Dedicated **`infinity-x-3.12`** branch focusing **100% on Project Infinity-X 3.1
 | Item | Value |
 |---|---|
 | Target ROM / GSI | **Project Infinity-X 3.12** (`ProjectInfinity-X/manifest` branch **`16`**, Android 16 QPR2 / `bp4a`) |
-| GSI Lunch Target | `infinity_gsi_arm64-bp4a-user` (default, clean SELinux) or `infinity_gsi_arm64-bp4a-userdebug` |
+| GSI Lunch Target | `infinity_gsi_arm64-user` (default, auto-selects `bp4a`, clean SELinux) or `infinity_gsi_arm64-userdebug` |
 | Stock Vendor Baseline | `RMX3820_15.0.0.320(CN01)` (`RMX3820_11.F.06_2060_202411241938`, Android 15 / API 35, SPL `2024-11-05`) |
 | Kernel Baseline | `5.15.149-android13-8-o-01120-g3337bebe8205` (`android13-5.15` GKI gen `8`, `module_layout = 0x0222dd63`, **3260 / 3260** stock module CRCs matched) |
 | Kernel Root Modes | `Pure-OGKI` (zero built-in root) or `YukiSU-LKM` (`Rouyashiki/YukiSU`, out-of-tree `CONFIG_KSU=m`) |
