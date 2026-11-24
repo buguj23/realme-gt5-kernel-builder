@@ -88,7 +88,7 @@ def patch_soong_runtime_memory(src: Path) -> None:
         path.write_text(updated, encoding="utf-8")
 
 
-def patch_infinity_gsi_product(src: Path) -> None:
+def patch_infinity_gsi_product(src: Path, *, with_gapps: str | None = None) -> None:
     """Fix upstream Infinity-X 16 GSI product definitions and user-build SELinux debug policy leak."""
     # 1. vendor/infinity/build/target/product/infinity_gsi_arm64.mk
     gsi_mk = src / "vendor/infinity/build/target/product/infinity_gsi_arm64.mk"
@@ -101,6 +101,15 @@ def patch_infinity_gsi_product(src: Path) -> None:
             "PRODUCT_NAME := lineage_gsi_arm64",
             "PRODUCT_NAME := infinity_gsi_arm64",
         )
+        # Set WITH_GAPPS directly in Make before infinity_generic_target.mk -> common.mk (`WITH_GAPPS ?= true`)
+        # because soong_ui strips WITH_GAPPS from the shell environment.
+        if with_gapps in ("true", "false"):
+            text = re.sub(r"(?m)^WITH_GAPPS\s*:?=\s*(?:true|false)\s*\n?", "", text)
+            anchor = "include vendor/infinity/build/target/product/infinity_generic_target.mk"
+            if anchor in text:
+                text = text.replace(anchor, f"WITH_GAPPS := {with_gapps}\n{anchor}", 1)
+            else:
+                text = f"WITH_GAPPS := {with_gapps}\n" + text
         if "building_lineage_gsi" not in text:
             text = text.rstrip() + (
                 "\n\n# Disable AOSP Soong-defined GSI system images in favor of Make-based Infinity-X GSI\n"
@@ -192,7 +201,12 @@ def patch_lineage_vendor_property_contexts(src: Path) -> None:
 
 
 def patch_sepolicy_user_build_compat(src: Path) -> None:
-    """Remove permissive backuptool domain so Android 16 user builds pass strict SELinux checks."""
+    """Make Lineage sepolicy compliant & stealthy on Android 16 user builds.
+
+    1. Disable `permissive backuptool;` so strict user builds compile cleanly.
+    2. Guard `adbd.te` adbroot binder rules with `userdebug_or_eng(...)` so user builds
+       do not expose `allow adbd adbroot:binder call` in live SELinux policy.
+    """
     bt = src / "device/lineage/sepolicy/common/private/backuptool.te"
     _patch_text(
         bt,
@@ -202,6 +216,14 @@ def patch_sepolicy_user_build_compat(src: Path) -> None:
             t,
         ),
     )
+
+    adbd_te = src / "device/lineage/sepolicy/common/private/adbd.te"
+    def guard_adbd_adbroot(text: str) -> str:
+        if "userdebug_or_eng(" in text or "adbroot" not in text:
+            return text
+        stripped = text.strip()
+        return f"userdebug_or_eng(`\n{stripped}\n')\n"
+    _patch_text(adbd_te, guard_adbd_adbroot)
 
 
 def patch_oplus_udfps_extension(src: Path) -> None:
@@ -277,14 +299,59 @@ def patch_yokeshiq_bionic_lineage_hide(src: Path) -> None:
         return
 
     def transform(text: str) -> str:
-        # 1. Add system UI/settings/launcher/lineageos allowlist to compute_allowlisted()
+        # 1. Add system UI/settings/launcher/lineageos allowlist + Zygote/USAP fork-race guard
         text = _replace_once_or_checked(
             text,
+            'static bool compute_allowlisted() {\n'
+            '    int fd = raw_openat("/proc/self/cmdline", O_RDONLY);\n'
+            '    if (fd < 0) return false;\n'
+            '\n'
+            '    char cmdline[256];\n'
+            '    ssize_t n = raw_read(fd, cmdline, sizeof(cmdline) - 1);\n'
+            '    raw_close(fd);\n'
+            '    if (n <= 0) return false;\n'
+            '    cmdline[n] = \'\\0\';\n'
+            '\n'
+            '    char* colon = strchr(cmdline, \':\');\n'
+            '    if (colon) *colon = \'\\0\';\n'
+            '\n'
             '    for (const char* const* p = kAllowlistedPackages; *p; ++p) {\n'
             '        if (strcmp(cmdline, *p) == 0) return true;\n'
             '    }\n'
             '    return false;\n'
+            '}\n'
+            '\n'
+            'static bool is_allowlisted_process() {\n'
+            '    static pid_t cached_pid = -1;\n'
+            '    static bool cached_value = false;\n'
+            '    pid_t cur = getpid();\n'
+            '    if (cur == cached_pid) return cached_value;\n'
+            '    bool result = compute_allowlisted();\n'
+            '    cached_value = result;\n'
+            '    cached_pid = cur;\n'
+            '    return result;\n'
             '}',
+            'static bool compute_allowlisted(bool* should_cache) {\n'
+            '    *should_cache = false;\n'
+            '    int fd = raw_openat("/proc/self/cmdline", O_RDONLY);\n'
+            '    if (fd < 0) return false;\n'
+            '\n'
+            '    char cmdline[256];\n'
+            '    ssize_t n = raw_read(fd, cmdline, sizeof(cmdline) - 1);\n'
+            '    raw_close(fd);\n'
+            '    if (n <= 0) return false;\n'
+            '    cmdline[n] = \'\\0\';\n'
+            '\n'
+            '    // Do not cache before Zygote/USAP specializes process argv0 via setArgV0()\n'
+            '    if (cmdline[0] == \'\\0\' || strcmp(cmdline, "<pre-initialized>") == 0 ||\n'
+            '        strncmp(cmdline, "zygote", 6) == 0 || strncmp(cmdline, "usap", 4) == 0) {\n'
+            '        return false;\n'
+            '    }\n'
+            '    *should_cache = true;\n'
+            '\n'
+            '    char* colon = strchr(cmdline, \':\');\n'
+            '    if (colon) *colon = \'\\0\';\n'
+            '\n'
             '    if (strcmp(cmdline, "com.android.systemui") == 0 ||\n'
             '        strcmp(cmdline, "com.android.settings") == 0 ||\n'
             '        strcmp(cmdline, "com.android.launcher3") == 0 ||\n'
@@ -297,6 +364,20 @@ def patch_yokeshiq_bionic_lineage_hide(src: Path) -> None:
             '        if (strcmp(cmdline, *p) == 0) return true;\n'
             '    }\n'
             '    return false;\n'
+            '}\n'
+            '\n'
+            'static bool is_allowlisted_process() {\n'
+            '    static pid_t cached_pid = -1;\n'
+            '    static bool cached_value = false;\n'
+            '    pid_t cur = getpid();\n'
+            '    if (cur == cached_pid) return cached_value;\n'
+            '    bool should_cache = false;\n'
+            '    bool result = compute_allowlisted(&should_cache);\n'
+            '    if (should_cache) {\n'
+            '        cached_value = result;\n'
+            '        cached_pid = cur;\n'
+            '    }\n'
+            '    return result;\n'
             '}',
             marker='strncmp(cmdline, "org.lineageos.", 14) == 0',
             label="bionic/custom_rom_hide.cpp:compute_allowlisted",
@@ -417,7 +498,9 @@ def patch_yokeshiq_bionic_lineage_hide(src: Path) -> None:
             '        bool closes_block = strstr(pos, "</hal>") != nullptr || strstr(pos, "</interface>") != nullptr;',
             '        bool opens_block  = strstr(pos, "<hal") != nullptr || strstr(pos, "<interface") != nullptr ||\n'
             '                            strstr(pos, "<install-in-user-type") != nullptr;\n'
-            '        bool closes_block = strstr(pos, "</hal>") != nullptr || strstr(pos, "</interface>") != nullptr ||\n'
+            '        bool self_closes  = opens_block && strstr(pos, "/>") != nullptr;\n'
+            '        bool closes_block = self_closes || strstr(pos, "</hal>") != nullptr ||\n'
+            '                            strstr(pos, "</interface>") != nullptr ||\n'
             '                            strstr(pos, "</install-in-user-type>") != nullptr;',
             marker='strstr(pos, "<install-in-user-type") != nullptr',
             label="bionic/custom_rom_hide.cpp:filter_vintf_sysconfig_blocks",
@@ -1336,11 +1419,12 @@ def patch_cn_captive_portal(src: Path) -> None:
 def apply_all(
     src: Path,
     *,
+    with_gapps: str | None = None,
     lineage_hide: bool = True,
     translations: bool = True,
 ) -> dict[str, int]:
     patch_soong_runtime_memory(src)
-    patch_infinity_gsi_product(src)
+    patch_infinity_gsi_product(src, with_gapps=with_gapps)
     patch_lineage_vendor_property_contexts(src)
     patch_sepolicy_user_build_compat(src)
     patch_oplus_udfps_extension(src)
@@ -1359,11 +1443,14 @@ def apply_all(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("src", type=Path, help="Path to Project Infinity-X 16 (3.12) source root")
+    parser.add_argument("--gapps", choices=("true", "false"), default=None,
+                        help="Pin WITH_GAPPS directly in infinity_gsi_arm64.mk (bypasses soong_ui env strip)")
     parser.add_argument("--no-lineage-hide", action="store_true", help="Skip yokeshiq anti-detection patches")
     parser.add_argument("--skip-translations", action="store_true", help="Skip zh-rCN supplement localization")
     args = parser.parse_args(argv)
     stats = apply_all(
         args.src,
+        with_gapps=args.gapps,
         lineage_hide=not args.no_lineage_hide,
         translations=not args.skip_translations,
     )

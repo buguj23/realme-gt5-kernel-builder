@@ -104,6 +104,7 @@ PATCHED_FILES=(
   "vendor/infinity/build/target/product/infinity_gsi_arm64.mk"
   "vendor/infinity/config/version.mk"
   "device/lineage/sepolicy/common/private/property_contexts"
+  "device/lineage/sepolicy/common/private/adbd.te"
   "device/lineage/sepolicy/common/private/backuptool.te"
   "device/lineage/sepolicy/common/private/file.te"
   "device/lineage/sepolicy/common/private/genfs_contexts"
@@ -127,12 +128,16 @@ PATCHED_FILES=(
   "frameworks/base/services/core/java/com/android/server/pm/permission/PermissionManagerService.java"
 )
 
+INIT_TE_CREATED=0
 restore_tree() {
   for rel in "${PATCHED_FILES[@]}"; do
     if [ -f "$BACKUP_DIR/files/$rel" ]; then
       cp -a "$BACKUP_DIR/files/$rel" "$SRC/$rel" || true
     fi
   done
+  if [ "$INIT_TE_CREATED" = 1 ]; then
+    rm -f "$SRC/device/lineage/sepolicy/common/private/init.te"
+  fi
   find "$SRC" -maxdepth 6 -name 'infinity_zh_cn_extra.xml' -delete 2>/dev/null || true
   rm -rf "$SRC/device/generic/common/overlay_gt5_brightness" "$BACKUP_DIR"
 }
@@ -150,13 +155,12 @@ for required in \
   "device/generic/common/gsi_product.mk" \
   "device/lineage/sepolicy/common/private/property_contexts" \
   "device/lineage/sepolicy/common/private/file.te" \
-  "device/lineage/sepolicy/common/private/genfs_contexts" \
-  "device/lineage/sepolicy/common/private/init.te"; do
+  "device/lineage/sepolicy/common/private/genfs_contexts"; do
   [ -f "$SRC/$required" ] || fail "missing expected source file: $SRC/$required"
 done
 
 # 1) Apply Python source patches (Infinity-X 3.12 GSI fixes, UDFPS, user sepolicy, yokeshiq stealth, zh-rCN, CN captive portal)
-PATCH_ARGS=()
+PATCH_ARGS=(--gapps "$WITH_GAPPS")
 if [ "$LINEAGE_HIDE" != "true" ]; then
   PATCH_ARGS+=(--no-lineage-hide)
 fi
@@ -189,6 +193,10 @@ on property:sys.boot_completed=1
 EOF
 
 # 4) Label /proc/phoenix and grant init write access under Enforcing SELinux
+#    (device/lineage/sepolicy/common/private/init.te is absent on Infinity-X 16; create cleanly if missing)
+if [ ! -f "$SRC/device/lineage/sepolicy/common/private/init.te" ]; then
+  INIT_TE_CREATED=1
+fi
 printf '\ntype proc_phoenix, fs_type, proc_type;\n' >> "$SRC/device/lineage/sepolicy/common/private/file.te"
 printf '\ngenfscon proc /phoenix u:object_r:proc_phoenix:s0\n' >> "$SRC/device/lineage/sepolicy/common/private/genfs_contexts"
 printf '\nallow init proc_phoenix:file w_file_perms;\n' >> "$SRC/device/lineage/sepolicy/common/private/init.te"

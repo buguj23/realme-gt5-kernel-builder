@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 import runpy
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -59,10 +61,15 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 '}\n',
                 encoding="utf-8",
             )
-            # 5. backuptool.te & property_contexts
+            # 5. backuptool.te, adbd.te & property_contexts
             sep = src / "device/lineage/sepolicy/common/private"
             sep.mkdir(parents=True)
             (sep / "backuptool.te").write_text("type backuptool, domain, coredomain;\n\npermissive backuptool;\n", encoding="utf-8")
+            (sep / "adbd.te").write_text(
+                "allow adbd adbroot:binder call;\n"
+                "allow adbd adbroot_service:service_manager find;\n",
+                encoding="utf-8",
+            )
             (sep / "property_contexts").write_text(
                 "persist.sys.lineage.foo u:object_r:system_prop:s0\n"
                 "ro.vendor.dolby.dax.version u:object_r:vendor_default_prop:s0\n"
@@ -126,17 +133,27 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 p.parent.mkdir(parents=True)
                 p.write_text(body, encoding="utf-8")
 
-            PATCH["apply_all"](src, lineage_hide=True, translations=False)
+            PATCH["apply_all"](src, with_gapps="false", lineage_hide=True, translations=False)
             # Run a second time to verify idempotency
-            PATCH["apply_all"](src, lineage_hide=True, translations=False)
+            PATCH["apply_all"](src, with_gapps="false", lineage_hide=True, translations=False)
 
-            self.assertIn("infinity_generic_target.mk", gsi_mk.read_text())
-            self.assertIn("PRODUCT_NAME := infinity_gsi_arm64", gsi_mk.read_text())
-            self.assertIn("building_lineage_gsi,true", gsi_mk.read_text())
+            gsi_mk_text = gsi_mk.read_text()
+            self.assertIn("WITH_GAPPS := false\ninclude vendor/infinity/build/target/product/infinity_generic_target.mk", gsi_mk_text)
+            self.assertEqual(gsi_mk_text.count("WITH_GAPPS :="), 1)
+            self.assertIn("PRODUCT_NAME := infinity_gsi_arm64", gsi_mk_text)
+            self.assertIn("building_lineage_gsi,true", gsi_mk_text)
+
+            # Switching to with_gapps="true" replaces cleanly without duplicate lines
+            PATCH["patch_infinity_gsi_product"](src, with_gapps="true")
+            gsi_mk_gapps = gsi_mk.read_text()
+            self.assertIn("WITH_GAPPS := true\ninclude vendor/infinity/build/target/product/infinity_generic_target.mk", gsi_mk_gapps)
+            self.assertEqual(gsi_mk_gapps.count("WITH_GAPPS :="), 1)
+
             self.assertIn("PRODUCT_INSTALL_DEBUG_POLICY_TO_SYSTEM_EXT := false", sys_ext.read_text())
             self.assertIn('("true", true): false', gsi_bp.read_text())
             self.assertNotIn("apns-full-conf.xml", (src / "device/generic/common/gsi_product.mk").read_text())
             self.assertNotRegex((sep / "backuptool.te").read_text(), r"(?m)^permissive backuptool;")
+            self.assertIn("userdebug_or_eng(`\nallow adbd adbroot:binder call;", (sep / "adbd.te").read_text())
             gsi_verify.check_system_ext_property_contexts_clean((sep / "property_contexts").read_text())
             self.assertIn("0x41000005u", udfps.read_text())
             self.assertIn("0x41000033u", udfps.read_text())
@@ -152,18 +169,40 @@ class Infinity312GsiPatchTests(unittest.TestCase):
                 self.assertIn("https://connect.rom.miui.com/generate_204", txt)
                 self.assertIn("http://connectivitycheck.qualcomm.cn/generate_204", txt)
 
-    def test_yokeshiq_bionic_and_frameworks_base_patches_idempotent(self):
+    def test_yokeshiq_bionic_patch_idempotent_zygote_safe_and_self_closing_xml(self):
         with tempfile.TemporaryDirectory() as td:
             src = Path(td)
-            # Minimal realistic bionic/libc/bionic/custom_rom_hide.cpp fixture
             hide_cpp = src / "bionic/libc/bionic/custom_rom_hide.cpp"
             hide_cpp.parent.mkdir(parents=True)
             hide_cpp.write_text(
                 'static bool compute_allowlisted() {\n'
+                '    int fd = raw_openat("/proc/self/cmdline", O_RDONLY);\n'
+                '    if (fd < 0) return false;\n'
+                '\n'
+                '    char cmdline[256];\n'
+                '    ssize_t n = raw_read(fd, cmdline, sizeof(cmdline) - 1);\n'
+                '    raw_close(fd);\n'
+                '    if (n <= 0) return false;\n'
+                '    cmdline[n] = \'\\0\';\n'
+                '\n'
+                '    char* colon = strchr(cmdline, \':\');\n'
+                '    if (colon) *colon = \'\\0\';\n'
+                '\n'
                 '    for (const char* const* p = kAllowlistedPackages; *p; ++p) {\n'
                 '        if (strcmp(cmdline, *p) == 0) return true;\n'
                 '    }\n'
                 '    return false;\n'
+                '}\n'
+                '\n'
+                'static bool is_allowlisted_process() {\n'
+                '    static pid_t cached_pid = -1;\n'
+                '    static bool cached_value = false;\n'
+                '    pid_t cur = getpid();\n'
+                '    if (cur == cached_pid) return cached_value;\n'
+                '    bool result = compute_allowlisted();\n'
+                '    cached_value = result;\n'
+                '    cached_pid = cur;\n'
+                '    return result;\n'
                 '}\n'
                 'static bool is_rom_path(const char* path) {\n'
                 '    if (is_blocked_dir(clean)) return true;\n'
@@ -227,17 +266,50 @@ class Infinity312GsiPatchTests(unittest.TestCase):
             PATCH["patch_yokeshiq_bionic_lineage_hide"](src)
             first = hide_cpp.read_text(encoding="utf-8")
             for needle in (
+                'strcmp(cmdline, "<pre-initialized>") == 0',
+                'strncmp(cmdline, "zygote", 6) == 0',
                 'strncmp(cmdline, "org.lineageos.", 14) == 0',
                 'strstr(clean, "/etc/selinux/") != nullptr',
                 'strstr(path, "/etc/sysconfig/") != nullptr',
                 'strstr(pos, "<install-in-user-type") != nullptr',
+                'bool self_closes  = opens_block && strstr(pos, "/>") != nullptr;',
                 'static bool is_hidden_rom_prop(const char* name)',
                 'strncasecmp(name, "ro.infinity.", 12) == 0',
             ):
                 self.assertIn(needle, first)
-            # Second pass must be a no-op
             PATCH["patch_yokeshiq_bionic_lineage_hide"](src)
             self.assertEqual(hide_cpp.read_text(encoding="utf-8"), first)
+
+    @unittest.skipUnless(shutil.which("clang++"), "requires clang++")
+    def test_udfps_extension_compiles_cleanly_under_werror(self):
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td)
+            ext = src / "frameworks/native/services/surfaceflinger/CompositionEngine/src/UdfpsExtension.cpp"
+            ext.parent.mkdir(parents=True)
+            ext.write_text(
+                "#ifndef TARGET_PROVIDES_UDFPS_LIB\n"
+                "#include <compositionengine/UdfpsExtension.h>\n\n"
+                "uint32_t getUdfpsDimZOrder(uint32_t z) {\n    return z;\n}\n\n"
+                "uint32_t getUdfpsZOrder(uint32_t z, __unused bool touched) {\n    return z;\n}\n\n"
+                "uint64_t getUdfpsUsageBits(uint64_t usageBits, __unused bool touched) {\n    return usageBits;\n}\n"
+                "#endif\n",
+                encoding="utf-8",
+            )
+            inc = src / "inc/compositionengine"
+            inc.mkdir(parents=True)
+            (inc / "UdfpsExtension.h").write_text(
+                "#include <cstdint>\n#define __unused __attribute__((__unused__))\n"
+                "uint32_t getUdfpsDimZOrder(uint32_t z);\n"
+                "uint32_t getUdfpsZOrder(uint32_t z, bool touched);\n"
+                "uint64_t getUdfpsUsageBits(uint64_t usageBits, bool touched);\n",
+                encoding="utf-8",
+            )
+            PATCH["patch_oplus_udfps_extension"](src)
+            res = subprocess.run(
+                ["clang++", "-std=c++20", "-fsyntax-only", "-Wall", "-Wextra", "-Werror", "-I", str(src / "inc"), str(ext)],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(res.returncode, 0, res.stderr)
 
     def test_gsi_verify_property_contexts_triebuilder(self):
         gsi_verify.check_property_contexts([
@@ -253,6 +325,15 @@ class Infinity312GsiPatchTests(unittest.TestCase):
             gsi_verify.check_system_ext_property_contexts_clean(
                 "ro.vendor.dolby.dax.version u:object_r:vendor_default_prop:s0\n"
             )
+
+    def test_rom_build_gsi_handles_missing_init_te_cleanly(self):
+        script = (SCRIPTS / "rom-build-gsi.sh").read_text(encoding="utf-8")
+        self.assertIn("INIT_TE_CREATED=1", script)
+        self.assertIn('--gapps "$WITH_GAPPS"', script)
+        self.assertIn("device/lineage/sepolicy/common/private/adbd.te", script)
+        # init.te must NOT be in the required pre-check list (absent on Infinity-X 16)
+        req_block = script.split("for required in", 1)[1].split("done", 1)[0]
+        self.assertNotIn("init.te", req_block)
 
 
 if __name__ == "__main__":

@@ -125,6 +125,10 @@ def verify_raw_gsi_image(
             not userdebug_cil_exists,
             "user build must not ship system_ext_userdebug_plat_sepolicy.cil (leaks su/adbroot policy)",
         )
+        require(
+            "(allow adbd adbroot" not in sepolicy_cil,
+            "user build system_ext_sepolicy.cil must not expose adbd->adbroot binder rules",
+        )
     if lineage_hide:
         combined_props = build_prop + "\n" + product_prop
         require("ro.modversion=" not in combined_props, "ro.modversion must be stripped when lineage_hide is enabled")

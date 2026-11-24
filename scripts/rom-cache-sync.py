@@ -457,7 +457,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
     env = clean_gh_env()
     use_gh = bool(shutil.which("gh")) and not args.no_gh
 
-    with tempfile.TemporaryDirectory(prefix=".ossi-cache-restore-", dir=args.work_dir or None) as td:
+    with tempfile.TemporaryDirectory(prefix=".gsi-cache-restore-", dir=args.work_dir or None) as td:
         work = Path(td)
         manifest_file = work / "rom-cache-manifest.json"
         download_asset(args.repo, args.tag, "rom-cache-manifest.json", manifest_file, use_gh=use_gh, env=env)
@@ -497,7 +497,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
             if zrc != 0 or trc != 0:
                 raise RuntimeError(f"Extraction failed for {tier['name']} (zstd={zrc}, tar={trc})")
 
-        stamp = out_dir / ".ossi-cache-restored.json"
+        stamp = out_dir / ".gsi-cache-restored.json"
         stamp.write_text(json.dumps({
             "restored_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "repo": args.repo,
