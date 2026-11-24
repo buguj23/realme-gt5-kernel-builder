@@ -20,12 +20,12 @@ import time
 import urllib.request
 
 DEFAULT_REPO = "buguj23/realme-gt5-kernel-builder"
-DEFAULT_BRANCH = "5.15.149"
-DEFAULT_TAG = "rom-cache-5.15.149-infinity"
+DEFAULT_BRANCH = "infinity-x-3.12"
+DEFAULT_TAG = "gsi-cache-3.12-infinity"
 DEFAULT_CHUNK_BYTES = 1900 * 1024 * 1024  # 1900 MiB (< GitHub Release 2 GiB cap)
 READ_BLOCK = 4 * 1024 * 1024
 
-# Logical incremental cache tiers relative to OUT_DIR (out/ossi/5.15.149).
+# Logical incremental cache tiers relative to OUT_DIR (out/gsi).
 # Excludes redundant final outputs (dist/, ota.zip, my_*.img), repackaging copies
 # (obj/PACKAGING/), debug symbols (symbols/), and host logs/env scripts.
 TIERS: list[dict] = [
@@ -287,12 +287,12 @@ def cmd_upload(args: argparse.Namespace) -> int:
     if not selected:
         raise RuntimeError("No matching tiers selected")
 
-    prefix = f"ossi-{args.branch}-cache"
+    prefix = f"gsi-{args.branch}-cache"
     manifest_path = work_dir / "rom-cache-manifest.json"
     sums_path = work_dir / "SHA256SUMS.txt"
 
     notes = (
-        f"Pruned incremental ROM build cache for Realme GT5 (`ossi` / `{args.branch}` / Project Infinity-X 2.9).\n\n"
+        f"Pruned incremental GSI build cache for Realme GT5 (`5.15.149` OGKI / `{args.branch}` / Project Infinity-X 3.12 Android 16).\n\n"
         f"- Build namespace root: `{args.build_root}`\n"
         f"- Relative `OUT_DIR`: `{args.out_relpath}`\n"
         f"- Compression: `zstd -{args.zstd_level}` split into `<= {args.chunk_mib} MiB` chunks\n"
@@ -303,7 +303,7 @@ def cmd_upload(args: argparse.Namespace) -> int:
         existing_assets = ensure_release(
             args.repo,
             args.tag,
-            f"GT5 {args.branch} Infinity-X 2.9 Incremental Build Cache",
+            f"GT5 {args.branch} Infinity-X 3.12 GSI Incremental Build Cache",
             notes,
             env,
         )
@@ -515,12 +515,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     sub = parser.add_subparsers(dest="command", required=True)
 
     up = sub.add_parser("upload", help="Stream pruned out/ cache chunks to a GitHub Release")
-    up.add_argument("--out-dir", required=True, help="Path to out/ossi/<branch>")
+    up.add_argument("--out-dir", required=True, help="Path to out/gsi")
     up.add_argument("--work-dir", required=True, help="Temp directory holding at most 1 chunk (~1.9 GiB)")
     up.add_argument("--repo", default=DEFAULT_REPO)
     up.add_argument("--tag", default=DEFAULT_TAG)
     up.add_argument("--branch", default=DEFAULT_BRANCH)
-    up.add_argument("--out-relpath", default="out/ossi/5.15.149")
+    up.add_argument("--out-relpath", default="out/gsi")
     up.add_argument("--build-root", default="/mnt/rom-src")
     up.add_argument("--builder-commit", default="")
     up.add_argument("--source-manifest", default="")

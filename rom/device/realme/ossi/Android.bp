@@ -1,9 +1,0 @@
-soong_namespace {
-}
-
-prebuilt_hidl_interfaces {
-    name: "hidl_oplus_transmessage_interface",
-    interfaces: [
-        "vendor.oplus.hardware.transmessage@1.0::ITransmessge",
-    ],
-}

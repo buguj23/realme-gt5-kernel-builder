@@ -1,1 +1,0 @@
-genfscon proc /phoenix u:object_r:vendor_proc_phoenix:s0

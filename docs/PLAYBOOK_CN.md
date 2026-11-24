@@ -1,6 +1,8 @@
-# Realme GT5 (`ossi` / `5.15.149`) 全链路构建、排障、无损实测与发布实战手册
+# Realme GT5 (`5.15.149`) 全链路构建、排障、无损实测与发布实战手册
 
-本文档完整沉淀 **Realme GT5 150W（`RMX3820` / `RE5C33` / `ossi`，ColorOS `15.0.0.320(CN01)`）** 从 **OEM OGKI 5.15.149 内核**、**Project Infinity-X 2.9 (Android 15) 完整类原生 ROM**、**Treble GSI (DSU)**、**YukiSU LKM** 到 **云端缓存与 GitHub Releases 自动化发布** 的实机验证经验、不同构建方式对比、完整踩坑根因修复以及真机零风险分层测试 SOP。
+> **分支提示 (`infinity-x-3.12`)**：当前分支专注于 **Project Infinity-X 3.12（Android 16 / `bp4a`）Treble GSI + `5.15.149` OGKI 内核**，已移除 `ossi` 完整 ROM 源码与构建工作流。3.12 GSI 的同步、补丁、汉化、反检测与构建 SOP 请查阅 [**`docs/GSI_3_12_BUILD.md`**](GSI_3_12_BUILD.md)；本文档保留 `5.15.149` 内核构建、ColorOS 15 排障原理、DSU 无损测试与 YukiSU 实战沉淀作为参考。
+
+本文档完整沉淀 **Realme GT5 150W（`RMX3820` / `RE5C33` / `ossi`，ColorOS `15.0.0.320(CN01)`）** 从 **OEM OGKI 5.15.149 内核**、**Treble GSI (DSU)**、**YukiSU LKM** 到 **云端缓存与 GitHub Releases 自动化发布** 的实机验证经验、完整踩坑根因修复以及真机零风险分层测试 SOP。
 
 ---
 

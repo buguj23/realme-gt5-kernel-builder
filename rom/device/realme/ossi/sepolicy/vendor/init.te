@@ -1,1 +1,0 @@
-allow init vendor_proc_phoenix:file w_file_perms;

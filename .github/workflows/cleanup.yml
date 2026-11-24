@@ -10,7 +10,7 @@ on:
         default: 'Build Realme GT5 OGKI (5.15.149)'
         options:
           - Build Realme GT5 OGKI (5.15.149)
-          - Build Project Infinity-X (ossi)
+          - Build Project Infinity-X 3.12 Treble GSI (DSU arm64-ab)
       cache_mode:
         type: choice
         description: '缓存清理类型'

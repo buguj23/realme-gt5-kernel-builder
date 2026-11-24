@@ -1,16 +1,28 @@
-name: Build Project Infinity-X Treble GSI (DSU arm64-ab)
+name: Build Project Infinity-X 3.12 Treble GSI (DSU arm64-ab)
 
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: "Baseline branch for source tree (default: 5.15.149)"
+      variant:
+        description: "Build variant (user recommended for clean SELinux policy; userdebug for adb root)"
         type: choice
         required: true
-        default: "5.15.149"
-        options: ["5.15.149"]
+        default: "user"
+        options: ["user", "userdebug"]
+      with_gapps:
+        description: "Include GApps (WITH_GAPPS=true)"
+        type: boolean
+        default: false
+      lineage_hide:
+        description: "Apply yokeshiq custom-ROM / LineageOS anti-detection patches (Android 16)"
+        type: boolean
+        default: true
+      sync_source:
+        description: "Run scripts/rom-sync.sh --branch 16 before building"
+        type: boolean
+        default: false
       source_dir:
-        description: "Android checkout on the runner (default: ~/gt5-rom/5.15.149)"
+        description: "Android 16 checkout on the runner (default: ~/gt5-gsi/infinity-x-3.12)"
         required: false
         default: ""
       mirror_mode:
@@ -19,8 +31,12 @@ on:
         required: true
         default: auto
         options: [auto, direct, cn]
+      restore_cache_tag:
+        description: "Optional GitHub Release tag to restore incremental out/gsi cache before building"
+        required: false
+        default: ""
       publish_release:
-        description: "Upload verified GSI .img.gz to GitHub Release infinity-x-2.9-gsi-arm64-dsu"
+        description: "Upload verified GSI .img.gz to GitHub Release infinity-x-3.12-gsi-arm64-dsu"
         type: boolean
         default: false
       rom_runner:
@@ -41,9 +57,9 @@ jobs:
   build-gsi:
     runs-on: ${{ fromJSON(inputs.rom_runner == 'gt5-rom' && '["self-hosted","linux","x64","gt5-rom"]' || (inputs.rom_runner == 'ubuntu-latest' && '["ubuntu-latest"]' || '["self-hosted","linux","x64"]')) }}
     concurrency:
-      group: ossi-self-hosted-gsi
+      group: gt5-self-hosted-gsi-312
       cancel-in-progress: false
-    timeout-minutes: 360
+    timeout-minutes: 420
     steps:
       - name: Checkout repository (self-hosted multi-mirror)
         if: runner.environment != 'github-hosted'
@@ -80,46 +96,70 @@ jobs:
           else
             echo "MIRROR_MODE=cn" >> "$GITHUB_ENV"
           fi
-      - name: Run ROM unit tests
+      - name: Run unit tests
         run: python3 -m unittest discover -s tests -v
-      - name: Build and verify Treble GSI (with ColorOS property_contexts & Phoenix fixes)
+      - name: Sync Project Infinity-X 16 (3.12) source (optional)
+        if: ${{ inputs.sync_source }}
         env:
-          BRANCH: ${{ inputs.branch }}
           ROM_SOURCE: ${{ inputs.source_dir }}
         run: |
           set -euo pipefail
-          SRC="${ROM_SOURCE:-$HOME/gt5-rom/$BRANCH}"
+          SRC="${ROM_SOURCE:-$HOME/gt5-gsi/infinity-x-3.12}"
+          bash scripts/rom-sync.sh --dir "$SRC" --manifest https://github.com/ProjectInfinity-X/manifest --branch 16
+      - name: Restore incremental GSI build cache (optional)
+        if: ${{ inputs.restore_cache_tag != '' }}
+        env:
+          ROM_SOURCE: ${{ inputs.source_dir }}
+          CACHE_TAG: ${{ inputs.restore_cache_tag }}
+        run: |
+          set -euo pipefail
+          SRC="${ROM_SOURCE:-$HOME/gt5-gsi/infinity-x-3.12}"
+          python3 scripts/rom-cache-sync.py restore --repo "$GITHUB_REPOSITORY" --tag "$CACHE_TAG" --src "$SRC"
+      - name: Build and verify Project Infinity-X 3.12 Treble GSI
+        env:
+          ROM_SOURCE: ${{ inputs.source_dir }}
+          VARIANT: ${{ inputs.variant }}
+          WITH_GAPPS: ${{ inputs.with_gapps }}
+          LINEAGE_HIDE: ${{ inputs.lineage_hide }}
+        run: |
+          set -euo pipefail
+          SRC="${ROM_SOURCE:-$HOME/gt5-gsi/infinity-x-3.12}"
           if [ "${RUNNER_ENVIRONMENT:-}" != "github-hosted" ] && [ -w "$HOME" ]; then
-            GSI_OUT="$HOME/ossi-gsi-deliveries/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            GSI_OUT="$HOME/gt5-gsi-deliveries/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           else
-            GSI_OUT="$RUNNER_TEMP/ossi-gsi-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            GSI_OUT="$RUNNER_TEMP/gt5-gsi-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           fi
           rm -rf "$GSI_OUT"
           mkdir -p "$GSI_OUT"
-          bash scripts/rom-build-gsi.sh --src "$SRC" --output "$GSI_OUT"
-          echo "OSSI_GSI_OUT=$GSI_OUT" >> "$GITHUB_ENV"
+          bash scripts/rom-build-gsi.sh \
+            --src "$SRC" \
+            --output "$GSI_OUT" \
+            --variant "$VARIANT" \
+            --gapps "$WITH_GAPPS" \
+            --lineage-hide "$LINEAGE_HIDE"
+          echo "GT5_GSI_OUT=$GSI_OUT" >> "$GITHUB_ENV"
       - name: Publish GSI Release (optional)
         if: ${{ inputs.publish_release }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="infinity-x-2.9-gsi-arm64-dsu"
-          GSI_OUT="${OSSI_GSI_OUT:?}"
+          TAG="infinity-x-3.12-gsi-arm64-dsu"
+          GSI_OUT="${GT5_GSI_OUT:?}"
           if ! gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" -R "$GITHUB_REPOSITORY" \
-              --title "Project Infinity-X 2.9 (Android 15) Treble GSI arm64-ab (DSU-Sideloader-Plus)" \
-              --notes "Automated verified Treble GSI build (ColorOS property_contexts collision & OPLUS Phoenix watchdog fixed)."
+              --title "Project Infinity-X 3.12 (Android 16) Treble GSI arm64-ab (5.15.149 / DSU)" \
+              --notes "Automated verified Project Infinity-X 3.12 (Android 16 / bp4a) Treble GSI for Realme GT5 (5.15.149 OGKI / RMX3820_15.0.0.320): ColorOS property_contexts & OPLUS Phoenix fixes, optical UDFPS Z-order, GT5 auto-brightness, yokeshiq anti-detection, and unified zh-rCN localization."
           fi
           gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber \
-            "$GSI_OUT/Infinity-X-2.9-gsi_arm64-ab.img.gz" \
+            "$GSI_OUT"/Infinity-X-3.12-gsi_arm64-*.img.gz \
             "$GSI_OUT/gsi-verify.txt" \
             "$GSI_OUT/SHA256SUMS.txt"
       - name: Publish GSI build summary
         run: |
-          GSI_OUT="${OSSI_GSI_OUT:?}"
+          GSI_OUT="${GT5_GSI_OUT:?}"
           {
-            echo "## Project Infinity-X 2.9 Treble GSI (DSU arm64-ab)"
+            echo "## Project Infinity-X 3.12 (Android 16) Treble GSI (DSU arm64-ab)"
             echo ""
             echo "- Delivery Directory: \`$GSI_OUT\`"
             echo ""

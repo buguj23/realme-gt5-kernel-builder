@@ -23,8 +23,11 @@
     "super_group": "qti_dynamic_partitions",
     "super_group_size": 14491320320,
     "source_manifest": "https://github.com/ProjectInfinity-X/manifest",
-    "source_branch": "15",
-    "deps_branch": "lineage-22.2",
-    "product": "infinity_ossi"
+    "source_branch": "16",
+    "deps_branch": "lineage-23.2",
+    "rom_version": "3.12",
+    "rom_android": "16",
+    "target_release": "bp4a",
+    "product": "infinity_gsi_arm64"
   }
 }

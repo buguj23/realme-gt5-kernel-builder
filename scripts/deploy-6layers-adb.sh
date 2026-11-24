@@ -184,6 +184,7 @@ run_config() {
     printf 1 > "$CFG/toggle_rom_fingerprint_names.val"
     printf 1 > "$CFG/toggle_rom_fingerprint_prefix.val"
     printf 1 > "$CFG/toggle_rom_fingerprint_build_type.val"
+    printf 1 > "$CFG/toggle_custom_rom_props.val"
     printf 1 > "$CFG/toggle_pif_props.val"
     printf 0 > "$CFG/toggle_adb_disabler.val"
     printf 1 > "$CFG/toggle_action_hma.val"

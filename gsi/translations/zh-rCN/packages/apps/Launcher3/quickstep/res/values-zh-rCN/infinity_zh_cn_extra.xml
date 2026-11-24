@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Unified Simplified Chinese (zh-rCN) supplement for Project Infinity-X 3.12 (Android 16) GSI -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="accessibility_app_usage_settings">"应用使用设置"</string>
+    <string name="accessibility_recent_apps">"最近用过的应用"</string>
+    <string name="accessibility_rotate_button">"旋转屏幕"</string>
+    <string name="action_image_copy">"复制"</string>
+    <string name="action_image_save">"保存"</string>
+    <string name="action_move_item_left">"向左移动项目"</string>
+    <string name="action_move_item_right">"向右移动项目"</string>
+    <string name="action_save_app_pair">"保存应用对"</string>
+    <string name="action_screenshot">"屏幕截图"</string>
+    <string name="action_share">"分享"</string>
+    <string name="action_split">"分屏"</string>
+    <string name="add_desk_button_content_description">"添加新桌面"</string>
+    <string name="all_apps_prediction_tip">"您可能想要使用的应用"</string>
+    <string name="allset_button_hint">"点按主屏幕按钮即可前往主屏幕"</string>
+    <string name="allset_button_hint_expressive">"点按主屏幕按钮"</string>
+    <string name="allset_description_fallback">"您可以开始使用自己的设备了"</string>
+    <string name="allset_description_generic">"您可以开始使用<xliff:g id="DEVICE">%1$s</xliff:g>了"</string>
+    <string name="allset_device_type_phone">"手机"</string>
+    <string name="allset_device_type_tablet">"平板电脑"</string>
+    <string name="allset_hint">"向上滑动可前往主屏幕"</string>
+    <string name="allset_hint_expressive">"向上滑动"</string>
+    <string name="allset_navigation_settings"><annotation id="link">"系统导航设置"</annotation></string>
+    <string name="allset_navigation_settings_expressive"><annotation id="link">"选择导航方式"</annotation></string>
+    <string name="allset_subtitle_expressive">"尽情享用新的<xliff:g id="DEVICE">%1$s</xliff:g>吧！"</string>
+    <string name="allset_subtitle_expressive_button_navigation">"点按即可开始使用<xliff:g id="DEVICE">%1$s</xliff:g>"</string>
+    <string name="allset_subtitle_expressive_gesture_navigation">"向上滑动即可开始使用您的<xliff:g id="DEVICE">%1$s</xliff:g>"</string>
+    <string name="allset_title">"大功告成！"</string>
+    <string name="allset_title_expressive">"您的 <xliff:g id="DEVICE">%1$s</xliff:g>\n已设置完毕！"</string>
+    <string name="allset_title_expressive_fallback">"您的设备\n已设置完毕！"</string>
+    <string name="allset_title_expressive_fixed">"设置完毕，开始使用吧！"</string>
+    <string name="always_show_taskbar">"始终显示任务栏"</string>
+    <string name="ambient_cue_autofill_action">"自动填充"</string>
+    <string name="ambient_cue_expand_action">"展开"</string>
+    <string name="ambient_cue_icon_content_description">"情境建议图标"</string>
+    <string name="ambientcue_first_time_edu_icon_description">"图标"</string>
+    <string name="ambientcue_first_time_edu_text">"我们会运用 AI 技术，根据您在屏幕上的操作主动提供相关信息和操作建议"</string>
+    <string name="ambientcue_first_time_edu_title">"获取实用建议"</string>
+    <string name="ambientcue_long_press_edu_text">"轻触并按住即可查看建议是如何生成的"</string>
+    <string name="assistant_gesture_feedback_swipe_not_diagonal">请朝屏幕中心方向沿对角线滑动</string>
+    <string name="assistant_gesture_feedback_swipe_not_long_enough">滑动距离不够，请向屏幕内部滑动更长距离</string>
+    <string name="assistant_gesture_feedback_swipe_too_far_from_corner">请从屏幕底部正角落处开始滑动</string>
+    <string name="assistant_gesture_tutorial_playground_subtitle">从屏幕底部任一角落沿对角线向内滑动</string>
+    <string name="assistant_gesture_tutorial_playground_title">语音助手手势</string>
+    <string name="back_gesture_feedback_cancelled">"确保从右侧或左侧边缘滑动到屏幕中间位置后再松开手指"</string>
+    <string name="back_gesture_feedback_complete_with_follow_up">"您完成了“返回”手势教程。接下来了解如何切换应用。"</string>
+    <string name="back_gesture_feedback_complete_with_overview_follow_up">"您已了解如何使用“从右侧向左滑动”手势返回。接下来学习切换应用吧！"</string>
+    <string name="back_gesture_feedback_complete_without_follow_up">"您已完成“返回”手势教程"</string>
+    <string name="back_gesture_feedback_swipe_in_nav_bar">"确保滑动时手的位置不要太靠近屏幕底部"</string>
+    <string name="back_gesture_feedback_swipe_too_far_from_edge">"确保从最右侧或最左侧边缘开始滑动"</string>
+    <string name="back_gesture_intro_subtitle">"如要返回上一个屏幕，请从屏幕左侧或右侧边缘往屏幕中间滑动。"</string>
+    <string name="back_gesture_intro_title">"滑动即可返回"</string>
+    <string name="back_gesture_tutorial_confirm_subtitle">"如要调节“返回”手势的灵敏度，请转到“设置”"</string>
+    <string name="back_gesture_tutorial_subtitle">"从屏幕左侧或右侧边缘往屏幕中间滑动"</string>
+    <string name="back_gesture_tutorial_title">"返回"</string>
+    <string name="blocked_by_policy">"该应用或您所在的单位不允许执行此操作"</string>
+    <string name="bubble_bar_a11y_title">"气泡条"</string>
+    <string name="bubble_bar_action_dismiss_all">"全部关闭"</string>
+    <string name="bubble_bar_action_move_left">"左移"</string>
+    <string name="bubble_bar_action_move_right">"右移"</string>
+    <string name="bubble_bar_bubble_description">"来自“<xliff:g id="APP_NAME">%2$s</xliff:g>”的<xliff:g id="NOTIFICATION_TITLE">%1$s</xliff:g>"</string>
+    <string name="bubble_bar_bubble_fallback_description">"消息气泡"</string>
+    <string name="bubble_bar_description_multiple_bubbles">"<xliff:g id="BUBBLE_BAR_BUBBLE_DESCRIPTION">%1$s</xliff:g>以及另外 <xliff:g id="BUBBLE_COUNT">%2$d</xliff:g> 个"</string>
+    <string name="bubble_bar_overflow_description">"溢出式气泡框"</string>
+    <string name="change_navigation_mode">"更改导航模式"</string>
+    <string name="derived_app_name">%1$s</string>
+    <string name="gesture_tutorial_action_button_label">"完成"</string>
+    <string name="gesture_tutorial_action_button_label_settings">"设置"</string>
+    <string name="gesture_tutorial_close_button_content_description">关闭手势教程</string>
+    <string name="gesture_tutorial_confirm_title">"大功告成"</string>
+    <string name="gesture_tutorial_nice">"很好！"</string>
+    <string name="gesture_tutorial_rotation_prompt">"请旋转设备，完成手势导航教程"</string>
+    <string name="gesture_tutorial_rotation_prompt_title">"请旋转设备"</string>
+    <string name="gesture_tutorial_step">"教程 <xliff:g id="CURRENT">%1$d</xliff:g>/<xliff:g id="TOTAL">%2$d</xliff:g>"</string>
+    <string name="gesture_tutorial_title">"手势导航教程"</string>
+    <string name="gesture_tutorial_try_again">"重试"</string>
+    <string name="header_app_icon_description">"应用图标"</string>
+    <string name="header_close_icon_description">"关闭"</string>
+    <string name="header_default_app_title">"应用名称"</string>
+    <string name="home_gesture_feedback_complete_with_follow_up">"您已完成“前往主屏幕”手势教程。接下来学习如何返回。"</string>
+    <string name="home_gesture_feedback_complete_without_follow_up">"您已完成“前往主屏幕”手势教程"</string>
+    <string name="home_gesture_feedback_overview_detected">"松开手指前，请勿中途停顿"</string>
+    <string name="home_gesture_feedback_swipe_too_far_from_edge">"确保从屏幕底部边缘向上滑动"</string>
+    <string name="home_gesture_feedback_wrong_swipe_direction">"确保笔直向上滑动"</string>
+    <string name="home_gesture_intro_subtitle">"从屏幕底部向上滑动，即可随时回到主屏幕。"</string>
+    <string name="home_gesture_intro_title">"上滑可转到主屏幕"</string>
+    <string name="home_gesture_tutorial_subtitle">"从屏幕底部向上滑动"</string>
+    <string name="home_gesture_tutorial_success">"太棒了！"</string>
+    <string name="home_gesture_tutorial_title">"前往主屏幕"</string>
+    <string name="hotsaet_tip_prediction_disabled">"已停用应用建议"</string>
+    <string name="hotsaet_tip_prediction_enabled">"已启用应用建议"</string>
+    <string name="hotseat_auto_enrolled">"最常用的应用会显示在此处，显示的项目会根据日常安排而发生变化"</string>
+    <string name="hotseat_prediction_settings">"设置"</string>
+    <string name="hotseat_tip_gaps_filled">"应用建议已添加到空白区域"</string>
+    <string name="hotseat_tip_no_empty_slots">"将应用拖离底部，以获取应用建议"</string>
+    <string name="move_drop_target_bottom_or_right">"移到底部/右侧"</string>
+    <string name="move_drop_target_top_or_left">"移到顶部/左侧"</string>
+    <string name="nudge_a11y_close">"关闭"</string>
+    <string name="nudge_a11y_image">"智能推送图片"</string>
+    <string name="nudge_a11y_title">"智能推送"</string>
+    <string name="open_app_as_a_bubble">"以气泡的形式打开应用"</string>
+    <string name="overview_gesture_feedback_complete_with_follow_up">"您已了解如何使用手势了。如要关闭手势，请前往“设置”。"</string>
+    <string name="overview_gesture_feedback_complete_without_follow_up">"您已完成“切换应用”手势教程"</string>
+    <string name="overview_gesture_feedback_home_detected">"请尝试长按窗口，然后再松开手指"</string>
+    <string name="overview_gesture_feedback_swipe_too_far_from_edge">"确保从屏幕底部边缘向上滑动"</string>
+    <string name="overview_gesture_feedback_wrong_swipe_direction">"确保笔直向上滑动，然后停住"</string>
+    <string name="overview_gesture_intro_subtitle">"如需在应用之间切换，请从屏幕底部向上滑动并按住，然后松开。"</string>
+    <string name="overview_gesture_intro_title">"滑动即可切换应用"</string>
+    <string name="overview_gesture_tutorial_subtitle">"从屏幕底部向上滑动并按住，然后松开"</string>
+    <string name="overview_gesture_tutorial_success">"恭喜！"</string>
+    <string name="overview_gesture_tutorial_title">"切换应用"</string>
+    <string name="quick_switch_content_description">"“最近打开过的应用”列表"</string>
+    <string name="quick_switch_desktop">"桌面模式"</string>
+    <string name="quick_switch_overflow">"{count,plural, =1{多个应用}other{多个应用}}"</string>
+    <string name="quick_switch_pane_title">"最近打开过的应用"</string>
+    <string name="quick_switch_scroll_arrow_left">"向左滚动"</string>
+    <string name="quick_switch_scroll_arrow_right">"向右滚动"</string>
+    <string name="quick_switch_split_task">"<xliff:g id="APP_NAME_1">%1$s</xliff:g>和<xliff:g id="APP_NAME_2">%2$s</xliff:g>"</string>
+    <string name="quick_switch_task_with_position_in_parent">"<xliff:g id="TASK_DESCRIPTION">%1$s</xliff:g>，第 <xliff:g id="INDEX_IN_PARENT">%2$d</xliff:g> 项，共 <xliff:g id="TOTAL_TASKS">%3$d</xliff:g> 项，松开按键即可选择"</string>
+    <string name="recent_split_task_option_desktop">"%1$s 的桌面模式"</string>
+    <string name="recent_task_desktop">"桌面设备"</string>
+    <string name="recent_task_option_desktop">"桌面"</string>
+    <string name="recent_task_option_external_display">"移至外接显示屏"</string>
+    <string name="recent_task_option_freeform">"自由窗口"</string>
+    <string name="recent_task_option_pin">"固定"</string>
+    <string name="recent_task_option_remove_task">"清除"</string>
+    <string name="recents_back">返回</string>
+    <string name="recents_clear_all">"全部清除"</string>
+    <string name="recents_empty_message">"近期没有任何内容"</string>
+    <string name="running_app_description">"<xliff:g id="APP_TITLE">%1$s</xliff:g> <xliff:g id="RUNNING_STATE">%2$s</xliff:g>"</string>
+    <string name="sandbox_mode_assistant_gesture_feedback_successful">太棒了！已成功完成语音助手呼出手势。</string>
+    <string name="sandbox_mode_back_gesture_feedback_successful">太棒了！已成功完成返回手势。</string>
+    <string name="sandbox_mode_back_gesture_feedback_swipe_too_far_from_edge">请从屏幕左侧或右侧的边缘向内滑动</string>
+    <string name="sandbox_mode_home_gesture_feedback_successful">太棒了！已成功完成返回主屏幕手势。</string>
+    <string name="sandbox_mode_overview_gesture_feedback_successful">太棒了！已成功完成多任务视图手势。</string>
+    <string name="sandbox_mode_subtitle">在此处体验并练习全面屏导航手势</string>
+    <string name="sandbox_mode_title">手势练习沙盒</string>
+    <string name="search_gesture_feature_title">"圈定即搜"</string>
+    <string name="shorter_duration_less_than_one_minute">"不到 1 分钟"</string>
+    <string name="split_widgets_not_supported">"目前不支持微件，请选择其他应用"</string>
+    <string name="task_contents_description_with_remaining_time">"<xliff:g id="TASK_DESCRIPTION">%1$s</xliff:g>（<xliff:g id="REMAINING_TIME">%2$s</xliff:g>）"</string>
+    <string name="taskbar_a11y_title">"任务栏"</string>
+    <string name="taskbar_button_a11y">"无障碍功能"</string>
+    <string name="taskbar_button_back">"返回"</string>
+    <string name="taskbar_button_home">"主屏幕"</string>
+    <string name="taskbar_button_ime_switcher">"IME 切换器"</string>
+    <string name="taskbar_button_more_options">"更多选项"</string>
+    <string name="taskbar_button_notifications">"通知"</string>
+    <string name="taskbar_button_quick_settings">"快捷设置"</string>
+    <string name="taskbar_button_recents">"最近用过"</string>
+    <string name="taskbar_divider_a11y_title">"任务栏分隔线"</string>
+    <string name="taskbar_drag_to_unpin_title">"移除"</string>
+    <string name="taskbar_edu_a11y_title">"任务栏教程"</string>
+    <string name="taskbar_edu_bubbles">"拖到下方角落即可使其悬浮"</string>
+    <string name="taskbar_edu_bubbles_animation_description">"通过拖动手势从任务栏创建气泡的动画演示"</string>
+    <string name="taskbar_edu_bubbles_standalone">"将应用拖到角落即可使其悬浮"</string>
+    <string name="taskbar_edu_close">"关闭"</string>
+    <string name="taskbar_edu_done">"完成"</string>
+    <string name="taskbar_edu_features">"体验任务栏的更多功能"</string>
+    <string name="taskbar_edu_next">"继续"</string>
+    <string name="taskbar_edu_pinning">"长按分隔线即可固定任务栏"</string>
+    <string name="taskbar_edu_pinning_animation_description">"该动画展示了如何使用切换开关固定任务栏，让任务栏始终显示在屏幕底部"</string>
+    <string name="taskbar_edu_pinning_standalone">"若要始终在屏幕底部显示任务栏，请轻触并按住分隔线"</string>
+    <string name="taskbar_edu_pinning_title">"始终显示任务栏"</string>
+    <string name="taskbar_edu_search_disclosure">"此产品会根据屏幕上的所选内容进行搜索。Google 的<xliff:g id="BEGIN_PRIVACY_LINK">&lt;a href="%1$s"&gt;</xliff:g>《隐私权政策》<xliff:g id="END_PRIVACY_LINK">&lt;/a&gt;</xliff:g>和<xliff:g id="BEGIN_TOS_LINK">&lt;a href="%2$s"&gt;</xliff:g>《服务条款》<xliff:g id="END_TOS_LINK">&lt;/a&gt;</xliff:g>适用。"</string>
+    <string name="taskbar_edu_split_screen_animation_description">"该动画展示了如何通过将应用从任务栏拖放到打开的应用的上方，来创建分屏"</string>
+    <string name="taskbar_edu_splitscreen">"将一个应用拖到一侧，即可同时使用两个应用"</string>
+    <string name="taskbar_edu_stashing">"缓慢向上滑动即可显示任务栏"</string>
+    <string name="taskbar_edu_suggested_app_animation_description">"该动画展示了如何在设备上访问推荐的应用"</string>
+    <string name="taskbar_edu_suggested_search_animation_description">"该动画展示了如何通过轻触并按住快捷操作按键并选择相应内容所在的区域，在界面中搜索相应内容"</string>
+    <string name="taskbar_edu_suggestions">"根据您的日常使用习惯获得应用建议"</string>
+    <string name="taskbar_edu_swipe_animation_description">"该动画展示了任务栏如何显示在屏幕底部，以及如何在不使用时自动隐藏"</string>
+    <string name="taskbar_phone_a11y_title">"导航栏"</string>
+    <string name="taskbar_pinned_overflow_a11y_title">"其他应用"</string>
+    <string name="taskbar_recents_overflow_a11y_title">"其他最近用过的应用"</string>
+    <string name="taskbar_search_edu_title">"轻触并按住操作键，即可根据屏幕上的内容进行搜索"</string>
+    <string name="time_left_for_app">"今天还可使用 <xliff:g id="TIME">%1$s</xliff:g>"</string>
+    <string name="title_app_suggestions">"应用建议"</string>
+    <string name="toast_contextual_split_select_app">"另外选择一个应用才可使用分屏模式"</string>
+    <string name="toast_split_app_unsupported">"另外选择一个应用才可使用分屏模式"</string>
+    <string name="toast_split_select_app">"点按另一个应用即可使用分屏"</string>
+    <string name="toast_split_select_app_cancel">"取消"</string>
+    <string name="toast_split_select_cont_desc">"退出分屏选择模式"</string>
+    <string name="underlay_close_button_content_description">"关闭"</string>
+</resources>

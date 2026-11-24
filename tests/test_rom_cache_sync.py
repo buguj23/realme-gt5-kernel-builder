@@ -1,4 +1,4 @@
-"""Unit tests for streaming chunked ROM cache upload and restore."""
+"""Unit tests for streaming chunked GSI incremental build cache upload and restore."""
 from pathlib import Path
 import runpy
 import shutil
@@ -15,21 +15,21 @@ class RomCacheSyncTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        self.out = self.root / "out/ossi/5.15.149"
-        # Populate representative cache files and excluded bloat/logs
+        self.out = self.root / "out/gsi"
+        # Populate representative GSI cache files and excluded bloat/logs
         for rel, content in [
             ("host/linux-x86/bin/avbtool", b"avbtool-bin" * 200),
-            ("soong/build.infinity_ossi.ninja", b"rule r1\n" * 400),
+            ("soong/build.infinity_gsi_arm64.ninja", b"rule r1\n" * 400),
             ("soong/.intermediates/frameworks/base/framework.jar", b"dexdata" * 500),
             ("soong/.temp/scratch.bin", b"temp-excluded"),
-            ("target/product/ossi/obj/SHARED_LIBRARIES/libfoo.so", b"elfdata" * 300),
-            ("target/product/ossi/obj/PACKAGING/target_files_intermediates/big.img", b"repack-excluded" * 500),
-            ("target/product/ossi/infinity_ossi-ota.zip", b"ota-excluded" * 500),
-            ("target/product/ossi/my_stock.img", b"oem-excluded" * 500),
-            ("target/product/ossi/symbols/libfoo.so", b"sym-excluded" * 500),
+            ("target/product/generic_arm64/obj/SHARED_LIBRARIES/libfoo.so", b"elfdata" * 300),
+            ("target/product/generic_arm64/obj/PACKAGING/target_files_intermediates/big.img", b"repack-excluded" * 500),
+            ("target/product/generic_arm64/infinity_gsi_arm64-ota.zip", b"ota-excluded" * 500),
+            ("target/product/generic_arm64/my_stock.img", b"oem-excluded" * 500),
+            ("target/product/generic_arm64/symbols/libfoo.so", b"sym-excluded" * 500),
             (".ninja_log", b"# ninja log v5\n"),
-            ("env-infinity_ossi.sh", b"export SECRET=never-upload\n"),
-            ("dist/infinity_ossi-target_files.zip", b"dist-excluded" * 500),
+            ("env-infinity_gsi_arm64.sh", b"export SECRET=never-upload\n"),
+            ("dist/infinity_gsi_arm64-target_files.zip", b"dist-excluded" * 500),
         ]:
             p = self.out / rel
             p.parent.mkdir(parents=True, exist_ok=True)
@@ -50,7 +50,7 @@ class RomCacheSyncTests(unittest.TestCase):
             rec = MOD["stream_tier_chunks"](
                 out_dir=self.out,
                 tier=tier,
-                prefix="ossi-5.15.149-cache",
+                prefix="gsi-infinity-x-3.12-cache",
                 work_dir=work,
                 chunk_bytes=256,  # force multi-part splitting
                 zstd_level=3,
@@ -78,7 +78,7 @@ class RomCacheSyncTests(unittest.TestCase):
         self.assertFalse((tier1_only / "soong/.intermediates").exists())
 
         # Restore all tiers into a brand new source tree and verify exact included vs excluded files
-        restored_out = self.root / "restored/out/ossi/5.15.149"
+        restored_out = self.root / "restored/out/gsi"
         restored_out.mkdir(parents=True)
         for rec in tier_records:
             zstd_p = subprocess.Popen(["zstd", "-d", "-c"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -90,25 +90,23 @@ class RomCacheSyncTests(unittest.TestCase):
             self.assertEqual(zstd_p.wait(), 0)
             self.assertEqual(tar_p.wait(), 0)
 
-        # Included incremental cache files must exist and match byte-for-byte
         for rel in (
             "host/linux-x86/bin/avbtool",
-            "soong/build.infinity_ossi.ninja",
+            "soong/build.infinity_gsi_arm64.ninja",
             "soong/.intermediates/frameworks/base/framework.jar",
-            "target/product/ossi/obj/SHARED_LIBRARIES/libfoo.so",
+            "target/product/generic_arm64/obj/SHARED_LIBRARIES/libfoo.so",
             ".ninja_log",
         ):
             self.assertEqual((restored_out / rel).read_bytes(), (self.out / rel).read_bytes())
 
-        # Excluded bloat/logs/env must NOT be present
         for rel in (
             "soong/.temp/scratch.bin",
-            "target/product/ossi/obj/PACKAGING/target_files_intermediates/big.img",
-            "target/product/ossi/infinity_ossi-ota.zip",
-            "target/product/ossi/my_stock.img",
-            "target/product/ossi/symbols/libfoo.so",
-            "env-infinity_ossi.sh",
-            "dist/infinity_ossi-target_files.zip",
+            "target/product/generic_arm64/obj/PACKAGING/target_files_intermediates/big.img",
+            "target/product/generic_arm64/infinity_gsi_arm64-ota.zip",
+            "target/product/generic_arm64/my_stock.img",
+            "target/product/generic_arm64/symbols/libfoo.so",
+            "env-infinity_gsi_arm64.sh",
+            "dist/infinity_gsi_arm64-target_files.zip",
         ):
             self.assertFalse((restored_out / rel).exists(), f"{rel} should have been excluded")
 

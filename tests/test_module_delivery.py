@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Consumer-visible module ABI and boot-phase dependency regressions."""
+"""Consumer-visible kernel module ABI, packaging, and 5.15.149 OGKI/GSI baseline contracts."""
 import json
 from pathlib import Path
 import re
-import runpy
 import shutil
 import subprocess
 import sys
@@ -17,7 +16,6 @@ import kmi
 from rom_inputs import baseline
 from rom_kernel_package import VARIANTS, assemble, kernel_release, verify_package
 
-STAGER = runpy.run_path(str(SCRIPTS / "rom-stage-kernel.py"))
 RELEASE_TEXT = "5.15.149-fixture"
 
 
@@ -77,69 +75,6 @@ class ModuleDeliveryTests(unittest.TestCase):
                     {"service": 0x11223344})
         self.assertNotEqual(self.verify().returncode, 0)
 
-    def test_first_stage_cannot_depend_on_later_partition(self):
-        pool = self.root / "stock"
-        ramdisk, vendor = pool / "ramdisk", pool / "vendor_dlkm"
-        for p in (ramdisk, vendor):
-            p.mkdir(parents=True)
-        self.module("consumer", {"module_layout": 0x12345678, "service": 0x11223344}, directory=ramdisk)
-        provider = self.module("provider", {"module_layout": 0x12345678}, {"service": 0x11223344}, directory=vendor)
-        lists = {"first_stage": ["consumer.ko"], "recovery": ["consumer.ko"]}
-        with self.assertRaisesRegex(ValueError, "normal first stage.*no delivered provider"):
-            STAGER["select_modules"](self.root, pool, lists)
-        shutil.copyfile(provider, ramdisk / provider.name)
-        (ramdisk / "modules.dep").write_text("consumer.ko: provider.ko\nprovider.ko:\n")
-        result = STAGER["select_modules"](self.root, pool, lists)
-        self.assertIn("provider.ko", result["vendor_ramdisk"])
-
-    def test_recovery_only_export_is_kept_out_of_normal_dlkm(self):
-        pool = self.root / "stock"
-        ramdisk, system = pool / "ramdisk", pool / "system_dlkm"
-        for p in (ramdisk, system):
-            p.mkdir(parents=True)
-        self.module("anchor", {"module_layout": 0x12345678}, directory=ramdisk)
-        self.module("oplus_bsp_zsmalloc", {"module_layout": 0x12345678},
-                    {"zs_pool_stats": 1}, directory=ramdisk)
-        normal = self.module("zsmalloc", {"module_layout": 0x12345678},
-                             {"zs_pool_stats": 2}, directory=system)
-        result = STAGER["select_modules"](self.root, pool, {
-            "first_stage": ["anchor.ko"], "recovery": ["anchor.ko", "oplus_bsp_zsmalloc.ko"]})
-        self.assertIn("oplus_bsp_zsmalloc.ko", result["vendor_ramdisk"])
-        self.assertNotIn("oplus_bsp_zsmalloc.ko", result["vendor_dlkm"])
-        shutil.copyfile(normal, ramdisk / normal.name)
-        with self.assertRaisesRegex(ValueError, "Recovery.*duplicate export"):
-            STAGER["select_modules"](self.root, pool, {
-                "first_stage": ["anchor.ko"], "recovery": ["oplus_bsp_zsmalloc.ko", "zsmalloc.ko"]})
-
-    def test_system_dlkm_blocklist_prevents_vendor_dlkm_duplicate_export(self):
-        pool = self.root / "stock"
-        ramdisk, recovery, vendor, system = (
-            pool / "ramdisk", pool / "recovery", pool / "vendor_dlkm", pool / "system_dlkm"
-        )
-        for p in (ramdisk, recovery, vendor, system):
-            p.mkdir(parents=True)
-        self.module("anchor", {"module_layout": 0x12345678}, directory=ramdisk)
-        self.module("zsmalloc", {"module_layout": 0x12345678}, {"zs_map_object": 1}, directory=system)
-        self.module("zram", {"module_layout": 0x12345678, "zs_map_object": 1}, directory=system)
-        self.module("oplus_bsp_zsmalloc", {"module_layout": 0x12345678},
-                    {"zs_map_object": 1}, directory=vendor)
-        shutil.copyfile(vendor / "oplus_bsp_zsmalloc.ko", recovery / "oplus_bsp_zsmalloc.ko")
-        (vendor / "system_dlkm.modules.blocklist").write_text("blocklist zram\nblocklist zsmalloc\n")
-        result = STAGER["select_modules"](self.root, pool, {
-            "first_stage": ["anchor.ko"], "recovery": ["anchor.ko", "oplus_bsp_zsmalloc.ko"]})
-        self.assertIn("oplus_bsp_zsmalloc.ko", result["vendor_dlkm"])
-        self.assertIn("zsmalloc.ko", result["system_dlkm"])
-
-    def test_stock_soft_dependencies_are_included_without_changing_load_order(self):
-        names = ["consumer.ko", "recovery-only.ko", "optional-service.ko"]
-        paths = {name: self.mods / name for name in names}
-        dependency_list = self.mods / "modules.dep"
-        (self.mods / "modules.softdep").write_text("softdep consumer pre:optional_service post: absent\n")
-        order = ["consumer.ko"]
-        selected = STAGER["dependency_closure"](order, paths, dependency_list)
-        self.assertEqual(set(selected), {"consumer.ko", "optional-service.ko"})
-        self.assertEqual(order, ["consumer.ko"])
-
     def test_module_abi_detects_change_beyond_layout_crc(self):
         module = self.module("consumer", {"module_layout": 0x12345678, "service": 1})
         original = kmi.module_abi(module)
@@ -174,7 +109,7 @@ class ModuleDeliveryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "SHA-256"):
                 verify_package(package, "5.15.149")
 
-    def test_single_5_15_149_baseline_and_yukisu_lkm_contracts(self):
+    def test_single_5_15_149_baseline_and_infinity_3_12_gsi_contracts(self):
         kernels = json.loads((ROOT / "official/kernels.json").read_text())
         self.assertEqual(list(kernels.keys()), ["149"])
         spec = baseline("5.15.149")
@@ -183,6 +118,13 @@ class ModuleDeliveryTests(unittest.TestCase):
         self.assertEqual(spec["security_patch"], "2024-11-05")
         self.assertEqual(spec["metadata_fs"], "f2fs")
         self.assertEqual(spec["api"], 35)
+        # Dedicated Infinity-X 3.12 (Android 16 / bp4a) GSI target
+        self.assertEqual(spec["source_branch"], "16")
+        self.assertEqual(spec["rom_version"], "3.12")
+        self.assertEqual(spec["rom_android"], "16")
+        self.assertEqual(spec["target_release"], "bp4a")
+        self.assertEqual(spec["product"], "infinity_gsi_arm64")
+
         kmeta = json.loads((ROOT / "kernel.json").read_text())
         self.assertEqual(kmeta["branch"], "5.15.149")
         self.assertEqual(kmeta["file"], "realme_gt5_v")
@@ -198,11 +140,13 @@ class ModuleDeliveryTests(unittest.TestCase):
                          "CONFIG_CGROUP_BPF=y", "CONFIG_COMPAT=y"):
             self.assertIn(required, features)
         self.assertFalse(re.search(r"^CONFIG_KSU=y|^CONFIG_KPM=y|^CONFIG_KSU_SUSFS=y", features, re.M))
-        board_ogki = (ROOT / "rom/device/realme/sm8550-ogki/BoardConfigOgki.mk").read_text()
-        self.assertNotIn("CONFIG_KSU=", board_ogki)
         self.assertNotIn("BakaSU", "".join(VARIANTS))
         self.assertIn("Pure-OGKI", VARIANTS)
         self.assertIn("YukiSU-LKM", VARIANTS)
+        # Strict GSI-only branch contract: ossi full ROM tree must not exist
+        self.assertFalse((ROOT / "rom").exists())
+        self.assertFalse((ROOT / ".github/workflows/build-infinity-rom.yml").exists())
+        self.assertFalse((SCRIPTS / "rom-build-local.sh").exists())
 
 
 if __name__ == "__main__":

@@ -113,21 +113,18 @@ class ChinaMirrorTests(unittest.TestCase):
         self.assertIn('fetch="https://mirrors.bfsu.edu.cn/git/lineageOS/LineageOS"', pass1)
         self.assertIn('fetch="https://ghfast.top/https://github.com/realme-kernel-opensource"', pass1)
 
-        # Rotate GitHub proxy without double wrapping.
         pass2 = mirror_helper.rewrite_manifest_text(pass1, github_prefix="https://v6.gh-proxy.org/")
         self.assertIn('fetch="https://v6.gh-proxy.org/https://github.com/realme-kernel-opensource"', pass2)
         self.assertNotIn("ghfast.top", pass2)
 
-        # Rotate back to direct GitHub.
         pass3 = mirror_helper.rewrite_manifest_text(pass2, github_prefix="")
         self.assertIn('fetch="https://github.com/realme-kernel-opensource"', pass3)
 
-        # Rewrite Gitea LFS remote to local file seed cleanly and idempotently.
-        lfs_xml = '<manifest>\n  <remote name="lfs" fetch="https://gitea.com/projectInfinity-x" revision="15" />\n</manifest>\n'
-        seeded = mirror_helper.rewrite_manifest_text(lfs_xml, lfs_mirror="file:///data/builder/.cache/gt5-rom-seed/15")
-        self.assertIn('fetch="file:///data/builder/.cache/gt5-rom-seed/15"', seeded)
+        lfs_xml = '<manifest>\n  <remote name="lfs" fetch="https://gitea.com/projectInfinity-x" revision="16" />\n</manifest>\n'
+        seeded = mirror_helper.rewrite_manifest_text(lfs_xml, lfs_mirror="file:///data/builder/.cache/gt5-rom-seed/16")
+        self.assertIn('fetch="file:///data/builder/.cache/gt5-rom-seed/16"', seeded)
 
-    def test_rom_check_inputs_accepts_proxied_official_manifest(self):
+    def test_rom_check_inputs_accepts_proxied_official_infinity_16_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             manifests = Path(tmp) / ".repo" / "manifests"
             manifests.mkdir(parents=True)
@@ -140,7 +137,7 @@ class ChinaMirrorTests(unittest.TestCase):
             subprocess.run(["git", "-C", str(manifests), "branch", "-M", "default"], check=True)
             subprocess.run(["git", "-C", str(manifests), "config", "--local", "remote.origin.url",
                             "https://cdn.gh-proxy.org/https://github.com/ProjectInfinity-X/manifest.git"], check=True)
-            subprocess.run(["git", "-C", str(manifests), "config", "--local", "branch.default.merge", "refs/heads/15"], check=True)
+            subprocess.run(["git", "-C", str(manifests), "config", "--local", "branch.default.merge", "refs/heads/16"], check=True)
             res = subprocess.run(
                 [sys.executable, str(SCRIPTS / "rom-check-inputs.py"), "source", "--src", tmp, "--branch", "5.15.149"],
                 capture_output=True, text=True,
@@ -225,14 +222,17 @@ class ChinaMirrorTests(unittest.TestCase):
         )
         self.assertIn("Skipping maximize-build-space.sh", res.stdout)
 
-    def test_legacy_bloat_removed_and_stock_metadata_present(self):
+    def test_stock_metadata_present_and_ossi_removed(self):
         for obsolete in (
             ROOT / "ZRAM.zip",
             ROOT / "lib" / "ccache",
-            SCRIPTS / "cache_apt_pkgs.sh",
-            SCRIPTS / "check_unicode_format.py",
+            ROOT / "rom",
+            ROOT / ".github" / "workflows" / "build-infinity-rom.yml",
+            ROOT / ".github" / "workflows" / "watch-local-rom.yml",
+            SCRIPTS / "rom-build-local.sh",
+            SCRIPTS / "rom-provision-deps.sh",
         ):
-            self.assertFalse(obsolete.exists(), f"obsolete file should be removed: {obsolete}")
+            self.assertFalse(obsolete.exists(), f"obsolete/ossi path should be absent: {obsolete}")
 
         meta = ROOT / "official" / "stock" / "15.0.0.320" / "payload_metadata.bin"
         self.assertTrue(meta.is_file(), "verified payload_metadata.bin must be present")
@@ -240,9 +240,9 @@ class ChinaMirrorTests(unittest.TestCase):
         self.assertIn("boot", parsed["partitions"])
         self.assertIn("vendor_dlkm", parsed["partitions"])
 
-    def test_workflows_support_self_hosted_and_cn_mirrors(self):
+    def test_workflows_support_self_hosted_and_gsi_312(self):
         import yaml
-        for wf_name in ("build-kernel-gt5.yml", "build-infinity-rom.yml", "build-infinity-gsi.yml", "cleanup.yml"):
+        for wf_name in ("build-kernel-gt5.yml", "build-infinity-gsi.yml", "seed-gitea-mirrors.yml", "cleanup.yml"):
             wf_path = ROOT / ".github" / "workflows" / wf_name
             data = yaml.safe_load(wf_path.read_text(encoding="utf-8"))
             self.assertIn("jobs", data)
@@ -254,16 +254,17 @@ class ChinaMirrorTests(unittest.TestCase):
                     self.assertNotIn("env.", text_val, f"{wf_name}:{job_name}.env.{k} must not use env context")
             text = wf_path.read_text(encoding="utf-8")
             self.assertNotIn("storage.googleapis.com/git-repo-downloads/repo", text)
-            if wf_name == "build-infinity-rom.yml":
-                for step in data["jobs"]["build"]["steps"]:
-                    self.assertNotIn("uses", step, "build-infinity-rom build job must not stall Set up job on codeload.github.com")
             if wf_name == "build-infinity-gsi.yml":
                 for step in data["jobs"]["build-gsi"]["steps"]:
                     self.assertNotIn("uses", step, "build-infinity-gsi job must not stall Set up job on codeload.github.com")
+                self.assertIn("infinity-x-3.12-gsi-arm64-dsu", text)
+            if wf_name == "seed-gitea-mirrors.yml":
+                self.assertIn("infinity-16-gitea-seed", text)
         gsi_script = (SCRIPTS / "rom-build-gsi.sh").read_text(encoding="utf-8")
         self.assertIn("SET_BOOTSTAGE@ANDROID_BOOT_COMPLETED", gsi_script)
         self.assertIn("proc_phoenix", gsi_script)
-        self.assertIn("check_property_contexts", gsi_script)
+        self.assertIn("gsi_verify.py", gsi_script)
+        self.assertIn("Infinity-X-3.12-gsi_arm64", gsi_script)
         kernel_wf = (ROOT / ".github" / "workflows" / "build-kernel-gt5.yml").read_text(encoding="utf-8")
         self.assertIn("runner.environment == 'github-hosted'", kernel_wf)
         self.assertIn("mirror_helper.py ensure-repo", kernel_wf)
@@ -290,7 +291,6 @@ class ChinaMirrorTests(unittest.TestCase):
             work = Path(td)
             repo_dir = work / ".repo"
 
-            # 1. Incomplete shallow project: projects/prebuilts/rust.git symlinked to project-objects, no refs + stale tmp_pack
             rust_proj = repo_dir / "projects" / "prebuilts" / "rust.git"
             rust_obj = repo_dir / "project-objects" / "platform" / "prebuilts" / "rust.git"
             subprocess.run(["git", "init", "--bare", str(rust_obj)], check=True, capture_output=True)
@@ -303,7 +303,6 @@ class ChinaMirrorTests(unittest.TestCase):
             (work / "prebuilts" / "rust").mkdir(parents=True)
             (work / "prebuilts" / "rust" / ".git").write_text("gitdir: ../../.repo/projects/prebuilts/rust.git\n")
 
-            # 2. Healthy fetched project: shared project-objects with a valid ref + shallow file
             good_proj = repo_dir / "projects" / "build" / "make.git"
             good_obj = repo_dir / "project-objects" / "platform" / "build" / "make.git"
             subprocess.run(["git", "init", "--bare", str(good_obj)], check=True, capture_output=True)
@@ -325,7 +324,7 @@ class ChinaMirrorTests(unittest.TestCase):
                 ]
             ).decode().strip()
             subprocess.run(
-                ["git", f"--git-dir={good_proj}", "update-ref", "refs/remotes/m/15", commit],
+                ["git", f"--git-dir={good_proj}", "update-ref", "refs/remotes/m/16", commit],
                 check=True,
             )
             (good_proj / "shallow").write_text(commit + "\n")
@@ -340,14 +339,10 @@ class ChinaMirrorTests(unittest.TestCase):
             self.assertTrue(good_obj.exists())
             self.assertTrue((good_proj / "shallow").exists())
 
-    def test_rom_sync_and_provision_direct_mode_skips_domestic_mirrors(self):
+    def test_rom_sync_direct_mode_skips_domestic_mirrors(self):
         sync_text = (SCRIPTS / "rom-sync.sh").read_text(encoding="utf-8")
         self.assertIn('--aosp https://android.googlesource.com/ --lineage https://github.com', sync_text)
         self.assertIn('--github-proxy direct', sync_text)
-
-        deps_text = (SCRIPTS / "rom-provision-deps.sh").read_text(encoding="utf-8")
-        self.assertIn('if [ "$(resolve_mirror_mode)" = "cn" ]; then', deps_text)
-        self.assertIn('MIRROR="https://github.com/LineageOS"', deps_text)
 
         with tempfile.TemporaryDirectory() as td:
             src = Path(td) / "rom"
@@ -391,10 +386,11 @@ class ChinaMirrorTests(unittest.TestCase):
             self.assertNotIn("mirrors.tuna.tsinghua.edu.cn", default_out + inf_out)
             self.assertNotIn("gh-proxy.org", inf_out)
 
-    def test_rom_build_local_restores_sigpipe_when_inherited_ignored(self):
+    def test_rom_build_gsi_restores_sigpipe_when_inherited_ignored(self):
         with tempfile.TemporaryDirectory() as td:
             probe = Path(td) / "probe.sh"
-            header = "\n".join((SCRIPTS / "rom-build-local.sh").read_text(encoding="utf-8").splitlines()[:10])
+            script_text = (SCRIPTS / "rom-build-gsi.sh").read_text(encoding="utf-8")
+            header = script_text.split("\nusage() {", 1)[0]
             probe.write_text(
                 header
                 + "\nset +o pipefail\n"
@@ -405,7 +401,7 @@ class ChinaMirrorTests(unittest.TestCase):
             env = os.environ.copy()
             env.pop("OSSI_SIGPIPE_RESET", None)
             for argv in (
-                ["bash", str(SCRIPTS / "rom-build-local.sh"), "--help"],
+                ["bash", str(SCRIPTS / "rom-build-gsi.sh"), "--help"],
                 ["bash", str(probe)],
             ):
                 res = subprocess.run(

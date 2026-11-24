@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Unified Simplified Chinese (zh-rCN) supplement for Project Infinity-X 3.12 (Android 16) GSI -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="aerr_copy">复制崩溃日志链接</string>
+    <string name="notification_channel_sleep">睡眠模式</string>
+    <string name="pocket_mode_illustration_description">手机在口袋中的图示</string>
+    <string name="pocket_mode_instruction_step1">1. 确保上方显示的蓝色区域（距离传感器）未被遮挡</string>
+    <string name="pocket_mode_instruction_step2">2. 长按电源键退出防误触模式</string>
+    <string name="pocket_mode_instructions_header">如何使用手机：</string>
+    <string name="pocket_mode_title">防误触模式已激活</string>
+    <string name="settings_restart_message">需要重启“设置”应用才能使所有更改生效。是否立即重启“设置”应用？</string>
+    <string name="settings_restart_title">需要重启设置</string>
+    <string name="sleep_mode_disabled_toast">睡眠模式已关闭</string>
+    <string name="sleep_mode_enabled_toast">睡眠模式已开启</string>
+    <string name="sleep_mode_notification_content">点按可关闭睡眠模式</string>
+    <string name="sleep_mode_notification_title">睡眠模式已开启</string>
+    <string name="system_restart_message">需要重启系统才能使所有更改生效。是否立即重启系统？</string>
+    <string name="system_restart_title">需要重启系统</string>
+    <string name="unlock_application">解锁 <xliff:g id="label" example="Telegram">%1$s</xliff:g></string>
+    <string name="url_copy_failed">上传日志至 Pasty 失败</string>
+    <string name="url_copy_success">链接复制成功</string>
+    <string name="volume_dialog_ringer_guidance_normal">来电和通知将会响铃</string>
+</resources>

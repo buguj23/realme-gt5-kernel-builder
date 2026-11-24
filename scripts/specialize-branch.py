@@ -131,17 +131,20 @@ def main() -> int:
     }
     (ROOT / "kernel.json").write_text(json.dumps(kernel, indent=2) + "\n")
 
-    (ROOT / "rom/device/realme/ossi/branch.mk").write_text(
-        f"# Default for {release}. The builder can stage any stock baseline.\n"
-        f"BOARD_KERNEL_ANALOGUE := {file}\n"
-        f"BOOT_SECURITY_PATCH := {spec['security_patch']}\n"
-        f"VENDOR_SECURITY_PATCH := $(BOOT_SECURITY_PATCH)\n"
-    )
+    ossi_dir = ROOT / "rom/device/realme/ossi"
+    if ossi_dir.is_dir():
+        (ossi_dir / "branch.mk").write_text(
+            f"# Default for {release}. The builder can stage any stock baseline.\n"
+            f"BOARD_KERNEL_ANALOGUE := {file}\n"
+            f"BOOT_SECURITY_PATCH := {spec['security_patch']}\n"
+            f"VENDOR_SECURITY_PATCH := $(BOOT_SECURITY_PATCH)\n"
+        )
 
     vend = ROOT / "rom/vendor/realme/ossi/ossi-vendor.mk"
-    vt = vend.read_text()
-    vt = re.sub(r"Android \d+", f"Android {android}", vt)
-    vend.write_text(vt)
+    if vend.is_file():
+        vt = vend.read_text()
+        vt = re.sub(r"Android \d+", f"Android {android}", vt)
+        vend.write_text(vt)
 
     lock_workflow(release)
     lock_fetch(file)

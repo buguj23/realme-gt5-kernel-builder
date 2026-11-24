@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
-# Build and verify Project Infinity-X 2.9 official Treble GSI (infinity_gsi_arm64-userdebug)
-# for non-destructive DSU-Sideloader-Plus testing against stock ColorOS 15.0.0.320 vendor.
+# Build and verify Project Infinity-X 3.12 (Android 16 QPR2 / bp4a) Treble GSI (infinity_gsi_arm64)
+# for Realme GT5 (RMX3820_15.0.0.320 / 5.15.149 OGKI kernel baseline) via DSU-Sideloader-Plus.
+#
+# Includes:
+#   - Upstream Infinity-X 16 GSI makefile & Soong fixes (infinity_gsi_arm64-bp4a-user/userdebug)
+#   - ColorOS property_contexts vendor/odm collision strip + TrieBuilder verification
+#   - OPLUS Phoenix 250s boot watchdog disarm + Enforcing proc_phoenix SELinux rules
+#   - Realme GT5 factory auto-brightness lux->nits overlay + android.hardware.fingerprint.xml
+#   - OPLUS/OPPO optical UDFPS SurfaceFlinger Z-order fix (0x41000005 / 0x41000033)
+#   - yokeshiq custom-ROM / LineageOS anti-detection patches rebased for Android 16
+#   - Unified Simplified Chinese (zh-rCN) localization (20 packages, ~9,000 entries)
+#   - Mainland China captive-portal default URLs (NetworkStack)
 set -euo pipefail
 
 if [ "${OSSI_SIGPIPE_RESET:-0}" != 1 ] && command -v python3 >/dev/null 2>&1; then
@@ -10,7 +20,18 @@ fi
 
 usage() {
   cat <<'EOF'
-rom-build-gsi.sh --src DIR --output DIR [--out-dir out/gsi] [--jobs N] [--vendor-property-contexts FILE]
+rom-build-gsi.sh --src DIR --output DIR [OPTIONS]
+
+Options:
+  --src DIR                      Infinity-X 16 (3.12) Android source checkout
+  --output DIR                   Output directory for verified .img, .img.gz, SHA256SUMS.txt
+  --out-dir PATH                 Build OUT_DIR relative to --src (default: out/gsi)
+  --variant user|userdebug       Build variant (default: user)
+  --release NAME                 Android trunk release config (default: bp4a)
+  --gapps true|false             Set WITH_GAPPS for Infinity-X build (default: false)
+  --lineage-hide true|false      Apply yokeshiq anti-detection patches (default: true)
+  --jobs N                       Parallel make/ninja jobs (default: auto-tuned to host RAM)
+  --vendor-property-contexts F   Optional stock vendor_property_contexts to cross-check
 EOF
 }
 
@@ -18,13 +39,22 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=""
 OUT=""
 GSI_OUT_DIR="out/gsi"
-JOBS="$(nproc)"
+VARIANT="user"
+TARGET_RELEASE="bp4a"
+WITH_GAPPS="false"
+LINEAGE_HIDE="true"
+JOBS=""
 VENDOR_PC=""
+
 while (( $# > 0 )); do
   case "$1" in
     --src) SRC=$2; shift 2 ;;
     --output) OUT=$2; shift 2 ;;
     --out-dir) GSI_OUT_DIR=$2; shift 2 ;;
+    --variant) VARIANT=$2; shift 2 ;;
+    --release) TARGET_RELEASE=$2; shift 2 ;;
+    --gapps) WITH_GAPPS=$2; shift 2 ;;
+    --lineage-hide) LINEAGE_HIDE=$2; shift 2 ;;
     --jobs) JOBS=$2; shift 2 ;;
     --vendor-property-contexts) VENDOR_PC=$2; shift 2 ;;
     -h|--help) usage; exit 0 ;;
@@ -34,33 +64,67 @@ done
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 [ -n "$SRC" ] && [ -n "$OUT" ] || { usage >&2; exit 2; }
+case "$VARIANT" in user|userdebug) ;; *) fail "invalid --variant: $VARIANT (use user or userdebug)" ;; esac
+case "$WITH_GAPPS" in true|false) ;; *) fail "invalid --gapps: $WITH_GAPPS (use true or false)" ;; esac
+case "$LINEAGE_HIDE" in true|false) ;; *) fail "invalid --lineage-hide: $LINEAGE_HIDE (use true or false)" ;; esac
+
+# Auto-tune parallelism and Go/JVM memory on constrained hosts (<24 GiB RAM) to avoid R8 OOM kills.
+HOST_RAM_GIB=$(awk '/MemTotal:/ {printf "%d", $2/1048576}' /proc/meminfo 2>/dev/null || echo 32)
+if [ -z "$JOBS" ]; then
+  if [ "$HOST_RAM_GIB" -le 20 ]; then
+    JOBS=4
+  else
+    JOBS=$(nproc)
+  fi
+fi
 [[ "$JOBS" =~ ^[1-9][0-9]*$ ]] || fail "invalid --jobs: $JOBS"
+
+if [ "$HOST_RAM_GIB" -le 20 ]; then
+  export SOONG_GOGC="${SOONG_GOGC:-40}"
+  export SOONG_GOMEMLIMIT="${SOONG_GOMEMLIMIT:-7GiB}"
+  export SOONG_GOMAXPROCS="${SOONG_GOMAXPROCS:-8}"
+  export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:--Xmx2560M}"
+fi
+
 SRC=$(realpath -e -- "$SRC")
 OUT=$(realpath -m -- "$OUT")
 if [ -n "$VENDOR_PC" ]; then VENDOR_PC=$(realpath -e -- "$VENDOR_PC"); fi
 [ -f "$SRC/build/envsetup.sh" ] || fail "missing $SRC/build/envsetup.sh"
 
-# Reversible staging: back up any patched files and restore on EXIT so rom-src stays clean.
-BACKUP_DIR=$(mktemp -d -p "${TMPDIR:-/tmp}" ossi-gsi-backup.XXXXXXXX)
-HIDDEN_DIR="$BACKUP_DIR/hidden"
-mkdir -p "$HIDDEN_DIR"
-
+# Reversible staging: back up modified source files and restore on EXIT so rom-src stays clean.
+BACKUP_DIR=$(mktemp -d -p "${TMPDIR:-/tmp}" gt5-gsi312-backup.XXXXXXXX)
 PATCHED_FILES=(
+  "build/soong/ui/build/soong.go"
+  "build/blueprint/bootstrap/command.go"
   "build/make/target/product/gsi/Android.bp"
   "build/make/target/product/gsi/init.gsi.rc"
   "device/generic/common/gsi_product.mk"
   "device/generic/common/gsi_arm64.mk"
+  "device/generic/common/gsi_system_ext.mk"
+  "vendor/infinity/build/target/product/infinity_gsi_arm64.mk"
   "vendor/infinity/config/version.mk"
   "device/lineage/sepolicy/common/private/property_contexts"
+  "device/lineage/sepolicy/common/private/backuptool.te"
   "device/lineage/sepolicy/common/private/file.te"
   "device/lineage/sepolicy/common/private/genfs_contexts"
   "device/lineage/sepolicy/common/private/init.te"
-)
-HIDE_TREES=(
-  "vendor/realme"
-  "device/realme"
-  "device/oneplus"
-  "hardware/oplus"
+  "frameworks/native/services/surfaceflinger/CompositionEngine/src/UdfpsExtension.cpp"
+  "packages/modules/NetworkStack/res/values/config.xml"
+  "packages/modules/NetworkStack/res/values-mcc460/config.xml"
+  "packages/apps/Updater/app/src/main/java/com/infinity/updater/misc/Constants.java"
+  "bionic/libc/bionic/custom_rom_hide.cpp"
+  "frameworks/base/core/java/android/content/res/ApkAssets.java"
+  "frameworks/base/core/java/android/content/res/AssetManager.java"
+  "frameworks/base/core/java/android/content/res/Resources.java"
+  "frameworks/base/core/java/android/os/ServiceManager.java"
+  "frameworks/base/core/java/android/os/SystemProperties.java"
+  "frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java"
+  "frameworks/base/services/core/java/com/android/server/am/BroadcastController.java"
+  "frameworks/base/services/core/java/com/android/server/pm/ComputerEngine.java"
+  "frameworks/base/services/core/java/com/android/server/pm/PackageManagerService.java"
+  "frameworks/base/services/core/java/com/android/server/pm/ResolveIntentHelper.java"
+  "frameworks/base/services/core/java/com/android/server/pm/parsing/PackageInfoUtils.java"
+  "frameworks/base/services/core/java/com/android/server/pm/permission/PermissionManagerService.java"
 )
 
 restore_tree() {
@@ -69,39 +133,39 @@ restore_tree() {
       cp -a "$BACKUP_DIR/files/$rel" "$SRC/$rel" || true
     fi
   done
-  for rel in "${HIDE_TREES[@]}"; do
-    if [ -e "$HIDDEN_DIR/$rel" ] && [ ! -e "$SRC/$rel" ]; then
-      mkdir -p "$(dirname "$SRC/$rel")"
-      mv "$HIDDEN_DIR/$rel" "$SRC/$rel" || true
-    fi
-  done
+  find "$SRC" -maxdepth 6 -name 'infinity_zh_cn_extra.xml' -delete 2>/dev/null || true
   rm -rf "$SRC/device/generic/common/overlay_gt5_brightness" "$BACKUP_DIR"
 }
 trap restore_tree EXIT
 
 for rel in "${PATCHED_FILES[@]}"; do
-  [ -f "$SRC/$rel" ] || fail "missing expected source file: $SRC/$rel"
-  mkdir -p "$(dirname "$BACKUP_DIR/files/$rel")"
-  cp -a "$SRC/$rel" "$BACKUP_DIR/files/$rel"
-done
-
-# Hide 64-bit-only device/vendor trees temporarily while Soong evaluates generic 64+32 GSI.
-for rel in "${HIDE_TREES[@]}"; do
-  if [ -d "$SRC/$rel" ]; then
-    mkdir -p "$(dirname "$HIDDEN_DIR/$rel")"
-    mv "$SRC/$rel" "$HIDDEN_DIR/$rel"
+  if [ -f "$SRC/$rel" ]; then
+    mkdir -p "$(dirname "$BACKUP_DIR/files/$rel")"
+    cp -a "$SRC/$rel" "$BACKUP_DIR/files/$rel"
   fi
 done
 
-# 1) GSI build compatibility patches
-sed -n '1,64p' "$BACKUP_DIR/files/build/make/target/product/gsi/Android.bp" \
-  > "$SRC/build/make/target/product/gsi/Android.bp"
-grep -v 'device/sample/etc/apns-full-conf.xml' "$BACKUP_DIR/files/device/generic/common/gsi_product.mk" \
-  | sed '/^PRODUCT_COPY_FILES += \\$/d' > "$SRC/device/generic/common/gsi_product.mk"
-# Expose android.hardware.fingerprint feature on ColorOS/OPLUS devices where OEM puts it in /my_product,
-# and apply Realme GT5 factory auto-brightness lux-to-nits curve overlay.
+for required in \
+  "build/make/target/product/gsi/init.gsi.rc" \
+  "device/generic/common/gsi_product.mk" \
+  "device/lineage/sepolicy/common/private/property_contexts" \
+  "device/lineage/sepolicy/common/private/file.te" \
+  "device/lineage/sepolicy/common/private/genfs_contexts" \
+  "device/lineage/sepolicy/common/private/init.te"; do
+  [ -f "$SRC/$required" ] || fail "missing expected source file: $SRC/$required"
+done
+
+# 1) Apply Python source patches (Infinity-X 3.12 GSI fixes, UDFPS, user sepolicy, yokeshiq stealth, zh-rCN, CN captive portal)
+PATCH_ARGS=()
+if [ "$LINEAGE_HIDE" != "true" ]; then
+  PATCH_ARGS+=(--no-lineage-hide)
+fi
+python3 "$HERE/rom-patch-source.py" "$SRC" "${PATCH_ARGS[@]}"
+
+# 2) Expose android.hardware.fingerprint feature on ColorOS/OPLUS devices (OEM puts it in /my_product)
+#    and apply Realme GT5 factory auto-brightness lux-to-nits curve overlay.
 mkdir -p "$SRC/device/generic/common/overlay_gt5_brightness/frameworks/base/core/res/res/values"
-cp -f "$HERE/../rom/device/realme/ossi/overlay/frameworks/base/core/res/res/values/config.xml" \
+cp -f "$HERE/../gsi/overlay/gt5/frameworks/base/core/res/res/values/config.xml" \
       "$SRC/device/generic/common/overlay_gt5_brightness/frameworks/base/core/res/res/values/config.xml"
 cat >> "$SRC/device/generic/common/gsi_product.mk" <<'EOF'
 
@@ -111,16 +175,6 @@ PRODUCT_PACKAGE_OVERLAYS += \
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/android.hardware.fingerprint.xml
 EOF
-sed 's/^PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := true$/PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := false/' \
-  "$BACKUP_DIR/files/device/generic/common/gsi_arm64.mk" > "$SRC/device/generic/common/gsi_arm64.mk"
-grep -v 'ro\.infinity\.device=\$(INFINITY_BUILD)' \
-  "$BACKUP_DIR/files/vendor/infinity/config/version.mk" > "$SRC/vendor/infinity/config/version.mk"
-
-# 2) Strip vendor/odm property_contexts entries from system_ext to prevent ColorOS
-#    ro.vendor.dolby.dax.version TrieBuilder duplicate-prefix LOG(FATAL) -> recovery!
-grep -Ev '^(ro\.vendor\.|vendor\.|persist\.vendor\.|ro\.odm\.)' \
-  "$BACKUP_DIR/files/device/lineage/sepolicy/common/private/property_contexts" \
-  > "$SRC/device/lineage/sepolicy/common/private/property_contexts"
 
 # 3) Disarm OPLUS Phoenix 250s boot watchdog on Realme/OnePlus/OPPO stock kernels
 cat >> "$SRC/build/make/target/product/gsi/init.gsi.rc" <<'EOF'
@@ -139,21 +193,17 @@ printf '\ntype proc_phoenix, fs_type, proc_type;\n' >> "$SRC/device/lineage/sepo
 printf '\ngenfscon proc /phoenix u:object_r:proc_phoenix:s0\n' >> "$SRC/device/lineage/sepolicy/common/private/genfs_contexts"
 printf '\nallow init proc_phoenix:file w_file_perms;\n' >> "$SRC/device/lineage/sepolicy/common/private/init.te"
 
-# 5) Merge Simplified Chinese (zh-rCN) supplement translations & Mainland China captive-portal defaults
-python3 - "$HERE/rom-patch-source.py" "$SRC" <<'PY'
-import pathlib, runpy, sys
-mod = runpy.run_path(sys.argv[1])
-src = pathlib.Path(sys.argv[2])
-count = mod["patch_infinity_zh_cn_translations"](src)
-mod["patch_cn_captive_portal"](src)
-print(f"Merged {count} Simplified Chinese (zh-rCN) supplement entries + CN captive-portal config into GSI source tree")
-PY
-
 mkdir -p "$OUT"
+FLAVOR="vanilla"
+[ "$WITH_GAPPS" = "true" ] && FLAVOR="gapps"
+LUNCH_TARGET="infinity_gsi_arm64-${TARGET_RELEASE}-${VARIANT}"
+
+echo "=== Building Project Infinity-X 3.12 GSI: ${LUNCH_TARGET} (WITH_GAPPS=${WITH_GAPPS}, LINEAGE_HIDE=${LINEAGE_HIDE}, JOBS=${JOBS}) ==="
 (
   cd "$SRC"
   export OUT_DIR="$GSI_OUT_DIR"
   export DIST_DIR="$OUT_DIR/dist"
+  export WITH_GAPPS="$WITH_GAPPS"
   unset INLINE_KERNEL_BUILDING || true
   set +euo pipefail
   if [ "${USE_CCACHE:-0}" != 1 ]; then
@@ -164,7 +214,7 @@ mkdir -p "$OUT"
     unset CCACHE_EXEC || true
     export USE_CCACHE=0
   fi
-  lunch infinity_gsi_arm64-userdebug || fail "lunch infinity_gsi_arm64-userdebug failed"
+  lunch "$LUNCH_TARGET" || fail "lunch $LUNCH_TARGET failed"
   m -j"$JOBS" systemimage || fail "m systemimage failed"
   set -euo pipefail
 
@@ -174,20 +224,14 @@ mkdir -p "$OUT"
   [ -s "$SYS_IMG" ] || fail "missing built $SYS_IMG"
 
   # Verify zero TrieBuilder property_contexts collisions (optionally against stock vendor_property_contexts)
-  python3 - "$HERE/rom-verify-delivery.py" \
+  python3 "$HERE/gsi_verify.py" property-contexts \
     "$PRODUCT_OUT/system/etc/selinux/plat_property_contexts" \
     "$PRODUCT_OUT/system/system_ext/etc/selinux/system_ext_property_contexts" \
     "$PRODUCT_OUT/system/product/etc/selinux/product_property_contexts" \
-    ${VENDOR_PC:+"$VENDOR_PC"} <<'PY'
-import pathlib, runpy, sys
-sys.path.insert(0, str(pathlib.Path(sys.argv[1]).parent))
-mod = runpy.run_path(sys.argv[1])
-ctxs = [(pathlib.Path(p).name, pathlib.Path(p).read_text(encoding="utf-8")) for p in sys.argv[2:] if p]
-mod["check_property_contexts"](ctxs)
-print(f"TrieBuilder property_contexts check passed ({len(ctxs)} files, 0 duplicates)")
-PY
+    ${VENDOR_PC:+"$VENDOR_PC"}
 
-  RAW_IMG="$OUT/Infinity-X-2.9-gsi_arm64-ab.img"
+  IMG_BASE="Infinity-X-3.12-gsi_arm64-${FLAVOR}-${VARIANT}-ab"
+  RAW_IMG="$OUT/${IMG_BASE}.img"
   if file "$SYS_IMG" | grep -qi "Android sparse image"; then
     "$HOST_BIN/simg2img" "$SYS_IMG" "$RAW_IMG"
   else
@@ -195,22 +239,10 @@ PY
   fi
   e2fsck -fn "$RAW_IMG" || true
   "$HOST_BIN/avbtool" info_image --image "$RAW_IMG" >/dev/null
-  {
-    echo "=== GSI build.prop ==="
-    debugfs -R "cat system/build.prop" "$RAW_IMG" 2>/dev/null | grep -E "^ro\.(build\.display\.id|build\.fingerprint|build\.version\.release|build\.version\.sdk|build\.version\.security_patch|infinity\.|system\.build\.)" || true
-    echo "=== GSI skip_mount.cfg ==="
-    debugfs -R "cat system/system_ext/etc/init/config/skip_mount.cfg" "$RAW_IMG" 2>/dev/null || true
-    echo "=== GSI init.gsi.rc (with OPLUS Phoenix disarm) ==="
-    debugfs -R "cat system/system_ext/etc/init/init.gsi.rc" "$RAW_IMG" 2>/dev/null || true
-    echo "=== GSI proc_phoenix SELinux rules ==="
-    debugfs -R "cat system/system_ext/etc/selinux/system_ext_sepolicy.cil" "$RAW_IMG" 2>/dev/null | grep "proc_phoenix" || true
-    echo "=== GSI system_ext_property_contexts vendor/odm check ==="
-    if debugfs -R "cat system/system_ext/etc/selinux/system_ext_property_contexts" "$RAW_IMG" 2>/dev/null | grep -qE "^(ro\.vendor\.|vendor\.|persist\.vendor\.|ro\.odm\.)"; then
-      echo "ERROR: vendor/odm entries still present in system_ext_property_contexts!" >&2
-      exit 1
-    fi
-    echo "(0 vendor/odm entries — clean!)"
-  } | tee "$OUT/gsi-verify.txt"
+
+  VERIFY_ARGS=(--img "$RAW_IMG" --variant "$VARIANT" --report "$OUT/gsi-verify.txt")
+  [ "$LINEAGE_HIDE" = "true" ] || VERIFY_ARGS+=(--no-lineage-hide)
+  python3 "$HERE/gsi_verify.py" image "${VERIFY_ARGS[@]}"
 
   if command -v pigz >/dev/null 2>&1; then
     pigz -p "$JOBS" -c -6 "$RAW_IMG" > "$RAW_IMG.gz"
@@ -219,7 +251,7 @@ PY
   fi
   (
     cd "$OUT"
-    sha256sum Infinity-X-2.9-gsi_arm64-ab.img Infinity-X-2.9-gsi_arm64-ab.img.gz gsi-verify.txt > SHA256SUMS.txt
+    sha256sum "${IMG_BASE}.img" "${IMG_BASE}.img.gz" gsi-verify.txt > SHA256SUMS.txt
     sha256sum -c SHA256SUMS.txt
   )
 )

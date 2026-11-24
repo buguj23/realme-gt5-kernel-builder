@@ -4,15 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "ProjectInfinity-X manifest branch (e.g. 15)"
+        description: "ProjectInfinity-X manifest branch (e.g. 16 for Infinity-X 3.12)"
         type: string
         required: true
-        default: "15"
+        default: "16"
       release_tag:
         description: "GitHub Release tag to publish compressed bare seed archives"
         type: string
         required: true
-        default: "infinity-15-gitea-seed"
+        default: "infinity-16-gitea-seed"
 
 permissions:
   contents: write

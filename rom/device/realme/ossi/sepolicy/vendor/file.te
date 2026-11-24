@@ -1,2 +1,0 @@
-# Vendor SELinux types for Realme GT5 (ossi).
-type vendor_proc_phoenix, fs_type, proc_type;
