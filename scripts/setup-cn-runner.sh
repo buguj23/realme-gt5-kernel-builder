@@ -83,7 +83,7 @@ if [ "$SKIP_APT" != 1 ]; then
   fi
 
   $SUDO apt-get update
-  $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${PKGS[@]}"
+  $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${PKGS[@]}"
 fi
 
 if ! command -v avbtool >/dev/null 2>&1; then
