@@ -143,7 +143,11 @@ restore_tree() {
   if [ "$INIT_TE_CREATED" = 1 ]; then
     rm -f "$SRC/device/lineage/sepolicy/common/private/init.te"
   fi
-  find "$SRC" -maxdepth 6 -name 'infinity_zh_cn_extra.xml' -delete 2>/dev/null || true
+  if [ -d "$HERE/../gsi/translations/zh-rCN" ]; then
+    while IFS= read -r rel_xml; do
+      rm -f "$SRC/$rel_xml"
+    done < <(cd "$HERE/../gsi/translations/zh-rCN" && find . -type f -name 'infinity_zh_cn_extra.xml' | sed 's|^\./||')
+  fi
   rm -rf "$SRC/device/generic/common/overlay_gt5_brightness" "$BACKUP_DIR"
 }
 trap restore_tree EXIT
