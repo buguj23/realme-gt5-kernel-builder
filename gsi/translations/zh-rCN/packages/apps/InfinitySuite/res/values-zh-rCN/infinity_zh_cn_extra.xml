@@ -429,7 +429,7 @@
                <item>@string/pulse_render_mode_solid_lines</item>
             </string-array>
     <string-array name="qs_header_clock_style_entries">
-                <item>@string/color_default</item>
+                    <item>@string/default_value</item>
                 <item>@string/qs_header_style1</item>
                 <item>@string/qs_header_style2</item>
                 <item>@string/qs_header_style3</item>
@@ -441,7 +441,7 @@
                 <item>@string/quick_pulldown_left</item>
             </string-array>
     <string-array name="quick_settings_tile_ui_style_entries">
-                <item>@string/color_default</item>
+                <item>@string/default_value</item>
                 <item>@string/quick_settings_tile_ui_style_a11_circle</item>
                 <item>@string/quick_settings_tile_ui_style_a11_square</item>
                 <item>@string/quick_settings_tile_ui_style_a11_mix</item>
@@ -456,12 +456,6 @@
                 <item>@string/screen_off_animation_default</item>
                 <item>@string/screen_off_animation_crt</item>
                 <item>@string/screen_off_animation_scale</item>
-            </string-array>
-    <string-array name="status_bar_battery_percent_entries">
-                <item>@string/status_bar_battery_percent_hidden</item>
-                <item>@string/status_bar_battery_percent_text_inside</item>
-                <item>@string/status_bar_battery_percent_text_next_right</item>
-                <item>@string/status_bar_battery_percent_text_next_left</item>
             </string-array>
     <string-array name="status_bar_date_entries">
                  <item>@string/status_bar_date_none</item>

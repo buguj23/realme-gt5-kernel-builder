@@ -87,6 +87,20 @@ def patch_soong_runtime_memory(src: Path) -> None:
     for path, updated in pending:
         path.write_text(updated, encoding="utf-8")
 
+    # Dexer heap: the 32-way dex stage runs r8/d8 with a hard-coded 4 GiB heap each;
+    # on a 64 GiB host that peak is enough to trigger a global OOM kill of ninja
+    # (observed: exit status 137 at 51%, dmesg "Killed process (ninja)"). 3 GiB per
+    # dexer still covers Settings/SystemUI R8 while halving the worst-case total.
+    dexer_config = src / "build/soong/java/config/config.go"
+    if dexer_config.is_file():
+        dexer_text = dexer_config.read_text(encoding="utf-8")
+        if "-JXmx3072M" not in dexer_text:
+            if dexer_text.count('"-JXmx4096M",') != 2:
+                raise RuntimeError(f"Soong dexer heap patch needs review: {dexer_config}")
+            dexer_config.write_text(
+                dexer_text.replace('"-JXmx4096M",', '"-JXmx3072M",'), encoding="utf-8"
+            )
+
 
 def patch_infinity_gsi_product(src: Path, *, with_gapps: str | None = None) -> None:
     """Fix upstream Infinity-X 16 GSI product definitions and user-build SELinux debug policy leak."""
@@ -214,7 +228,7 @@ def patch_infinity_gsi_product(src: Path, *, with_gapps: str | None = None) -> N
         '                     soong_config_variable("gsi", "building_lineage_gsi")), {\n'
         '        ("true", true): false,\n'
         '        ("true", default): true,\n'
-        '        default: false,\n'
+        '        (default, default): false,\n'
         '    }),'
     )
     _patch_text(
@@ -879,10 +893,26 @@ def patch_yokeshiq_frameworks_base_lineage_hide(src: Path) -> int:
 
     # 4. ServiceManager.java (A16 uses @android.ravenwood.annotation.RavenwoodReplace)
     def _service_manager(t: str) -> str:
+        # Insert the blocked-service check inside getService, and declare the helper AFTER
+        # the method: placing it above the signature steals getService's own annotations
+        # (@Nullable/@NonNull/@SystemApi) and makes metalava report a brand-new unannotated
+        # public API (InvalidNullConversion + UnflaggedApi).
         t = _replace_once_or_checked(
             t,
             "    public static IBinder getService(String name) {\n"
             "        try {",
+            "    public static IBinder getService(String name) {\n"
+            "        if (isBlockedService(name)) {\n"
+            "            return null;\n"
+            "        }\n"
+            "        try {",
+            marker="public static IBinder getService(String name) {\n        if (isBlockedService(name))",
+            label="ServiceManager.java:getService",
+        )
+        t = _replace_once_or_checked(
+            t,
+            "    /** @hide */\n"
+            "    public static IBinder getService$ravenwood(String name) {",
             "    // gsi-3.12 lineage_hide\n"
             "    private static boolean isBlockedService(String name) {\n"
             "        if (name == null || android.os.Process.myUid() < android.os.Process.FIRST_APPLICATION_UID) {\n"
@@ -903,13 +933,10 @@ def patch_yokeshiq_frameworks_base_lineage_hide(src: Path) -> int:
             "        return false;\n"
             "    }\n"
             "\n"
-            "    public static IBinder getService(String name) {\n"
-            "        if (isBlockedService(name)) {\n"
-            "            return null;\n"
-            "        }\n"
-            "        try {",
+            "    /** @hide */\n"
+            "    public static IBinder getService$ravenwood(String name) {",
             marker="private static boolean isBlockedService(String name)",
-            label="ServiceManager.java:getService",
+            label="ServiceManager.java:isBlockedService",
         )
         t = _replace_once_or_checked(
             t,
@@ -954,6 +981,14 @@ def patch_yokeshiq_frameworks_base_lineage_hide(src: Path) -> int:
             "        if (TRACK_KEY_ACCESS) onKeyAccess(key);\n"
             "        return native_get(key);\n"
             "    }",
+            "    public static String get(@NonNull String key) {\n"
+            "        if (isBlockedPropKey(key)) {\n"
+            '            return "";\n'
+            "        }\n"
+            "        if (TRACK_KEY_ACCESS) onKeyAccess(key);\n"
+            "        return native_get(key);\n"
+            "    }\n"
+            "\n"
             "    // gsi-3.12 lineage_hide\n"
             "    private static boolean isBlockedPropKey(String key) {\n"
             "        if (key == null || android.os.Process.myUid() < android.os.Process.FIRST_APPLICATION_UID) {\n"
@@ -975,14 +1010,6 @@ def patch_yokeshiq_frameworks_base_lineage_hide(src: Path) -> int:
             "            return true;\n"
             "        }\n"
             "        return false;\n"
-            "    }\n"
-            "\n"
-            "    public static String get(@NonNull String key) {\n"
-            "        if (isBlockedPropKey(key)) {\n"
-            '            return "";\n'
-            "        }\n"
-            "        if (TRACK_KEY_ACCESS) onKeyAccess(key);\n"
-            "        return native_get(key);\n"
             "    }",
             marker="private static boolean isBlockedPropKey(String key)",
             label="SystemProperties.java:get",
@@ -1106,6 +1133,15 @@ def patch_yokeshiq_frameworks_base_lineage_hide(src: Path) -> int:
             '                        || "com.android.launcher3".equals(pkg)\n'
             '                        || "com.android.settings".equals(pkg)\n'
             '                        || "com.android.shell".equals(pkg)\n'
+            '                        || "com.android.documentsui".equals(pkg)\n'
+            '                        || "com.android.permissioncontroller".equals(pkg)\n'
+            '                        || "com.android.photopicker".equals(pkg)\n'
+            '                        || "com.android.externalstorage".equals(pkg)\n'
+            '                        || "com.google.android.permissioncontroller".equals(pkg)\n'
+            '                        || "com.google.android.documentsui".equals(pkg)\n'
+            '                        || "com.google.android.photopicker".equals(pkg)\n'
+            '                        || pkg.startsWith("com.android.providers.")\n'
+            '                        || pkg.startsWith("com.google.android.providers.media")\n'
             '                        || pkg.startsWith("org.lineageos.")\n'
             '                        || pkg.startsWith("com.android.launcher")) {\n'
             "                    return true;\n"
@@ -1405,6 +1441,15 @@ def patch_yokeshiq_frameworks_base_lineage_hide(src: Path) -> int:
             '                        || "com.android.launcher3".equals(pkg)\n'
             '                        || "com.android.settings".equals(pkg)\n'
             '                        || "com.android.shell".equals(pkg)\n'
+            '                        || "com.android.documentsui".equals(pkg)\n'
+            '                        || "com.android.permissioncontroller".equals(pkg)\n'
+            '                        || "com.android.photopicker".equals(pkg)\n'
+            '                        || "com.android.externalstorage".equals(pkg)\n'
+            '                        || "com.google.android.permissioncontroller".equals(pkg)\n'
+            '                        || "com.google.android.documentsui".equals(pkg)\n'
+            '                        || "com.google.android.photopicker".equals(pkg)\n'
+            '                        || pkg.startsWith("com.android.providers.")\n'
+            '                        || pkg.startsWith("com.google.android.providers.media")\n'
             '                        || pkg.startsWith("org.lineageos.")\n'
             '                        || pkg.startsWith("com.android.launcher")) {\n'
             "                    return true;\n"

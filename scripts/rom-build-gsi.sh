@@ -37,7 +37,10 @@ EOF
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=""
-OUT=""
+# Artifact destination. Deliberately NOT named OUT: build/envsetup.sh exports OUT
+# and lunch() rewrites it to the build tree, which made every artifact land in
+# $PRODUCT_OUT instead of the requested --output directory.
+DEST=""
 GSI_OUT_DIR="out/gsi"
 VARIANT="user"
 TARGET_RELEASE="bp4a"
@@ -49,7 +52,7 @@ VENDOR_PC=""
 while (( $# > 0 )); do
   case "$1" in
     --src) SRC=$2; shift 2 ;;
-    --output) OUT=$2; shift 2 ;;
+    --output) DEST=$2; shift 2 ;;
     --out-dir) GSI_OUT_DIR=$2; shift 2 ;;
     --variant) VARIANT=$2; shift 2 ;;
     --release) TARGET_RELEASE=$2; shift 2 ;;
@@ -63,7 +66,7 @@ while (( $# > 0 )); do
 done
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
-[ -n "$SRC" ] && [ -n "$OUT" ] || { usage >&2; exit 2; }
+[ -n "$SRC" ] && [ -n "$DEST" ] || { usage >&2; exit 2; }
 case "$VARIANT" in user|userdebug) ;; *) fail "invalid --variant: $VARIANT (use user or userdebug)" ;; esac
 case "$WITH_GAPPS" in true|false) ;; *) fail "invalid --gapps: $WITH_GAPPS (use true or false)" ;; esac
 case "$LINEAGE_HIDE" in true|false) ;; *) fail "invalid --lineage-hide: $LINEAGE_HIDE (use true or false)" ;; esac
@@ -87,7 +90,7 @@ if [ "$HOST_RAM_GIB" -le 20 ]; then
 fi
 
 SRC=$(realpath -e -- "$SRC")
-OUT=$(realpath -m -- "$OUT")
+DEST=$(realpath -m -- "$DEST")
 if [ -n "$VENDOR_PC" ]; then VENDOR_PC=$(realpath -e -- "$VENDOR_PC"); fi
 [ -f "$SRC/build/envsetup.sh" ] || fail "missing $SRC/build/envsetup.sh"
 
@@ -95,6 +98,7 @@ if [ -n "$VENDOR_PC" ]; then VENDOR_PC=$(realpath -e -- "$VENDOR_PC"); fi
 BACKUP_DIR=$(mktemp -d -p "${TMPDIR:-/tmp}" gt5-gsi312-backup.XXXXXXXX)
 PATCHED_FILES=(
   "build/soong/ui/build/soong.go"
+  "build/soong/java/config/config.go"
   "build/blueprint/bootstrap/command.go"
   "build/make/target/board/BoardConfigGsiCommon.mk"
   "build/make/target/product/gsi_release.mk"
@@ -210,7 +214,7 @@ printf '\ntype proc_phoenix, fs_type, proc_type;\n' >> "$SRC/device/lineage/sepo
 printf '\ngenfscon proc /phoenix u:object_r:proc_phoenix:s0\n' >> "$SRC/device/lineage/sepolicy/common/private/genfs_contexts"
 printf '\nallow init proc_phoenix:file w_file_perms;\n' >> "$SRC/device/lineage/sepolicy/common/private/init.te"
 
-mkdir -p "$OUT"
+mkdir -p "$DEST"
 FLAVOR="vanilla"
 [ "$WITH_GAPPS" = "true" ] && FLAVOR="gapps"
 # Infinity-X 16 build/envsetup.sh parses single-arg hyphenated targets as `<product>-<variant>`
@@ -250,7 +254,7 @@ echo "=== Building Project Infinity-X 3.12 GSI: ${LUNCH_TARGET} (release=${TARGE
     ${VENDOR_PC:+"$VENDOR_PC"}
 
   IMG_BASE="Infinity-X-3.12-gsi_arm64-${FLAVOR}-${VARIANT}-ab"
-  RAW_IMG="$OUT/${IMG_BASE}.img"
+  RAW_IMG="$DEST/${IMG_BASE}.img"
   if file "$SYS_IMG" | grep -qi "Android sparse image"; then
     "$HOST_BIN/simg2img" "$SYS_IMG" "$RAW_IMG"
   else
@@ -259,7 +263,7 @@ echo "=== Building Project Infinity-X 3.12 GSI: ${LUNCH_TARGET} (release=${TARGE
   e2fsck -fn "$RAW_IMG" || true
   "$HOST_BIN/avbtool" info_image --image "$RAW_IMG" >/dev/null
 
-  VERIFY_ARGS=(--img "$RAW_IMG" --variant "$VARIANT" --report "$OUT/gsi-verify.txt")
+  VERIFY_ARGS=(--img "$RAW_IMG" --variant "$VARIANT" --report "$DEST/gsi-verify.txt")
   [ "$LINEAGE_HIDE" = "true" ] || VERIFY_ARGS+=(--no-lineage-hide)
   python3 "$HERE/gsi_verify.py" image "${VERIFY_ARGS[@]}"
 
@@ -269,7 +273,7 @@ echo "=== Building Project Infinity-X 3.12 GSI: ${LUNCH_TARGET} (release=${TARGE
     gzip -c -6 "$RAW_IMG" > "$RAW_IMG.gz"
   fi
   (
-    cd "$OUT"
+    cd "$DEST"
     sha256sum "${IMG_BASE}.img" "${IMG_BASE}.img.gz" gsi-verify.txt > SHA256SUMS.txt
     sha256sum -c SHA256SUMS.txt
   )
