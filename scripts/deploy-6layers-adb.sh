@@ -2,13 +2,15 @@
 # Deploy & configure the 6-layer YukiSU stealth architecture over ADB + ksud
 # Supports both flashed ROM (normal reboot) and zero-flash Sticky DSU (--directlkm-boot IMG).
 #
-# Architecture (per realme_gt5_infinity_and_stealth_master_guide):
-#   Layer 1: YukiSU (LKM) + built-in Kasumi/Kagami zero-mount VFS + UTS View GKI spoof
-#   Layer 2: YukiZygisk (standalone kernel Zygisk; disables built-in YukiZygisk first)
-#   Layer 3: TEESimulator-RS + Specter (Boot Spoofing ON, ROM Cleaner ON, ADB Lock OFF, PIF)
+# Architecture (live-verified on GT5 Infinity-X 3.12 Sticky DSU, Chunqiu 4.6.3: 1 GSI-inherent item only):
+#   Layer 1: YukiSU v1.9.0 DirectLKM + built-in Kasumi/Kagami + UTS View GKI spoof + kernel_umount
+#            + ksud umount for Vector dex2oat{32,64} + YukiSU Manager "默认卸载模块" ON
+#   Layer 2: YukiZygisk v0.5.0+ (anonymous_memory=true, yukilinker=true, denylist_mode=1 Skip+unmount)
+#   Layer 3: OhMyKeymint v1.3.0+ (replaces TEESimulator-RS; brand="realme") + Specter v2.0.0
+#            (non-destructive mode: disable resetprop/crom_props toggles to prevent Property Modified)
 #   Layer 4: Yukari (Binder service filter) + FuseHide (Standalone Zygisk MediaProvider isolation)
-#   Layer 5: HMA-OSS (Zygisk edition + Specter HMA config sync + Vold Isolation)
-#   Layer 6: Vector v2.2+ (Golden minimal scope: zero banking/gov/anti-cheat apps checked)
+#   Layer 5: HMA-OSS (Zygisk edition) + fgetpriority v0.0.4 (eliminates 隐藏应用列表生效(2))
+#   Layer 6: Vector v2.2+ ENABLED (Golden minimal scope: disable "卸载模块" ONLY for apps needing Xposed)
 set -euo pipefail
 
 SERIAL=""
@@ -101,13 +103,22 @@ check_ksud() {
   echo "$out"
 }
 
+find_optional_file() {
+  local pat="$1"
+  find "$PACK_DIR" -maxdepth 1 -type f -iname "$pat" | sort | head -n 1 || true
+}
+
 stage_push() {
   echo "=== Pushing 6-layer modules & APKs to /sdcard/Download/yuki_6layers/ ==="
   "${ADB[@]}" shell "mkdir -p /sdcard/Download/yuki_6layers"
+  local keymint_pat="OhMyKeymint-*.zip"
+  if [ -z "$(find_optional_file "$keymint_pat")" ]; then
+    keymint_pat="TEESimulator-RS-*.zip"
+  fi
   for pat in \
     "YukiSU_*.apk" \
     "YukiZygisk-*.zip" \
-    "TEESimulator-RS-*.zip" \
+    "$keymint_pat" \
     "specter-*.zip" \
     "Yukari*.zip" \
     "FuseHide-*.zip" \
@@ -119,6 +130,12 @@ stage_push() {
     "${ADB[@]}" push "$f" "/sdcard/Download/yuki_6layers/$(basename "$f")" >/dev/null
     echo "  pushed $(basename "$f")"
   done
+  local fgp
+  fgp=$(find_optional_file "fgetpriority*.zip")
+  if [ -n "$fgp" ]; then
+    "${ADB[@]}" push "$fgp" "/sdcard/Download/yuki_6layers/$(basename "$fgp")" >/dev/null
+    echo "  pushed $(basename "$fgp")"
+  fi
 }
 
 run_stage1() {
@@ -140,8 +157,12 @@ run_stage1() {
   run_root "$ksud uts-view status"
   run_root "$ksud feature list"
 
-  echo "=== Batch 1 (Layer 2 + Layer 3): YukiZygisk + TEESimulator-RS + Specter ==="
-  for pat in "YukiZygisk-*.zip" "TEESimulator-RS-*.zip" "specter-*.zip"; do
+  echo "=== Batch 1 (Layer 2 + Layer 3): YukiZygisk + OhMyKeymint/TEESimulator + Specter ==="
+  local keymint_pat="OhMyKeymint-*.zip"
+  if [ -z "$(find_optional_file "$keymint_pat")" ]; then
+    keymint_pat="TEESimulator-RS-*.zip"
+  fi
+  for pat in "YukiZygisk-*.zip" "$keymint_pat" "specter-*.zip"; do
     local base
     base=$(basename "$(find_file "$pat")")
     echo "  installing $base..."
@@ -152,21 +173,31 @@ run_stage1() {
 run_stage2() {
   local ksud
   ksud=$(check_ksud)
-  echo "=== Batch 2 (Layer 4 + Layer 5 + Layer 6): Yukari + FuseHide + HMA-OSS + Vector ==="
+  echo "=== Batch 2 (Layer 4 + Layer 5 + Layer 6): Yukari + FuseHide + HMA-OSS + fgetpriority + Vector ==="
   for pat in "Yukari*.zip" "FuseHide-*.zip" "HMA-OSS-ZYGISK-*.zip" "Vector-*.zip"; do
     local base
     base=$(basename "$(find_file "$pat")")
     echo "  installing $base..."
     run_root "$ksud module install '/sdcard/Download/yuki_6layers/$base'"
   done
+  local fgp
+  fgp=$(find_optional_file "fgetpriority*.zip")
+  if [ -n "$fgp" ]; then
+    local fgp_base
+    fgp_base=$(basename "$fgp")
+    echo "  installing $fgp_base..."
+    run_root "$ksud module install '/sdcard/Download/yuki_6layers/$fgp_base'"
+  fi
   local fuse_apk
   fuse_apk=$(find_file "FuseHide_*.apk")
   "${ADB[@]}" install -r "$fuse_apk" >/dev/null || true
 }
 
 run_config() {
-  echo "=== Phase 5: Configure Mainland China Captive Portal + Specter + HMA-OSS ==="
-  run_root '
+  local ksud
+  ksud=$(check_ksud)
+  echo "=== Phase 5: Configure China Captive Portal + YukiZygisk + OMK + Specter + Vector umount + HMA-OSS ==="
+  run_root "
     # Switch Android NetworkMonitor captive-portal URLs to Mainland China reachable endpoints
     settings put global captive_portal_mode 1
     settings put global captive_portal_http_url http://connect.rom.miui.com/generate_204
@@ -174,41 +205,52 @@ run_config() {
     settings put global captive_portal_fallback_url http://connectivitycheck.qualcomm.cn/generate_204
     settings put global captive_portal_other_fallback_urls http://connect.rom.miui.com/generate_204
 
+    # Configure YukiZygisk v0.5.0+: anonymous memory + yukilinker + Skip & unmount on denylist
+    if [ -x /data/adb/modules/yukizygisk/bin/yzctl ]; then
+      /data/adb/modules/yukizygisk/bin/yzctl config set anonymous_memory true yukilinker true denylist_mode 1 || true
+    fi
+
+    # Register Vector dex2oat bind-mounts in YukiSU kernel umount table (prevents Mount loophole + Found LSPHook)
+    $ksud umount add /apex/com.android.art/bin/dex2oat32 -f 2 2>&1 || true
+    $ksud umount add /apex/com.android.art/bin/dex2oat64 -f 2 2>&1 || true
+    $ksud umount save 2>&1 || true
+    if [ -f /data/adb/ksu/.umount ]; then
+      grep -vE '^---|^[{}]' /data/adb/ksu/.umount > /data/adb/ksu/.umount.tmp && mv /data/adb/ksu/.umount.tmp /data/adb/ksu/.umount
+    fi
+
+    # Specter non-destructive config: let ROM bionic/frameworks patches + YukiSU hide_bootloader + OMK handle props/TEE
+    # (enabling Specter crom_props/rom_fingerprint/prop_handler deletes ro.build.fingerprint & triggers Property Modified)
     CFG=/data/adb/specter/config/val
-    mkdir -p "$CFG"
-    printf 1 > "$CFG/toggle_prop_handler.val"
-    printf 1 > "$CFG/toggle_boot_state_props.val"
-    printf 1 > "$CFG/toggle_bootmode_spoof.val"
-    printf 1 > "$CFG/toggle_boot_hash.val"
-    printf 1 > "$CFG/toggle_rom_fingerprint.val"
-    printf 1 > "$CFG/toggle_rom_fingerprint_names.val"
-    printf 1 > "$CFG/toggle_rom_fingerprint_prefix.val"
-    printf 1 > "$CFG/toggle_rom_fingerprint_build_type.val"
-    printf 1 > "$CFG/toggle_custom_rom_props.val"
-    printf 1 > "$CFG/toggle_pif_props.val"
-    printf 0 > "$CFG/toggle_adb_disabler.val"
-    printf 1 > "$CFG/toggle_action_hma.val"
+    mkdir -p \"\$CFG\"
+    printf 0 > \"\$CFG/toggle_prop_handler.val\"
+    printf 0 > \"\$CFG/toggle_boot_state_props.val\"
+    printf 0 > \"\$CFG/toggle_bootmode_spoof.val\"
+    printf 1 > \"\$CFG/toggle_boot_hash.val\"
+    printf 0 > \"\$CFG/toggle_rom_fingerprint.val\"
+    printf 0 > \"\$CFG/toggle_rom_fingerprint_names.val\"
+    printf 0 > \"\$CFG/toggle_rom_fingerprint_prefix.val\"
+    printf 0 > \"\$CFG/toggle_rom_fingerprint_build_type.val\"
+    printf 0 > \"\$CFG/toggle_custom_rom_props.val\"
+    printf 0 > \"\$CFG/toggle_pif_props.val\"
+    printf 0 > \"\$CFG/toggle_adb_disabler.val\"
+    printf 1 > \"\$CFG/toggle_action_hma.val\"
     if [ -f /data/adb/modules/specter/features/keybox.sh ]; then
       sh /data/adb/modules/specter/features/keybox.sh || true
-    fi
-    if [ -f /data/adb/modules/specter/features/widevine.sh ]; then
-      sh /data/adb/modules/specter/features/widevine.sh || true
     fi
     if [ -f /data/adb/modules/specter/features/hma.sh ]; then
       sh /data/adb/modules/specter/features/hma.sh || true
     fi
-    # Enable Vold Isolation in HMA-OSS config if present
-    for hma_cfg in /data/misc/hide_my_applist*/config.json; do
-      [ -f "$hma_cfg" ] || continue
-      if grep -q "\"voldIsolation\"" "$hma_cfg"; then
-        sed -i "s/\"voldIsolation\"[[:space:]]*:[[:space:]]*false/\"voldIsolation\": true/g" "$hma_cfg" || true
-      fi
-    done
+
+    # Align OhMyKeymint device brand with vendor (realme RMX3820) when GSI ro.product.brand=generic
+    if [ -f /data/misc/keystore/omk/config.toml ]; then
+      sed -i 's/^brand = \"generic\"/brand = \"realme\"/' /data/misc/keystore/omk/config.toml || true
+    fi
+
     # Install bundled manager APKs from HMA-OSS and Vector modules if not installed
     for apk in /data/adb/modules/hma_oss_zygisk/manager.apk /data/adb/modules/zygisk_vector/manager.apk; do
-      [ -f "$apk" ] && pm install -r "$apk" >/dev/null 2>&1 || true
+      [ -f \"\$apk\" ] && pm install -r \"\$apk\" >/dev/null 2>&1 || true
     done
-  '
+  "
 }
 
 run_verify() {
@@ -231,7 +273,8 @@ run_verify() {
     echo '--- Specter config ---'
     head -n 1 /data/adb/specter/config/val/*.val 2>/dev/null || true
   "
-  echo "NOTE: Keep Vector v2.2 on GOLDEN MINIMAL SCOPE (only non-sensitive apps like WeChat/QQ/UI tweaks; NEVER check banking/gov/anti-cheat apps!)."
+  echo "NOTE 1: In YukiSU Manager -> Settings, enable '默认卸载模块' (Unmount modules by default) so YukiZygisk skips & unmounts dex2oat for sensitive/detector apps!"
+  echo "NOTE 2: Keep Vector v2.2 on GOLDEN MINIMAL SCOPE: disable '卸载模块' ONLY for apps needing Xposed hooks (e.g. WeChat/QQ) and MediaProvider (com.android.providers.media.module for FuseHide)."
 }
 
 case "$STAGE" in
