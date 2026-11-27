@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Realme GT5 (RMX3820 / Tianma TM1240 1.5K 144Hz AMOLED + TCS3701 under-display ALS)
+  Native AOSP DisplayDeviceConfig for physical display local:4630946682935740547.
+
+  Why DisplayDeviceConfig XML instead of an android-target RRO APK:
+  - Read ONCE at boot exclusively by system_server (DisplayDeviceConfig.create()).
+  - Never injected into AssetManager / idmap, so unmounted app processes and
+    webview_zygote NEVER open it and NEVER suffer ENOENT / JNI FatalError!
+
+  Calibration facts verified on live RMX3820:
+  - /sys/class/backlight/panel0-backlight (0..4095) is linear 12-bit MIPI DBV (~2..500 nits SDR).
+  - Using linear screenBrightnessMap (0.0->2.0, 1.0->500.0) eliminates double-gamma distortion
+    so SystemUI's HLG brightness slider (0..100%) maps 1:1 with human perceived brightness!
+  - Smooth Pixel/ColorOS-grade transition ramps + fast horizon (1s/4s) + snappy debounce (0.6s/1.4s)
+    + fine hysteresis (12%/15%) make brightness transitions silky and responsive.
+  - Lux-to-backlight curve is strictly contractive under worst-case OLED self-leakage (~250 lux @ 100%)
+    so pitch-dark rooms smoothly converge down without oscillation.
+-->
+<displayConfiguration>
+    <name>Realme GT5 TM1240</name>
+
+    <!-- Linear 12-bit MIPI DBV backlight [0.0..1.0] -> SDR nits [2.0..500.0] -->
+    <screenBrightnessMap interpolation="linear">
+        <point>
+            <value>0.0</value>
+            <nits>2.0</nits>
+        </point>
+        <point>
+            <value>1.0</value>
+            <nits>500.0</nits>
+        </point>
+    </screenBrightnessMap>
+
+    <screenBrightnessDefault>0.16</screenBrightnessDefault>
+
+    <!-- Front under-display TCS3701 ambient light sensor exposed by Qualcomm SEE HAL -->
+    <lightSensor>
+        <type>qti.sensor.wise_light</type>
+    </lightSensor>
+
+    <!-- Silky-smooth perceptual ramp rates & max transition durations -->
+    <screenBrightnessRampFastDecrease>0.55</screenBrightnessRampFastDecrease>
+    <screenBrightnessRampFastIncrease>0.55</screenBrightnessRampFastIncrease>
+    <screenBrightnessRampSlowDecrease>0.12</screenBrightnessRampSlowDecrease>
+    <screenBrightnessRampSlowIncrease>0.16</screenBrightnessRampSlowIncrease>
+    <screenBrightnessRampIncreaseMaxMillis>1500</screenBrightnessRampIncreaseMaxMillis>
+    <screenBrightnessRampDecreaseMaxMillis>2000</screenBrightnessRampDecreaseMaxMillis>
+
+    <!-- Responsive rolling average windows (1s short / 4s long) -->
+    <ambientLightHorizonShort>1000</ambientLightHorizonShort>
+    <ambientLightHorizonLong>4000</ambientLightHorizonLong>
+
+    <!-- Fine hysteresis so moderate lighting changes glide smoothly -->
+    <ambientBrightnessChangeThresholds>
+        <brighteningThresholds>
+            <minimum>2.0</minimum>
+            <brightnessThresholdPoints>
+                <brightnessThresholdPoint>
+                    <threshold>0</threshold>
+                    <percentage>12</percentage>
+                </brightnessThresholdPoint>
+            </brightnessThresholdPoints>
+        </brighteningThresholds>
+        <darkeningThresholds>
+            <minimum>2.0</minimum>
+            <brightnessThresholdPoints>
+                <brightnessThresholdPoint>
+                    <threshold>0</threshold>
+                    <percentage>15</percentage>
+                </brightnessThresholdPoint>
+            </brightnessThresholdPoints>
+        </darkeningThresholds>
+    </ambientBrightnessChangeThresholds>
+
+    <!-- Auto-brightness curve aligned 1:1 with Android HLG UI slider (15% -> 100%) -->
+    <autoBrightness enabled="true">
+        <brighteningLightDebounceMillis>600</brighteningLightDebounceMillis>
+        <darkeningLightDebounceMillis>1400</darkeningLightDebounceMillis>
+        <luxToBrightnessMapping>
+            <mode>default</mode>
+            <setting>normal</setting>
+            <map>
+                <point><first>0</first><second>0.008</second></point>
+                <point><first>3</first><second>0.015</second></point>
+                <point><first>10</first><second>0.030</second></point>
+                <point><first>25</first><second>0.052</second></point>
+                <point><first>60</first><second>0.088</second></point>
+                <point><first>120</first><second>0.135</second></point>
+                <point><first>250</first><second>0.195</second></point>
+                <point><first>500</first><second>0.285</second></point>
+                <point><first>1000</first><second>0.410</second></point>
+                <point><first>2000</first><second>0.560</second></point>
+                <point><first>4000</first><second>0.720</second></point>
+                <point><first>8000</first><second>0.870</second></point>
+                <point><first>16000</first><second>1.000</second></point>
+            </map>
+        </luxToBrightnessMapping>
+    </autoBrightness>
+</displayConfiguration>

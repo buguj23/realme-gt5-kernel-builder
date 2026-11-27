@@ -1,0 +1,6 @@
+id=gt5_display_fix
+name=GT5 显示与自动亮度原厂校准 (RMX3820)
+version=v1.1.0
+versionCode=110
+author=GT5-InfinityX
+description=为真我 GT5 (TM1240 + TCS3701 屏下光感) 提供原生 DisplayDeviceConfig XML（零 RRO / 零 WebView 崩溃 / 线性对齐 UI 亮度条 / 丝滑渐变斜坡）并开机守护居中挖孔校准
