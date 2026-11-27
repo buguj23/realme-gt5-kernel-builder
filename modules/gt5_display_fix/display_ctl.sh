@@ -81,8 +81,8 @@ clamp_state() {
   case "$GAMUT" in native|p3_vivid|p3_nature|p3_pro|srgb_pro|srgb_nature|bt2020) ;; *) GAMUT="p3_vivid" ;; esac
   COLOR_TEMP=$(clamp_int "$COLOR_TEMP" 2800 10000 6500)
   SDR2HDR_ID=$(clamp_int "$SDR2HDR_ID" 0 38 0)
-  case "$DIRECT_HDR" in 0|5|9|61|62) ;; *) DIRECT_HDR=0 ;; esac
-  case "$MEMC_MODE" in off|video_single|video_dual|video_netflix|game|game_emv) ;; *) MEMC_MODE="off" ;; esac
+  case "$DIRECT_HDR" in 0|3|4|5|6|7|8|9|10|11|12|13|14|61|62) ;; *) DIRECT_HDR=0 ;; esac
+  case "$MEMC_MODE" in off|video_single|video_dual|video_netflix|game|game_emv|tnr) ;; *) MEMC_MODE="off" ;; esac
   MEMC_GAME_ID=$(clamp_int "$MEMC_GAME_ID" 0 255 3)
   case "$MEMC_LATENCY" in 18|34|50|51) ;; *) MEMC_LATENCY=50 ;; esac
   case "$MEMC_FPS" in 0|30|45|60) ;; *) MEMC_FPS=45 ;; esac
@@ -173,6 +173,7 @@ apply_gamut_and_temp() {
   esac
   if [ "$skip_temp" != "1" ]; then
     iris_run 48 1 "$COLOR_TEMP"
+    iris_run 35 1 "$COLOR_TEMP"
   fi
 }
 
@@ -186,10 +187,16 @@ apply_sys_hdr() {
 
 apply_panel_hw() {
   sys_write pwm_onepulse "$PWM_ONEPULSE"
-  sys_write hbm "$PANEL_HBM"
   sys_write LCM_CABC "$LCM_CABC"
   sys_write dither "$PANEL_DITHER"
-  sys_write seed "$PANEL_SEED"
+  # Kernel forbids writing seed while HBM is active: set seed before enabling HBM
+  if [ "$PANEL_HBM" = "0" ]; then
+    sys_write hbm 0
+    sys_write seed "$PANEL_SEED"
+  else
+    sys_write seed "$PANEL_SEED"
+    sys_write hbm 1
+  fi
 }
 
 is_bypass_sdr2hdr() {
@@ -212,7 +219,7 @@ apply_iris_pipeline() {
   elif [ "$cm" = "bypass" ]; then
     need_pt=0
   else
-    if [ "$mm" != "off" ] || [ "$srm" != "0" ] || [ "$dhdr" != "0" ]; then
+    if [ "$mm" != "off" ] || [ "$srm" != "0" ] || [ "$dhdr" != "0" ] || [ "$GAMUT" = "bt2020" ]; then
       need_pt=1
     elif ! is_bypass_sdr2hdr "$s2h"; then
       need_pt=1
@@ -250,6 +257,7 @@ apply_iris_pipeline() {
       video_netflix) iris_run 258 3 74 0 0 ;;
       game)          iris_run 258 6 10 99 "$mlat" 99 "$mgid" "$mfps" ;;
       game_emv)      iris_run 258 3 40 255 6 ;;
+      tnr)           iris_run 258 1 14 ;;
     esac
 
     # 6. Apply Gamut & Color Temp (preserve preset Kelvin for 6=Cinema6500K / 12=Movie5000K)
@@ -313,7 +321,8 @@ print_status() {
 
   hw_bypass=$(iris_get1 56)
   hw_gamut=$(iris_get1 40)
-  hw_temp=$(iris_get1 48)
+  hw_temp=$(iris_get1 35)
+  case "$hw_temp" in ''|0|-*) hw_temp=$(iris_get1 48) ;; esac
   hw_memc=$(iris_get1 258)
   hw_s2h=$(iris_get1 267)
   hw_sr=$(iris_get1 273)

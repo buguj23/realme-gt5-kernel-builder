@@ -1,6 +1,6 @@
 id=gt5_display_fix
 name=GT5 独显芯片与画质增强中心 Pro (RMX3820)
-version=v2.0.0
-versionCode=200
+version=v2.0.1
+versionCode=201
 author=GT5-InfinityX
 description=真我 GT5 (TM1240 + TCS3701 + Pixelworks X7 独显芯片) 完整显示套件：系统 HDR10/HDR10+/HLG/Ultra HDR 与 1032nit HBM、Pixelworks X7 视频/游戏 HDR(SDR2HDR/EDR)、7 档原厂校准色域与硬件色温、视频/游戏 MEMC 插帧超帧、1.5K 硬件超分辨率(LPSR/HESR)、原厂应用自动场景引擎、类 DC 单脉冲调光、线性自动亮度与居中挖孔守护（内置 YukiSU WebUI，零 WebView 崩溃）

@@ -307,10 +307,10 @@
 
   <div class="card">
     <div class="card-title">
-      <span>硬件色温调节 (Type 48)</span>
+      <span>硬件色温调节 (Type 35 / 48)</span>
       <span id="tempVal" class="slider-val">6500 K</span>
     </div>
-    <input id="tempSlider" class="kelvin" type="range" min="2800" max="10000" step="50" value="6500"
+    <input id="tempSlider" class="kelvin" type="range" min="2800" max="10000" step="100" value="6500"
            oninput="onTempInput(this.value)" />
     <div class="grid-4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
       <button class="chip center" onclick="setTemp(5500)"><span class="c-name">5500K</span><span class="c-desc">暖色护眼</span></button>
@@ -746,11 +746,15 @@ const FILTERS = [
 ];
 
 const DIRECT_HDRS = [
-  { id: 0,  name: "自动/关闭", desc: "跟随内容" },
-  { id: 5,  name: "本地 SDR2HDR", desc: "本地视频" },
-  { id: 9,  name: "AI 在线视频", desc: "流媒体增强" },
-  { id: 61, name: "HLG HDR",   desc: "广播级 HLG" },
-  { id: 62, name: "HDR10",     desc: "静态 HDR10" }
+  { id: 0,  name: "自动/关闭",  desc: "跟随内容" },
+  { id: 62, name: "HDR10",      desc: "静态 HDR10" },
+  { id: 61, name: "HLG HDR",    desc: "广播级 HLG" },
+  { id: 9,  name: "AI 在线视频",desc: "流媒体增强" },
+  { id: 11, name: "AI 本地视频",desc: "本地电影增强" },
+  { id: 12, name: "AI 相册照片",desc: "图片 HDR 增强" },
+  { id: 13, name: "AI 游戏画质",desc: "游戏动态映射" },
+  { id: 14, name: "AI 护眼阅读",desc: "图文对比优化" },
+  { id: 5,  name: "本地 SDR2HDR",desc: "通用本地映射" }
 ];
 
 const MEMCS = [
@@ -759,7 +763,8 @@ const MEMCS = [
   { id: "video_single",  name: "视频单通道插帧", desc: "直播 / 竖屏短视频" },
   { id: "video_netflix", name: "Netflix 专享",   desc: "流媒体电影防抖插帧" },
   { id: "game",          name: "游戏独立超帧",   desc: "独显倍帧至 90/120/144fps" },
-  { id: "game_emv",      name: "EMV 智能超帧",   desc: "游戏引擎运动矢量自适应" }
+  { id: "game_emv",      name: "EMV 智能超帧",   desc: "游戏引擎运动矢量自适应" },
+  { id: "tnr",           name: "TNR 硬件降噪",   desc: "视频时域降噪平滑画质" }
 ];
 
 const MEMC_LATS = [
