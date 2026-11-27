@@ -243,28 +243,34 @@
 
 <!-- Mode selector -->
 <div class="card">
-  <div class="card-title"><span>灯效模式（原厂硬件驱动）</span></div>
+  <div class="card-title"><span>灯效模式（全部支持 4 灯独立控色/亮度/开关）</span></div>
   <div class="mode-grid">
-    <div class="chip" data-mode="new_always_on_mode" onclick="setMode('new_always_on_mode')">常亮</div>
-    <div class="chip" data-mode="individual_ctl_breath" onclick="setMode('individual_ctl_breath')">四灯独立呼吸</div>
-    <div class="chip" data-mode="breath_mode" onclick="setMode('breath_mode')">同步呼吸</div>
-    <div class="chip" data-mode="blink_mode" onclick="setMode('blink_mode')">节奏闪烁</div>
-    <div class="chip" data-mode="horse_race_lamp" onclick="setMode('horse_race_lamp')">跑马流光</div>
-    <div class="chip" data-mode="cc_mode" onclick="setMode('cc_mode')">恒流高亮</div>
+    <div class="chip" data-mode="always_on" onclick="setMode('always_on')">常亮</div>
+    <div class="chip" data-mode="breath" onclick="setMode('breath')">硬件呼吸</div>
+    <div class="chip" data-mode="blink" onclick="setMode('blink')">节奏闪烁</div>
+    <div class="chip" data-mode="marquee" onclick="setMode('marquee')">跑马流光</div>
+    <div class="chip" data-mode="rainbow" onclick="setMode('rainbow')">四区彩虹</div>
   </div>
   <div id="rhythmBox" class="hidden" style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">
     <div class="card-title" style="margin-bottom:6px;">
-      <span>呼吸 / 闪烁节奏</span>
+      <span id="rhythmLabel">呼吸 / 闪烁节奏</span>
       <span style="display:flex;gap:6px;">
         <button class="mini-btn" onclick="setRhythm(8,2,8,2)">柔和</button>
         <button class="mini-btn" onclick="setRhythm(6,2,6,2)">原厂</button>
         <button class="mini-btn" onclick="setRhythm(3,1,3,1)">急促</button>
       </span>
     </div>
-    <div class="row"><label>渐亮 TR1</label><input id="tr1" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tr1v" class="val">6</span></div>
-    <div class="row"><label>保持 TON</label><input id="ton" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tonv" class="val">2</span></div>
-    <div class="row"><label>渐暗 TF1</label><input id="tf1" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tf1v" class="val">6</span></div>
+    <div id="trRow" class="row"><label>渐亮 TR1</label><input id="tr1" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tr1v" class="val">6</span></div>
+    <div class="row"><label>亮起 TON</label><input id="ton" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tonv" class="val">2</span></div>
+    <div id="tfRow" class="row"><label>渐暗 TF1</label><input id="tf1" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tf1v" class="val">6</span></div>
     <div class="row"><label>熄灭 TOFF</label><input id="toff" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="toffv" class="val">2</span></div>
+  </div>
+  <div id="speedBox" class="hidden" style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">
+    <div class="row" style="margin:0;">
+      <label>流动速度</label>
+      <input id="speedRange" type="range" min="1" max="10" value="5" oninput="onSpeedInput(this.value)">
+      <span id="speedVal" class="val">5 档</span>
+    </div>
   </div>
 </div>
 
@@ -326,7 +332,7 @@ const PRESETS = [
 ];
 
 let state = {
-  enabled: 0, mode: "new_always_on_mode", boot_restore: 1, screen_follow: 0,
+  enabled: 0, mode: "always_on", boot_restore: 1, screen_follow: 0, speed: 5,
   tr1: 6, ton: 2, tf1: 6, toff: 2, hw_reg20: "0x06", hw_trigger: "none",
   leds: [
     {id:1,on:1,r:255,g:26,b:82,br:60},
@@ -425,8 +431,16 @@ function render() {
   document.querySelectorAll(".chip").forEach(c => {
     c.classList.toggle("active", c.dataset.mode === state.mode);
   });
-  const needRhythm = ["individual_ctl_breath", "breath_mode", "blink_mode"].includes(state.mode);
-  document.getElementById("rhythmBox").classList.toggle("hidden", !needRhythm);
+  const isBreath = state.mode === "breath";
+  const isBlink = state.mode === "blink";
+  const isFlow = state.mode === "marquee" || state.mode === "rainbow";
+  document.getElementById("rhythmBox").classList.toggle("hidden", !(isBreath || isBlink));
+  document.getElementById("trRow").classList.toggle("hidden", !isBreath);
+  document.getElementById("tfRow").classList.toggle("hidden", !isBreath);
+  document.getElementById("rhythmLabel").textContent = isBreath ? "硬件呼吸节奏" : "闪烁亮灭节奏";
+  document.getElementById("speedBox").classList.toggle("hidden", !isFlow);
+  document.getElementById("speedRange").value = state.speed || 5;
+  document.getElementById("speedVal").textContent = (state.speed || 5) + " 档";
 
   // Rhythm values
   ["tr1","ton","tf1","toff"].forEach(k => {
@@ -438,9 +452,9 @@ function render() {
   const stage = document.getElementById("haloStage");
   stage.classList.remove("anim-breath", "anim-blink", "anim-flow");
   if (state.enabled) {
-    if (state.mode === "individual_ctl_breath" || state.mode === "breath_mode") stage.classList.add("anim-breath");
-    else if (state.mode === "blink_mode") stage.classList.add("anim-blink");
-    else if (state.mode === "horse_race_lamp") stage.classList.add("anim-flow");
+    if (state.mode === "breath") stage.classList.add("anim-breath");
+    else if (state.mode === "blink") stage.classList.add("anim-blink");
+    else if (state.mode === "marquee" || state.mode === "rainbow") stage.classList.add("anim-flow");
   }
 
   // LED cards + SVG segments
@@ -471,9 +485,15 @@ function render() {
   document.getElementById("bootRestore").checked = !!state.boot_restore;
   document.getElementById("screenFollow").checked = !!state.screen_follow;
 
-  const chipActive = state.hw_reg20 && state.hw_reg20 !== "0x06" && state.hw_reg20 !== "0x00";
+  const MODE_NAMES = {
+    always_on: "常亮",
+    breath: "硬件呼吸",
+    blink: "节奏闪烁",
+    marquee: "跑马流光",
+    rainbow: "四区彩虹"
+  };
   document.getElementById("statusPill").textContent = state.enabled
-    ? `硬件激活 · ${state.mode} · CHIP(${state.hw_reg20})`
+    ? `硬件激活 · ${MODE_NAMES[state.mode] || state.mode} · CHIP(${state.hw_reg20})`
     : `芯片待机 0mA · CHIP(${state.hw_reg20})`;
 }
 
@@ -485,6 +505,7 @@ function schedulePush(immediate = false) {
       `MODE=${state.mode}`,
       `BOOT_RESTORE=${state.boot_restore ? 1 : 0}`,
       `SCREEN_FOLLOW=${state.screen_follow ? 1 : 0}`,
+      `SPEED=${state.speed || 5}`,
       `TR1=${state.tr1}`, `TON=${state.ton}`, `TF1=${state.tf1}`, `TOFF=${state.toff}`
     ];
     state.leds.forEach((l, i) => {
@@ -526,6 +547,11 @@ function onRhythmInput() {
   state.ton = Number(document.getElementById("ton").value);
   state.tf1 = Number(document.getElementById("tf1").value);
   state.toff = Number(document.getElementById("toff").value);
+  render();
+  schedulePush(false);
+}
+function onSpeedInput(v) {
+  state.speed = Number(v);
   render();
   schedulePush(false);
 }
