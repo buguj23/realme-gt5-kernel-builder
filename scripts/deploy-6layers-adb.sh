@@ -213,6 +213,11 @@ run_config() {
       cmd overlay set-priority --user 0 com.android.shell:gt5_center_cutout highest 2>/dev/null || true
       settings put system statusbar_extra_padding_start 25
       settings delete system statusbar_extra_padding_end 2>/dev/null || true
+      # Fix Realme GT5 Awakening Halo Pro (aw210xx_led) staying lit white while screen unlocked
+      # (vendor.qti.hardware.lights maps LIGHT_ID_BUTTONS id=2 to /sys/class/leds/{red,green,blue})
+      content insert --uri content://lineagesettings/secure --bind name:s:button_brightness --bind value:s:0.0 2>/dev/null || true
+      content insert --uri content://lineagesettings/secure --bind name:s:keyboard_brightness --bind value:s:0.0 2>/dev/null || true
+      content insert --uri content://lineagesettings/secure --bind name:s:button_backlight_timeout --bind value:s:0 2>/dev/null || true
     fi
 
     # Configure YukiZygisk v0.5.0+: anonymous memory + yukilinker + Skip & unmount on denylist
