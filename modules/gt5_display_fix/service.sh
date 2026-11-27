@@ -1,16 +1,18 @@
 #!/system/bin/sh
-# 1. Ensure GT5 factory center punch-hole cutout fabricated overlay stays active across reboots
-# 2. ColorOS/Realme UI behavior bridge:
-#    Listen to DisplayBrightnessStrategySelector (logd-filtered single tag, 0% CPU idle, <10ms latency).
-#    Whenever user toggles Auto-Brightness OFF -> ON (FallbackBrightnessStrategy -> AutomaticBrightnessStrategy
-#    outside of a screen-wake transition), immediately clear AOSP's sticky 5-minute ShortTermModel &
-#    screen_auto_brightness_adj bias so brightness glides smoothly back to the real ambient lux curve!
+# Realme GT5 (RMX3820) Display, Auto-Brightness, HDR & Pixelworks X7 Boot Service
+# 1. Keeps factory center punch-hole cutout fabricated overlay active across reboots.
+# 2. Dedicated <10ms ColorOS-style Auto-Brightness bias reset watcher (isolated from other watchers).
+# 3. Applies saved Pixelworks X7 / Color Gamut / System HDR / Panel DC state on boot.
+# 4. Starts zero-CPU-idle App Auto-Scene & Screen-Wake Gamut Guard daemon.
+
+MODDIR="${0%/*}"
 
 while [ "$(getprop sys.boot_completed)" != "1" ]; do
   sleep 2
 done
 sleep 2
 
+# 1. Center punch-hole cutout guard
 if ! cmd overlay list android 2>/dev/null | grep -q '\[x\] com.android.shell:gt5_center_cutout'; then
   cmd overlay fabricate --target android --name gt5_center_cutout \
     android:string/config_mainBuiltInDisplayCutout string \
@@ -18,6 +20,7 @@ if ! cmd overlay list android 2>/dev/null | grep -q '\[x\] com.android.shell:gt5
   cmd overlay enable com.android.shell:gt5_center_cutout >/dev/null 2>&1 || true
 fi
 
+# 2. Dedicated Auto-Brightness OFF -> ON instant bias reset watcher
 (
   while true; do
     wake_ts=0
@@ -27,7 +30,6 @@ fi
           wake_ts=$(date +%s)
           ;;
         *"from AutomaticBrightnessStrategy to FallbackBrightnessStrategy"*)
-          # Explicit Auto OFF while awake -> ensure immediate Auto ON resets bias
           wake_ts=0
           ;;
         *"from FallbackBrightnessStrategy to AutomaticBrightnessStrategy"*)
@@ -42,3 +44,13 @@ fi
     sleep 2
   done
 ) </dev/null >/dev/null 2>&1 &
+
+# 3. Restore Pixelworks X7 + Gamut + System HDR + Panel hardware state
+if [ -f "$MODDIR/display_ctl.sh" ]; then
+  sh "$MODDIR/display_ctl.sh" boot_apply >/dev/null 2>&1 || true
+fi
+
+# 4. Start event-driven App Auto-Scene & Screen-Wake Gamut Guard
+if [ -f "$MODDIR/scene_daemon.sh" ]; then
+  sh "$MODDIR/scene_daemon.sh" >/dev/null 2>&1 &
+fi

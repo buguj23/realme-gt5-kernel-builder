@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Realme GT5 (RMX3820 / Tianma TM1240 1.5K 144Hz AMOLED + TCS3701 under-display ALS)
+  Realme GT5 (RMX3820 / Tianma TM1240 1.5K 144Hz AMOLED + TCS3701 under-display ALS + Pixelworks X7)
   Native AOSP DisplayDeviceConfig for physical display local:4630946682935740547.
 
   Why DisplayDeviceConfig XML instead of an android-target RRO APK:
@@ -8,31 +8,112 @@
   - Never injected into AssetManager / idmap, so unmounted app processes and
     webview_zygote NEVER open it and NEVER suffer ENOENT / JNI FatalError!
 
-  Calibration facts verified on live RMX3820:
-  - /sys/class/backlight/panel0-backlight (0..4095) is linear 12-bit MIPI DBV (~2..500 nits SDR).
-  - Using linear screenBrightnessMap (0.0->2.0, 1.0->500.0) eliminates double-gamma distortion
-    so SystemUI's HLG brightness slider (0..100%) maps 1:1 with human perceived brightness!
-  - Smooth Pixel/ColorOS-grade transition ramps + fast horizon (1s/4s) + snappy debounce (0.6s/1.4s)
-    + fine hysteresis (12%/15%) make brightness transitions silky and responsive.
-  - Lux-to-backlight curve is strictly contractive under worst-case OLED self-leakage (~250 lux @ 100%)
-    so pitch-dark rooms smoothly converge down without oscillation.
+  Factory hardware measurements verified on live RMX3820 (tm1240.xml + kernel sysfs):
+  - /sys/class/backlight/panel0-backlight/max_brightness = 4095 (full 12-bit MIPI DBV)
+  - /sys/kernel/oplus_display/max_brightness = 3515 (normal SDR max = 3515/4095 = 0.858 -> ~500 nits)
+  - DBV 3515..4095 (0.858..1.0) is hardware HBM range (~500 -> 1032 nits peak per tm1240.xml).
+  - Native Android 16 HighBrightnessMode + HdrBrightnessConfig unlocks HDR10 / HDR10+ / HLG /
+    Ultra HDR dynamic range boost (up to 4.0x / 1032 nits) and outdoor sunlight HBM (>10000 lux),
+    while keeping normal SDR slider 1:1 aligned with HLG perceived brightness!
 -->
 <displayConfiguration>
     <name>Realme GT5 TM1240</name>
 
-    <!-- Linear 12-bit MIPI DBV backlight [0.0..1.0] -> SDR nits [2.0..500.0] -->
+    <!-- 2-segment linear MIPI DBV backlight: [0.0..0.858] SDR 2..500 nits, [0.858..1.0] HBM 500..1032 nits -->
     <screenBrightnessMap interpolation="linear">
         <point>
             <value>0.0</value>
             <nits>2.0</nits>
         </point>
         <point>
-            <value>1.0</value>
+            <value>0.858</value>
             <nits>500.0</nits>
+        </point>
+        <point>
+            <value>1.0</value>
+            <nits>1032.0</nits>
         </point>
     </screenBrightnessMap>
 
-    <screenBrightnessDefault>0.16</screenBrightnessDefault>
+    <screenBrightnessDefault>0.14</screenBrightnessDefault>
+
+    <!-- Native Android 16 High Brightness Mode (Sunlight HBM + HDR HBM ceiling) -->
+    <highBrightnessMode enabled="true">
+        <transitionPoint>0.858</transitionPoint>
+        <minimumLux>10000</minimumLux>
+        <timing>
+            <timeWindowSecs>1800</timeWindowSecs>
+            <timeMaxSecs>300</timeMaxSecs>
+            <timeMinSecs>60</timeMinSecs>
+        </timing>
+        <allowInLowPowerMode>false</allowInLowPowerMode>
+        <minimumHdrPercentOfScreen>0.2</minimumHdrPercentOfScreen>
+        <sdrHdrRatioMap>
+            <point>
+                <sdrNits>2.0</sdrNits>
+                <hdrRatio>4.0</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>100.0</sdrNits>
+                <hdrRatio>4.0</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>250.0</sdrNits>
+                <hdrRatio>3.5</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>500.0</sdrNits>
+                <hdrRatio>2.06</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>1032.0</sdrNits>
+                <hdrRatio>1.0</hdrRatio>
+            </point>
+        </sdrHdrRatioMap>
+    </highBrightnessMode>
+
+    <!-- Native Android 16 HDR / Ultra HDR Brightness Modifier (HDR10 / HDR10+ / HLG / Gainmap) -->
+    <hdrBrightnessConfig>
+        <brightnessMap>
+            <point>
+                <first>0</first>
+                <second>1.0</second>
+            </point>
+            <point>
+                <first>10000</first>
+                <second>1.0</second>
+            </point>
+        </brightnessMap>
+        <brightnessIncreaseDebounceMillis>300</brightnessIncreaseDebounceMillis>
+        <brightnessDecreaseDebounceMillis>800</brightnessDecreaseDebounceMillis>
+        <screenBrightnessRampIncrease>0.4</screenBrightnessRampIncrease>
+        <screenBrightnessRampDecrease>0.25</screenBrightnessRampDecrease>
+        <minimumHdrPercentOfScreenForNbm>0.05</minimumHdrPercentOfScreenForNbm>
+        <minimumHdrPercentOfScreenForHbm>0.25</minimumHdrPercentOfScreenForHbm>
+        <allowInLowPowerMode>false</allowInLowPowerMode>
+        <sdrHdrRatioMap>
+            <point>
+                <first>2.0</first>
+                <second>4.0</second>
+            </point>
+            <point>
+                <first>100.0</first>
+                <second>4.0</second>
+            </point>
+            <point>
+                <first>250.0</first>
+                <second>3.5</second>
+            </point>
+            <point>
+                <first>500.0</first>
+                <second>2.06</second>
+            </point>
+            <point>
+                <first>1032.0</first>
+                <second>1.0</second>
+            </point>
+        </sdrHdrRatioMap>
+    </hdrBrightnessConfig>
 
     <!-- Front under-display TCS3701 ambient light sensor exposed by Qualcomm SEE HAL -->
     <lightSensor>
@@ -73,7 +154,7 @@
         </darkeningThresholds>
     </ambientBrightnessChangeThresholds>
 
-    <!-- Auto-brightness curve aligned 1:1 with Android HLG UI slider (15% -> 100%) -->
+    <!-- Auto-brightness curve aligned 1:1 with SDR [0..0.858] + Sunlight HBM [0.858..1.0] -->
     <autoBrightness enabled="true">
         <brighteningLightDebounceMillis>600</brighteningLightDebounceMillis>
         <darkeningLightDebounceMillis>1400</darkeningLightDebounceMillis>
@@ -81,19 +162,21 @@
             <mode>default</mode>
             <setting>normal</setting>
             <map>
-                <point><first>0</first><second>0.008</second></point>
-                <point><first>3</first><second>0.015</second></point>
-                <point><first>10</first><second>0.030</second></point>
-                <point><first>25</first><second>0.052</second></point>
-                <point><first>60</first><second>0.088</second></point>
-                <point><first>120</first><second>0.135</second></point>
-                <point><first>250</first><second>0.195</second></point>
-                <point><first>500</first><second>0.285</second></point>
-                <point><first>1000</first><second>0.410</second></point>
-                <point><first>2000</first><second>0.560</second></point>
-                <point><first>4000</first><second>0.720</second></point>
-                <point><first>8000</first><second>0.870</second></point>
-                <point><first>16000</first><second>1.000</second></point>
+                <point><first>0</first><second>0.007</second></point>
+                <point><first>3</first><second>0.013</second></point>
+                <point><first>10</first><second>0.026</second></point>
+                <point><first>25</first><second>0.045</second></point>
+                <point><first>60</first><second>0.076</second></point>
+                <point><first>120</first><second>0.116</second></point>
+                <point><first>250</first><second>0.168</second></point>
+                <point><first>500</first><second>0.245</second></point>
+                <point><first>1000</first><second>0.352</second></point>
+                <point><first>2000</first><second>0.480</second></point>
+                <point><first>4000</first><second>0.618</second></point>
+                <point><first>8000</first><second>0.765</second></point>
+                <point><first>10000</first><second>0.858</second></point>
+                <point><first>25000</first><second>0.930</second></point>
+                <point><first>50000</first><second>1.000</second></point>
             </map>
         </luxToBrightnessMapping>
     </autoBrightness>
