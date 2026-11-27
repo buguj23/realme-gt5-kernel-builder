@@ -205,6 +205,16 @@ run_config() {
     settings put global captive_portal_fallback_url http://connectivitycheck.qualcomm.cn/generate_204
     settings put global captive_portal_other_fallback_urls http://connect.rom.miui.com/generate_204
 
+    # Fix Realme GT5 (RMX3820/22635) broken ODM top-left cutout (M -720..-500) using exact factory my_product center cutout
+    if [ \"\$(getprop ro.boot.prjname)\" = \"22635\" ]; then
+      cmd overlay fabricate --target android --name gt5_center_cutout \
+        android:string/config_mainBuiltInDisplayCutout 0x03 \"M -58,0 L -58,138 L 58,138 L 58,0 Z\" 2>/dev/null || true
+      cmd overlay enable --user 0 com.android.shell:gt5_center_cutout 2>/dev/null || true
+      cmd overlay set-priority --user 0 com.android.shell:gt5_center_cutout highest 2>/dev/null || true
+      settings put system statusbar_extra_padding_start 25
+      settings delete system statusbar_extra_padding_end 2>/dev/null || true
+    fi
+
     # Configure YukiZygisk v0.5.0+: anonymous memory + yukilinker + Skip & unmount on denylist
     if [ -x /data/adb/modules/yukizygisk/bin/yzctl ]; then
       /data/adb/modules/yukizygisk/bin/yzctl config set anonymous_memory true yukilinker true denylist_mode 1 || true
