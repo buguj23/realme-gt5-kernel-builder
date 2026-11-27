@@ -18,6 +18,9 @@ STATE_FILE="$STATE_DIR/state.env"
 ANIM_PID_FILE="$STATE_DIR/anim.pid"
 ANIM_GEN_FILE="$STATE_DIR/anim.gen"
 LED_BASE="/sys/class/leds"
+TILE_PKG="com.gt5.halotile"
+TILE_DIR="/data/user/0/$TILE_PKG/files"
+TILE_STATE="$TILE_DIR/state"
 
 mkdir -p "$STATE_DIR"
 
@@ -107,6 +110,42 @@ LED4_BR=${LED4_BR:-60}
 EOF
   mv -f "${STATE_FILE}.tmp" "$STATE_FILE"
   chmod 600 "$STATE_FILE"
+  sync_tile_state
+}
+
+sync_tile_state() {
+  [ -d "$TILE_DIR" ] || return 0
+  # Compute average brightness of active LEDs (or all 4 if none active)
+  sum=0; cnt=0
+  for idx in 1 2 3 4; do
+    eval "on=\$LED${idx}_ON; br=\$LED${idx}_BR"
+    if [ "${on:-1}" = "1" ] && [ "${br:-0}" -gt 0 ]; then
+      sum=$((sum + br))
+      cnt=$((cnt + 1))
+    fi
+  done
+  if [ "$cnt" -gt 0 ]; then
+    avg_br=$(( (sum + cnt / 2) / cnt ))
+  else
+    avg_br=$(( ( ${LED1_BR:-60} + ${LED2_BR:-60} + ${LED3_BR:-60} + ${LED4_BR:-60} + 2 ) / 4 ))
+  fi
+
+  if [ ! -f "$TILE_STATE" ]; then
+    : > "$TILE_STATE" 2>/dev/null || return 0
+    owner=$(stat -c '%u:%g' "$TILE_DIR" 2>/dev/null || true)
+    [ -n "$owner" ] && chown "$owner" "$TILE_STATE" 2>/dev/null || true
+    chmod 600 "$TILE_STATE" 2>/dev/null || true
+    ctx=$(ls -dZ "$TILE_DIR" 2>/dev/null | awk '{print $1}')
+    [ -n "$ctx" ] && chcon "$ctx" "$TILE_STATE" 2>/dev/null || true
+  fi
+
+  # In-place write preserves inode, UID/GID, and per-app SELinux MCS context
+  printf '%s|%s|%s\n' "${ENABLED:-0}" "${MODE:-always_on}" "$avg_br" > "$TILE_STATE" 2>/dev/null || true
+
+  if [ "${HALO_FROM_TILE:-0}" != "1" ]; then
+    nohup am broadcast --user 0 -a "${TILE_PKG}.ACTION_SYNC" -n "${TILE_PKG}/.TileSyncReceiver" \
+      </dev/null >/dev/null 2>&1 &
+  fi
 }
 
 clamp() {
@@ -524,6 +563,10 @@ case "$cmd" in
     ;;
   hw_apply_only)
     hw_apply
+    ;;
+  sync_tile)
+    load_state
+    sync_tile_state
     ;;
   *)
     echo "Usage: $0 {status|on|off|toggle|apply|set KEY=VAL...|locate 1..4}" >&2

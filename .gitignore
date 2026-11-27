@@ -39,3 +39,6 @@ rom/device/realme/ossi/prebuilt/oem-partitions.mk
 rom/device/realme/ossi/prebuilt/oem-partitions.json
 *.ko
 rom/vendor/realme/ossi/proprietary/
+
+# Local signing keystore for gt5_halo QS tile
+modules/gt5_halo/tile_app/*.keystore

@@ -26,6 +26,18 @@ if [ -f "$STATE_FILE" ]; then
   fi
 fi
 
+# Event-driven 0% CPU Quick Settings Tile bridge (inotifyd -> tile_bridge.sh)
+TILE_DIR="/data/user/0/com.gt5.halotile/files"
+(
+  while true; do
+    if [ -d "$TILE_DIR" ] && [ -x "$MODDIR/tile_bridge.sh" ]; then
+      sh "$CTL" sync_tile >/dev/null 2>&1 || true
+      /system/bin/inotifyd "$MODDIR/tile_bridge.sh" "$TILE_DIR:w" >/dev/null 2>&1
+    fi
+    sleep 3
+  done
+) </dev/null >/dev/null 2>&1 &
+
 # Optional ultra-light screen-follow monitor (active only when SCREEN_FOLLOW=1 && ENABLED=1)
 last_awake=""
 while true; do
