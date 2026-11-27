@@ -235,11 +235,15 @@ apply_iris_pipeline() {
       iris_run 56 1 0
     fi
 
-    # 2. Apply Direct HDR pipeline (Type 47)
-    iris_run 47 1 "$dhdr"
-
-    # 3. Apply Video/Game SDR2HDR / EDR / Filter (Type 267)
+    # 2. Apply Video/Game SDR2HDR / EDR / Filter (Type 267) first
     iris_run 267 2 3 "$s2h"
+
+    # 3. Apply Direct HDR pipeline (Type 47) only when explicitly selected (avoid clobbering 267 or being cleared by 267=0)
+    if [ "$dhdr" != "0" ]; then
+      iris_run 47 1 "$dhdr"
+    elif [ "$s2h" = "0" ]; then
+      iris_run 47 1 0
+    fi
 
     # 4. Apply Super Resolution (Type 273)
     if [ "$srm" = "0" ]; then
