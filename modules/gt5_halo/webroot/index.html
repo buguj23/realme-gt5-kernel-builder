@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>觉醒光环 Pro · Realme GT5</title>
+<style>
+  :root {
+    --bg: #0c0e14;
+    --card: #151924;
+    --card2: #1c2231;
+    --border: rgba(255,255,255,0.08);
+    --text: #f3f6fc;
+    --muted: #8b95ab;
+    --accent: #6c8cff;
+    --accent2: #ff477e;
+    --ok: #2dd4bf;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Noto Sans SC", sans-serif;
+    min-height: 100vh;
+  }
+  body {
+    padding: calc(env(safe-area-inset-top, 18px) + 14px) 14px calc(env(safe-area-inset-bottom, 20px) + 28px);
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; padding: 0 2px;
+  }
+  .title-wrap h1 {
+    font-size: 21px; font-weight: 700; margin: 0; letter-spacing: 0.2px;
+    background: linear-gradient(135deg, #fff, #9fb8ff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .title-wrap p { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+  .power-btn {
+    border: none; border-radius: 999px;
+    padding: 10px 18px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .2s ease;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .power-btn.off {
+    background: var(--card2); color: var(--muted); border: 1px solid var(--border);
+  }
+  .power-btn.on {
+    background: linear-gradient(135deg, #5b7cfa, #ff477e);
+    color: #fff; box-shadow: 0 6px 22px rgba(108,140,255,0.42);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center;
+  }
+
+  /* Live 4-Segment Awakening Halo Preview */
+  .halo-stage {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px 8px 10px;
+    background: radial-gradient(circle at 50% 45%, rgba(108,140,255,0.09), transparent 70%);
+    border-radius: 14px;
+  }
+  .halo-svg { width: 220px; height: 144px; overflow: visible; }
+  .halo-seg {
+    fill: none; stroke-width: 9; stroke-linecap: round;
+    transition: stroke .18s ease, opacity .18s ease, filter .18s ease;
+  }
+  .halo-stage.anim-breath .halo-seg { animation: haloBreath 2.6s ease-in-out infinite; }
+  .halo-stage.anim-blink .halo-seg { animation: haloBlink 1.1s steps(2, start) infinite; }
+  .halo-stage.anim-flow #seg1 { animation: haloFlow 1.6s linear infinite 0s; }
+  .halo-stage.anim-flow #seg2 { animation: haloFlow 1.6s linear infinite 0.4s; }
+  .halo-stage.anim-flow #seg3 { animation: haloFlow 1.6s linear infinite 0.8s; }
+  .halo-stage.anim-flow #seg4 { animation: haloFlow 1.6s linear infinite 1.2s; }
+  @keyframes haloBreath { 0%,100%{opacity:.22} 50%{opacity:1} }
+  @keyframes haloBlink { 0%,100%{opacity:1} 50%{opacity:.1} }
+  @keyframes haloFlow { 0%,100%{opacity:.18} 30%{opacity:1} 60%{opacity:.25} }
+
+  .status-pill {
+    margin-top: 8px; font-size: 11px; color: var(--muted);
+    background: rgba(255,255,255,0.04); padding: 4px 10px; border-radius: 999px;
+  }
+
+  /* Mode chips */
+  .mode-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .chip {
+    background: var(--card2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 12px; padding: 9px 6px; font-size: 12.5px; font-weight: 500;
+    text-align: center; cursor: pointer; transition: all .15s;
+  }
+  .chip.active {
+    background: rgba(108,140,255,0.2);
+    border-color: var(--accent);
+    color: #fff; font-weight: 600;
+  }
+
+  /* Presets */
+  .preset-scroll {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .preset-scroll::-webkit-scrollbar { display: none; }
+  .preset-btn {
+    flex: 0 0 auto;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 8px 10px; cursor: pointer; min-width: 68px;
+    color: var(--text); font-size: 11px;
+  }
+  .preset-swatch {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.22);
+  }
+
+  /* Sliders & controls */
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; }
+  .row label { font-size: 13px; color: var(--text); white-space: nowrap; }
+  .val { font-size: 12px; color: var(--muted); min-width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
+  input[type="range"] {
+    flex: 1; accent-color: var(--accent); height: 5px; cursor: pointer;
+  }
+
+  /* 4 Independent LED Cards */
+  .led-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .led-card {
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 15px; padding: 11px;
+    transition: border-color .2s;
+  }
+  .led-card.disabled { opacity: 0.48; }
+  .led-head {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+  }
+  .led-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .led-badge {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .mini-btn {
+    border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+    color: var(--muted); border-radius: 8px; padding: 3px 7px; font-size: 11px; cursor: pointer;
+  }
+  .mini-btn:active { background: rgba(255,255,255,0.15); color: #fff; }
+  .color-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  input[type="color"] {
+    width: 38px; height: 30px; border: none; padding: 0; background: none;
+    border-radius: 8px; cursor: pointer;
+  }
+  .hex-tag {
+    font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--muted);
+    background: rgba(0,0,0,0.28); padding: 4px 7px; border-radius: 7px;
+  }
+
+  /* Toggle switch */
+  .switch {
+    position: relative; width: 42px; height: 24px; flex: 0 0 auto;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; background: #2c3347; border-radius: 999px;
+    transition: .2s; cursor: pointer;
+  }
+  .slider:before {
+    content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: .2s;
+  }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider:before { transform: translateX(18px); }
+
+  .quick-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-sec {
+    flex: 1; background: var(--card2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 11px; padding: 8px; font-size: 12px; cursor: pointer;
+  }
+  .btn-sec:active { background: rgba(108,140,255,0.2); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 16px) + 18px);
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(24, 30, 46, 0.96); border: 1px solid var(--border);
+    color: #fff; padding: 8px 16px; border-radius: 999px; font-size: 12.5px;
+    opacity: 0; pointer-events: none; transition: all .22s; z-index: 99;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title-wrap">
+    <h1>觉醒光环 Pro</h1>
+    <p>Realme GT5 · AW21012 四区独立控光</p>
+  </div>
+  <button id="powerBtn" class="power-btn off" onclick="togglePower()">
+    <span class="dot"></span><span id="powerText">已关闭</span>
+  </button>
+</div>
+
+<!-- Live Halo Preview -->
+<div class="card">
+  <div id="haloStage" class="halo-stage">
+    <svg class="halo-svg" viewBox="0 0 220 140">
+      <rect x="26" y="16" width="168" height="108" rx="22" fill="#0b0d13" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+      <!-- Inner Snapdragon chip emblem -->
+      <rect x="86" y="48" width="48" height="44" rx="8" fill="#131722" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <text x="110" y="74" text-anchor="middle" fill="#64748b" font-size="10" font-weight="700" font-family="sans-serif">GT5</text>
+      <!-- 4 independent segments matching AW21012 4 LED groups -->
+      <path id="seg1" class="halo-seg" d="M 36 58 L 36 38 Q 36 24 50 24 L 104 24" />
+      <path id="seg2" class="halo-seg" d="M 116 24 L 170 24 Q 184 24 184 38 L 184 58" />
+      <path id="seg3" class="halo-seg" d="M 36 82 L 36 102 Q 36 116 50 116 L 104 116" />
+      <path id="seg4" class="halo-seg" d="M 116 116 L 170 116 Q 184 116 184 102 L 184 82" />
+      <!-- Zone labels -->
+      <text x="58" y="43" fill="#94a3b8" font-size="10">灯1</text>
+      <text x="148" y="43" fill="#94a3b8" font-size="10">灯2</text>
+      <text x="58" y="106" fill="#94a3b8" font-size="10">灯3</text>
+      <text x="148" y="106" fill="#94a3b8" font-size="10">灯4</text>
+    </svg>
+    <div id="statusPill" class="status-pill">正在读取硬件状态…</div>
+  </div>
+</div>
+
+<!-- Mode selector -->
+<div class="card">
+  <div class="card-title"><span>灯效模式（原厂硬件驱动）</span></div>
+  <div class="mode-grid">
+    <div class="chip" data-mode="new_always_on_mode" onclick="setMode('new_always_on_mode')">常亮</div>
+    <div class="chip" data-mode="individual_ctl_breath" onclick="setMode('individual_ctl_breath')">四灯独立呼吸</div>
+    <div class="chip" data-mode="breath_mode" onclick="setMode('breath_mode')">同步呼吸</div>
+    <div class="chip" data-mode="blink_mode" onclick="setMode('blink_mode')">节奏闪烁</div>
+    <div class="chip" data-mode="horse_race_lamp" onclick="setMode('horse_race_lamp')">跑马流光</div>
+    <div class="chip" data-mode="cc_mode" onclick="setMode('cc_mode')">恒流高亮</div>
+  </div>
+  <div id="rhythmBox" class="hidden" style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">
+    <div class="card-title" style="margin-bottom:6px;">
+      <span>呼吸 / 闪烁节奏</span>
+      <span style="display:flex;gap:6px;">
+        <button class="mini-btn" onclick="setRhythm(8,2,8,2)">柔和</button>
+        <button class="mini-btn" onclick="setRhythm(6,2,6,2)">原厂</button>
+        <button class="mini-btn" onclick="setRhythm(3,1,3,1)">急促</button>
+      </span>
+    </div>
+    <div class="row"><label>渐亮 TR1</label><input id="tr1" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tr1v" class="val">6</span></div>
+    <div class="row"><label>保持 TON</label><input id="ton" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tonv" class="val">2</span></div>
+    <div class="row"><label>渐暗 TF1</label><input id="tf1" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="tf1v" class="val">6</span></div>
+    <div class="row"><label>熄灭 TOFF</label><input id="toff" type="range" min="0" max="15" oninput="onRhythmInput()"><span id="toffv" class="val">2</span></div>
+  </div>
+</div>
+
+<!-- Factory ColorOS Presets from oplusLights.xml -->
+<div class="card">
+  <div class="card-title"><span>原厂 ColorOS 预设配色（含双色混光）</span></div>
+  <div id="presetScroll" class="preset-scroll"></div>
+</div>
+
+<!-- Global Brightness + 4-LED Independent Control -->
+<div class="card">
+  <div class="card-title">
+    <span>4 颗灯珠独立控制（12-bit 硬件调光）</span>
+  </div>
+  <div class="row" style="margin-bottom:10px;">
+    <label>总亮度联动</label>
+    <input id="globalBr" type="range" min="1" max="100" value="60" oninput="onGlobalBr(this.value)">
+    <span id="globalBrVal" class="val">60%</span>
+  </div>
+  <div id="ledGrid" class="led-grid"></div>
+  <div class="quick-actions">
+    <button class="btn-sec" onclick="syncAllFromLed1()">同步灯 1 颜色至全部 4 灯</button>
+    <button class="btn-sec" onclick="enableAllLeds()">4 灯全开</button>
+  </div>
+</div>
+
+<!-- Persistence & Screen-follow Settings -->
+<div class="card">
+  <div class="card-title"><span>行为与持久化</span></div>
+  <div class="row">
+    <label>开机自动恢复光环状态</label>
+    <label class="switch"><input id="bootRestore" type="checkbox" onchange="onFlagChange()"><span class="slider"></span></label>
+  </div>
+  <div class="row">
+    <label>锁屏自动熄灭 · 亮屏自动恢复</label>
+    <label class="switch"><input id="screenFollow" type="checkbox" onchange="onFlagChange()"><span class="slider"></span></label>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const CTL = "/data/adb/modules/gt5_halo/halo_ctl.sh";
+
+// Official Realme GT5 presets extracted from /odm/etc/misc/oplusLights.xml + 4-zone rainbow
+const PRESETS = [
+  { name: "粉蓝混光", sw: "linear-gradient(135deg,#ff1a52,#620aff)", leds: [[255,26,82],[255,26,82],[98,10,255],[98,10,255]] },
+  { name: "橙粉混光", sw: "linear-gradient(135deg,#ff5e12,#ff1a26)", leds: [[255,94,18],[255,94,18],[255,26,38],[255,26,38]] },
+  { name: "蓝黄混光", sw: "linear-gradient(135deg,#38a0ff,#ffe038)", leds: [[56,160,255],[56,160,255],[255,224,56],[255,224,56]] },
+  { name: "青绿混光", sw: "linear-gradient(135deg,#3ac8ec,#98fa98)", leds: [[58,200,236],[58,200,236],[152,250,152],[152,250,152]] },
+  { name: "暖金混光", sw: "linear-gradient(135deg,#e6be80,#f0f000)", leds: [[230,190,128],[230,190,128],[240,240,0],[240,240,0]] },
+  { name: "四色赛博", sw: "conic-gradient(#ff2a6d,#05d9e8,#39ff14,#b967ff,#ff2a6d)", leds: [[255,42,109],[5,217,232],[57,255,20],[185,103,255]] },
+  { name: "原厂冷白", sw: "#f0e6e6", leds: [[240,174,174],[240,174,174],[240,174,174],[240,174,174]] },
+  { name: "GT 蓝紫", sw: "#540078", leds: [[84,0,120],[84,0,120],[84,0,120],[84,0,120]] },
+  { name: "极光绿",   sw: "#00e800", leds: [[0,232,0],[0,232,0],[0,232,0],[0,232,0]] },
+  { name: "电光蓝",   sw: "#0055ff", leds: [[0,85,255],[0,85,255],[0,85,255],[0,85,255]] },
+  { name: "炽焰橙",   sw: "#ff4800", leds: [[255,72,0],[255,72,0],[255,72,0],[255,72,0]] },
+  { name: "烈焰红",   sw: "#ff1010", leds: [[255,16,16],[255,16,16],[255,16,16],[255,16,16]] }
+];
+
+let state = {
+  enabled: 0, mode: "new_always_on_mode", boot_restore: 1, screen_follow: 0,
+  tr1: 6, ton: 2, tf1: 6, toff: 2, hw_reg20: "0x06", hw_trigger: "none",
+  leds: [
+    {id:1,on:1,r:255,g:26,b:82,br:60},
+    {id:2,on:1,r:255,g:26,b:82,br:60},
+    {id:3,on:1,r:98,g:10,b:255,br:60},
+    {id:4,on:1,r:98,g:10,b:255,br:60}
+  ]
+};
+let cbSeq = 0;
+let pushTimer = null;
+
+function ksuExec(cmd) {
+  return new Promise((resolve, reject) => {
+    if (!globalThis.ksu || typeof globalThis.ksu.exec !== "function") {
+      resolve({ errno: 0, stdout: JSON.stringify(state), stderr: "" });
+      return;
+    }
+    const cb = "__halo_cb_" + (++cbSeq) + "_" + Date.now();
+    const timer = setTimeout(() => { delete globalThis[cb]; reject(new Error("timeout")); }, 10000);
+    globalThis[cb] = (errno, stdout, stderr) => {
+      clearTimeout(timer);
+      delete globalThis[cb];
+      resolve({ errno, stdout: String(stdout || ""), stderr: String(stderr || "") });
+    };
+    try {
+      globalThis.ksu.exec(cmd, "{}", cb);
+    } catch (e) {
+      clearTimeout(timer);
+      delete globalThis[cb];
+      reject(e);
+    }
+  });
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b].map(x => Math.max(0, Math.min(255, Number(x)|0)).toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return [255, 255, 255];
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+function buildPresets() {
+  const wrap = document.getElementById("presetScroll");
+  wrap.innerHTML = PRESETS.map((p, idx) => `
+    <button class="preset-btn" onclick="applyPreset(${idx})">
+      <span class="preset-swatch" style="background:${p.sw}"></span>
+      <span>${p.name}</span>
+    </button>
+  `).join("");
+}
+
+function buildLedCards() {
+  const grid = document.getElementById("ledGrid");
+  grid.innerHTML = [0,1,2,3].map(i => `
+    <div id="ledCard${i+1}" class="led-card">
+      <div class="led-head">
+        <span class="led-name"><span id="badge${i+1}" class="led-badge"></span>灯 ${i+1}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="mini-btn" onclick="locateLed(${i+1})">定位</button>
+          <label class="switch" style="transform:scale(0.84);transform-origin:right center;">
+            <input id="ledOn${i+1}" type="checkbox" onchange="onLedToggle(${i}, this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="color-row">
+        <input id="ledColor${i+1}" type="color" oninput="onLedColor(${i}, this.value)">
+        <span id="ledHex${i+1}" class="hex-tag">#FFFFFF</span>
+      </div>
+      <div class="row" style="margin:2px 0 0;">
+        <label style="font-size:11.5px;color:var(--muted);">亮度</label>
+        <input id="ledBr${i+1}" type="range" min="0" max="100" oninput="onLedBr(${i}, this.value)">
+        <span id="ledBrVal${i+1}" class="val" style="min-width:32px;">60%</span>
+      </div>
+    </div>
+  `).join("");
+}
+
+function render() {
+  const pBtn = document.getElementById("powerBtn");
+  const pTxt = document.getElementById("powerText");
+  pBtn.className = "power-btn " + (state.enabled ? "on" : "off");
+  pTxt.textContent = state.enabled ? "光环开启" : "已关闭";
+
+  // Mode chips
+  document.querySelectorAll(".chip").forEach(c => {
+    c.classList.toggle("active", c.dataset.mode === state.mode);
+  });
+  const needRhythm = ["individual_ctl_breath", "breath_mode", "blink_mode"].includes(state.mode);
+  document.getElementById("rhythmBox").classList.toggle("hidden", !needRhythm);
+
+  // Rhythm values
+  ["tr1","ton","tf1","toff"].forEach(k => {
+    document.getElementById(k).value = state[k];
+    document.getElementById(k + "v").textContent = state[k];
+  });
+
+  // Preview animation class
+  const stage = document.getElementById("haloStage");
+  stage.classList.remove("anim-breath", "anim-blink", "anim-flow");
+  if (state.enabled) {
+    if (state.mode === "individual_ctl_breath" || state.mode === "breath_mode") stage.classList.add("anim-breath");
+    else if (state.mode === "blink_mode") stage.classList.add("anim-blink");
+    else if (state.mode === "horse_race_lamp") stage.classList.add("anim-flow");
+  }
+
+  // LED cards + SVG segments
+  let brSum = 0;
+  state.leds.forEach((led, i) => {
+    const id = i + 1;
+    const hex = rgbToHex(led.r, led.g, led.b);
+    const active = state.enabled && led.on && led.br > 0;
+    const seg = document.getElementById("seg" + id);
+    seg.style.stroke = active ? hex : "#22283a";
+    seg.style.opacity = active ? (0.3 + 0.7 * (led.br / 100)) : 0.35;
+    seg.style.filter = active ? `drop-shadow(0 0 ${Math.round(4 + led.br * 0.14)}px ${hex})` : "none";
+
+    document.getElementById("ledCard" + id).classList.toggle("disabled", !led.on);
+    document.getElementById("badge" + id).style.background = led.on ? hex : "#334155";
+    document.getElementById("ledOn" + id).checked = !!led.on;
+    const cp = document.getElementById("ledColor" + id);
+    if (document.activeElement !== cp) cp.value = hex;
+    document.getElementById("ledHex" + id).textContent = hex;
+    document.getElementById("ledBr" + id).value = led.br;
+    document.getElementById("ledBrVal" + id).textContent = led.br + "%";
+    brSum += Number(led.br);
+  });
+  const avgBr = Math.round(brSum / 4);
+  document.getElementById("globalBr").value = Math.max(1, avgBr);
+  document.getElementById("globalBrVal").textContent = avgBr + "%";
+
+  document.getElementById("bootRestore").checked = !!state.boot_restore;
+  document.getElementById("screenFollow").checked = !!state.screen_follow;
+
+  const chipActive = state.hw_reg20 && state.hw_reg20 !== "0x06" && state.hw_reg20 !== "0x00";
+  document.getElementById("statusPill").textContent = state.enabled
+    ? `硬件激活 · ${state.mode} · CHIP(${state.hw_reg20})`
+    : `芯片待机 0mA · CHIP(${state.hw_reg20})`;
+}
+
+function schedulePush(immediate = false) {
+  clearTimeout(pushTimer);
+  const run = async () => {
+    const args = [
+      `ENABLED=${state.enabled ? 1 : 0}`,
+      `MODE=${state.mode}`,
+      `BOOT_RESTORE=${state.boot_restore ? 1 : 0}`,
+      `SCREEN_FOLLOW=${state.screen_follow ? 1 : 0}`,
+      `TR1=${state.tr1}`, `TON=${state.ton}`, `TF1=${state.tf1}`, `TOFF=${state.toff}`
+    ];
+    state.leds.forEach((l, i) => {
+      const n = i + 1;
+      args.push(`LED${n}_ON=${l.on?1:0}`, `LED${n}_R=${l.r}`, `LED${n}_G=${l.g}`, `LED${n}_B=${l.b}`, `LED${n}_BR=${l.br}`);
+    });
+    try {
+      const r = await ksuExec(`sh ${CTL} set ${args.join(" ")}`);
+      if (r.stdout.trim().startsWith("{")) {
+        state = JSON.parse(r.stdout.trim());
+        render();
+      }
+    } catch (e) {
+      toast("写入硬件失败: " + e.message);
+    }
+  };
+  if (immediate) run(); else pushTimer = setTimeout(run, 80);
+}
+
+function togglePower() {
+  state.enabled = state.enabled ? 0 : 1;
+  render();
+  schedulePush(true);
+  toast(state.enabled ? "觉醒光环已点亮" : "觉醒光环已熄灭");
+}
+function setMode(m) {
+  state.mode = m;
+  state.enabled = 1;
+  render();
+  schedulePush(true);
+}
+function setRhythm(tr1, ton, tf1, toff) {
+  state.tr1 = tr1; state.ton = ton; state.tf1 = tf1; state.toff = toff;
+  render();
+  schedulePush(true);
+}
+function onRhythmInput() {
+  state.tr1 = Number(document.getElementById("tr1").value);
+  state.ton = Number(document.getElementById("ton").value);
+  state.tf1 = Number(document.getElementById("tf1").value);
+  state.toff = Number(document.getElementById("toff").value);
+  render();
+  schedulePush(false);
+}
+function applyPreset(idx) {
+  const p = PRESETS[idx];
+  p.leds.forEach((rgb, i) => {
+    state.leds[i].on = 1;
+    state.leds[i].r = rgb[0];
+    state.leds[i].g = rgb[1];
+    state.leds[i].b = rgb[2];
+    if (state.leds[i].br === 0) state.leds[i].br = 60;
+  });
+  state.enabled = 1;
+  render();
+  schedulePush(true);
+  toast("已套用：" + p.name);
+}
+function onLedToggle(i, checked) {
+  state.leds[i].on = checked ? 1 : 0;
+  render();
+  schedulePush(true);
+}
+function onLedColor(i, hex) {
+  const [r, g, b] = hexToRgb(hex);
+  state.leds[i].r = r; state.leds[i].g = g; state.leds[i].b = b;
+  state.leds[i].on = 1;
+  state.enabled = 1;
+  render();
+  schedulePush(false);
+}
+function onLedBr(i, val) {
+  state.leds[i].br = Number(val);
+  if (state.leds[i].br > 0) state.leds[i].on = 1;
+  render();
+  schedulePush(false);
+}
+function onGlobalBr(val) {
+  const v = Number(val);
+  state.leds.forEach(l => { l.br = v; });
+  render();
+  schedulePush(false);
+}
+function syncAllFromLed1() {
+  const src = state.leds[0];
+  state.leds.forEach(l => { l.r = src.r; l.g = src.g; l.b = src.b; l.on = 1; });
+  state.enabled = 1;
+  render();
+  schedulePush(true);
+  toast("已将灯 1 颜色同步至 4 颗灯");
+}
+function enableAllLeds() {
+  state.leds.forEach(l => { l.on = 1; if (l.br === 0) l.br = 60; });
+  state.enabled = 1;
+  render();
+  schedulePush(true);
+  toast("已开启全部 4 颗灯");
+}
+function onFlagChange() {
+  state.boot_restore = document.getElementById("bootRestore").checked ? 1 : 0;
+  state.screen_follow = document.getElementById("screenFollow").checked ? 1 : 0;
+  schedulePush(true);
+}
+async function locateLed(id) {
+  toast(`正在点亮定位：灯 ${id} (1.4秒)`);
+  try {
+    const r = await ksuExec(`sh ${CTL} locate ${id}`);
+    if (r.stdout.trim().startsWith("{")) {
+      state = JSON.parse(r.stdout.trim());
+      render();
+    }
+  } catch (e) {}
+}
+
+(async function init() {
+  try { globalThis.ksu?.enableEdgeToEdge?.(true); } catch (e) {}
+  buildPresets();
+  buildLedCards();
+  try {
+    const r = await ksuExec(`sh ${CTL} status`);
+    if (r.stdout.trim().startsWith("{")) {
+      state = JSON.parse(r.stdout.trim());
+    }
+  } catch (e) {}
+  render();
+})();
+</script>
+</body>
+</html>
