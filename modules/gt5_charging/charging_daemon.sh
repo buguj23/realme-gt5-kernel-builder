@@ -31,8 +31,10 @@ while true; do
   esac
 
   if [ "$wired" -eq 1 ]; then
-    # Plug-in transition -> immediately apply 150W hyper profile & capture initial point
+    # Plug-in transition -> let UFCS/SuperVOOC handshake settle cleanly (4s) on fresh plug-in,
+    # then zero-interference verify profile & capture initial post-handshake point
     if [ "$prev_wired" -ne 1 ]; then
+      [ "$prev_wired" -eq 0 ] && sleep 4
       sh "$CTL" apply >/dev/null 2>&1
       sh "$CTL" sample_now >/dev/null 2>&1
       prev_wired=1

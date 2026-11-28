@@ -39,7 +39,7 @@ public final class ChargingStore {
         public int vbusMv;
         public int ibusMa;
         public boolean voocIng;
-        public boolean ppsIng;
+        public int ppsIng;
         public int coolDown;
         public int bccCurrent;
         public int mmiEn = 1;
@@ -49,6 +49,9 @@ public final class ChargingStore {
         public int cycleCount;
         public int devicePower = 150000;
         public int adapterPower;
+        public int uiPower;
+        public int protocolType;
+        public int ufcsOplusId;
         public String chargeMode = "hyper";
         public int sampleInterval = 60;
         public int ichargerCustomMode = -1;
@@ -122,7 +125,7 @@ public final class ChargingStore {
                 s.vbusMv = o.optInt("vbus_mv", 0);
                 s.ibusMa = o.optInt("ibus_ma", 0);
                 s.voocIng = o.optInt("vooc_ing", 0) == 1;
-                s.ppsIng = o.optInt("pps_ing", 0) == 1;
+                s.ppsIng = o.optInt("pps_ing", 0);
                 s.coolDown = o.optInt("cool_down", 0);
                 s.bccCurrent = o.optInt("bcc_current", 0);
                 s.mmiEn = o.optInt("mmi_en", 1);
@@ -132,6 +135,9 @@ public final class ChargingStore {
                 s.cycleCount = o.optInt("cycle_count", 0);
                 s.devicePower = o.optInt("device_power", 150000);
                 s.adapterPower = o.optInt("adapter_power", 0);
+                s.uiPower = o.optInt("ui_power", 0);
+                s.protocolType = o.optInt("protocol_type", 0);
+                s.ufcsOplusId = o.optInt("ufcs_oplus_id", 0);
                 s.chargeMode = o.optString("charge_mode", "hyper");
                 s.sampleInterval = o.optInt("sample_interval", 60);
                 s.ichargerCustomMode = o.optInt("icharger_custom_mode", -1);

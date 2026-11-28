@@ -68,8 +68,8 @@ public class ChargingHistoryActivity extends Activity {
 
     // Mode radio references
     private RadioButton rbHyper, rbBalanced, rbCool;
-    private TextView tvDiagIcharger, tvDiagShell, tvDiagScreen, tvDiagThermal;
-    private View dotIcharger, dotShell, dotScreen, dotThermal;
+    private TextView tvDiagProto, tvDiagIcharger, tvDiagShell, tvDiagScreen, tvDiagThermal;
+    private View dotProto, dotIcharger, dotShell, dotScreen, dotThermal;
 
     // Sampling interval chip references
     private final List<TextView> intervalChips = new ArrayList<>();
@@ -521,6 +521,10 @@ public class ChargingHistoryActivity extends Activity {
         header.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         card.addView(header, lpMarginBottom(10));
 
+        Object[] r0 = addDiagRow(card, "150W 私有协议握手 (Oplus UFCS)");
+        dotProto = (View) r0[0];
+        tvDiagProto = (TextView) r0[1];
+
         Object[] r1 = addDiagRow(card, "ICharger V5 极速模式");
         dotIcharger = (View) r1[0];
         tvDiagIcharger = (TextView) r1[1];
@@ -709,11 +713,38 @@ public class ChargingHistoryActivity extends Activity {
 
         // Hardware diagnostics
         if (!s.fromDaemon) {
+            setDiag(dotProto, tvDiagProto, false, "正在等待后台服务同步...");
             setDiag(dotIcharger, tvDiagIcharger, false, "正在等待后台服务同步...");
             setDiag(dotShell, tvDiagShell, false, "正在等待壳温桥接同步...");
             setDiag(dotScreen, tvDiagScreen, false, "正在等待状态同步...");
             setDiag(dotThermal, tvDiagThermal, true, "原厂硬件保护默认开启");
             return;
+        }
+
+        int uiW = s.uiPower >= 1000 ? (s.uiPower / 1000) : s.uiPower;
+        if (!s.wired) {
+            setDiag(dotProto, tvDiagProto, true,
+                    "未接入充电器 · 已就绪（接入原装 150W 充电器后零干扰自动握手 UFCS）");
+        } else if (s.protocolType == 6 || s.ppsIng == 4 || s.ufcsOplusId == 1) {
+            int ratedW = uiW > 0 ? uiW : 150;
+            if (s.voocIng || s.vbusMv >= 7000) {
+                setDiag(dotProto, tvDiagProto, true,
+                        String.format(Locale.US,
+                                "已握手 Oplus 私有 UFCS %dW (11V/13.7A 满血通道 · 按电量/温度阶梯调流)",
+                                ratedW));
+            } else {
+                setDiag(dotProto, tvDiagProto, true,
+                        String.format(Locale.US,
+                                "已认证 Oplus 私有 UFCS %dW（当前 %d%% 处于高电量恒压涓流，低电量 <35%% 触发满血峰值）",
+                                ratedW, s.soc));
+            }
+        } else if (s.voocIng) {
+            setDiag(dotProto, tvDiagProto, true,
+                    String.format(Locale.US, "已握手 SuperVOOC 闪充 (%s)", s.protocol));
+        } else {
+            setDiag(dotProto, tvDiagProto, false,
+                    String.format(Locale.US, "当前协议：%s（未握手 150W UFCS，请使用原装 150W 充电器及数据线）",
+                            s.protocol));
         }
 
         boolean hyperOk = (s.ichargerCustomMode == 3 && s.ichargerSmartMode == 0);

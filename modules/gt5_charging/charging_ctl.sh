@@ -188,47 +188,64 @@ get_screen_on() {
 
 sync_screen_status() {
   sc=$(get_screen_on)
-  # Verified via charger-V5-service disassembly & live logcat:
-  # notifyScreenStatus(0) = screen OFF -> starts 150W scale_chg hyper thread
-  # notifyScreenStatus(1) = screen ON  -> stops screen-off scale_chg thread
-  service call "$ICHARGER_SVC" 78 i32 "$sc" >/dev/null 2>&1
-  echo "$sc" > "$STATE_DIR/last_screen_state"
+  prev_sc=$(cat "$STATE_DIR/last_screen_state" 2>/dev/null)
+  if [ "$sc" != "$prev_sc" ] || [ "${1:-}" = "force" ]; then
+    # Verified via charger-V5-service disassembly & live logcat:
+    # notifyScreenStatus(0) = screen OFF -> starts 150W scale_chg hyper thread
+    # notifyScreenStatus(1) = screen ON  -> stops screen-off scale_chg thread
+    service call "$ICHARGER_SVC" 78 i32 "$sc" >/dev/null 2>&1
+    echo "$sc" > "$STATE_DIR/last_screen_state"
+  fi
 }
 
 apply_charge_mode() {
   load_config
   feed_shell_temp
 
-  # Always ensure charging is enabled and slow_chg is cleared
-  [ -w /sys/class/oplus_chg/battery/mmi_charging_enable ] && echo 1 > /sys/class/oplus_chg/battery/mmi_charging_enable 2>/dev/null
-  [ -w /sys/class/oplus_chg/battery/slow_chg_en ] && echo "0,0,0,0" > /sys/class/oplus_chg/battery/slow_chg_en 2>/dev/null
+  # Only touch kernel charging control nodes if their state actually differs!
+  # Writing mmi_charging_enable=1 unconditionally triggers oplus_chg workqueue reset
+  # and can drop an active 150W UFCS/SuperVOOC handshake back to 5W DCP.
+  cur_mmi=$(safe_int /sys/class/oplus_chg/battery/mmi_charging_enable 1)
+  if [ "$cur_mmi" -ne 1 ] && [ -w /sys/class/oplus_chg/battery/mmi_charging_enable ]; then
+    echo 1 > /sys/class/oplus_chg/battery/mmi_charging_enable 2>/dev/null
+  fi
+
+  cur_slow=$(safe_read /sys/class/oplus_chg/battery/slow_chg_en)
+  if [ -n "$cur_slow" ] && [ "$cur_slow" != "0,0,0,0" ] && [ -w /sys/class/oplus_chg/battery/slow_chg_en ]; then
+    echo "0,0,0,0" > /sys/class/oplus_chg/battery/slow_chg_en 2>/dev/null
+  fi
 
   batt_temp_d1=$(safe_int /sys/class/power_supply/battery/temp 300)
+  cur_cd=$(safe_int /sys/class/oplus_chg/battery/cool_down 0)
+  cur_custom=$(icharger_get_custom_mode)
+  cur_smart=$(icharger_get_smart_mode)
 
   case "$CHARGE_MODE" in
     hyper)
       # 150W Hyper Speed Charge Mode (loads /odm/firmware/fastchg/22635/charging_hyper_mode_config.txt: 40.5C ceiling)
-      service call "$ICHARGER_SVC" 88 i32 3 i32 1 >/dev/null 2>&1
-      # Disable BCC Life Mode anode cap (smart_charge_mode=0 -> sends bcc_current=0 to voocphy)
-      service call "$ICHARGER_SVC" 94 s16 "0" >/dev/null 2>&1
-      # Clear stale cool_down ONLY when battery is safely below 38.5C (never bypass >=40.5C hardware thermal step-down)
-      if [ "$batt_temp_d1" -lt 385 ] && [ -w /sys/class/oplus_chg/battery/cool_down ]; then
+      [ "$cur_custom" -ne 3 ] && service call "$ICHARGER_SVC" 88 i32 3 i32 1 >/dev/null 2>&1
+      # Disable BCC Life Mode anode cap (smart_charge_mode=0 -> sends bcc_current=0 to voocphy/ufcs)
+      [ "$cur_smart" -ne 0 ] && service call "$ICHARGER_SVC" 94 s16 "0" >/dev/null 2>&1
+      # Clear stale cool_down ONLY when non-zero and battery is safely below 38.5C
+      if [ "$cur_cd" -ne 0 ] && [ "$batt_temp_d1" -lt 385 ] && [ -w /sys/class/oplus_chg/battery/cool_down ]; then
         echo 0 > /sys/class/oplus_chg/battery/cool_down 2>/dev/null
       fi
       ;;
     balanced)
       # Stock balanced thermal table (36.0C ceiling) + BCC life mode ON
-      service call "$ICHARGER_SVC" 88 i32 3 i32 0 >/dev/null 2>&1
-      service call "$ICHARGER_SVC" 94 s16 "1" >/dev/null 2>&1
-      if [ "$batt_temp_d1" -lt 355 ] && [ -w /sys/class/oplus_chg/battery/cool_down ]; then
+      [ "$cur_custom" -ne 0 ] && service call "$ICHARGER_SVC" 88 i32 3 i32 0 >/dev/null 2>&1
+      [ "$cur_smart" -ne 1 ] && service call "$ICHARGER_SVC" 94 s16 "1" >/dev/null 2>&1
+      if [ "$cur_cd" -ne 0 ] && [ "$batt_temp_d1" -lt 355 ] && [ -w /sys/class/oplus_chg/battery/cool_down ]; then
         echo 0 > /sys/class/oplus_chg/battery/cool_down 2>/dev/null
       fi
       ;;
     cool)
       # Low-heat battery protection (~35-40W cap via Cool_Down_Oplus_Curve level 14 = 4000mA)
-      service call "$ICHARGER_SVC" 88 i32 3 i32 0 >/dev/null 2>&1
-      service call "$ICHARGER_SVC" 94 s16 "1" >/dev/null 2>&1
-      [ -w /sys/class/oplus_chg/battery/cool_down ] && echo 14 > /sys/class/oplus_chg/battery/cool_down 2>/dev/null
+      [ "$cur_custom" -ne 0 ] && service call "$ICHARGER_SVC" 88 i32 3 i32 0 >/dev/null 2>&1
+      [ "$cur_smart" -ne 1 ] && service call "$ICHARGER_SVC" 94 s16 "1" >/dev/null 2>&1
+      if [ "$cur_cd" -ne 14 ] && [ -w /sys/class/oplus_chg/battery/cool_down ]; then
+        echo 14 > /sys/class/oplus_chg/battery/cool_down 2>/dev/null
+      fi
       ;;
   esac
 
@@ -306,6 +323,8 @@ read_telemetry() {
   T_ADAPTER_PWR=$(safe_int /sys/class/oplus_chg/common/adapter_power 0)
   T_CPA_PWR=$(safe_int /sys/class/oplus_chg/common/cpa_power 0)
   T_UI_PWR=$(safe_int /sys/class/oplus_chg/common/ui_power 0)
+  T_PROTO_TYPE=$(safe_int /sys/class/oplus_chg/common/protocol_type 0)
+  T_UFCS_OPLUS=$(safe_int /sys/class/oplus_chg/battery/ufcs_oplus_id 0)
   T_DEVICE_PWR=$(safe_int /sys/class/oplus_chg/common/device_power 150000)
   T_BCC_CUR=$(safe_int /sys/class/oplus_chg/battery/bcc_current 0)
   T_MMI_EN=$(safe_int /sys/class/oplus_chg/battery/mmi_charging_enable 1)
@@ -335,8 +354,8 @@ read_telemetry() {
     [ "$T_CHG_MA" -gt 0 ] && T_PBATT_MW=$(( (T_VPACK_MV * T_CHG_MA) / 1000 ))
     [ "$T_VBUS_MV" -gt 0 ] && [ "$T_IBUS_MA" -gt 0 ] && T_PUSB_MW=$(( (T_VBUS_MV * T_IBUS_MA) / 1000 ))
 
-    if [ "$T_VOOC_ING" -eq 1 ] || [ "$T_PPS_ING" -eq 1 ]; then
-      # Direct charge pump: take max(2S battery pack power, VBUS input power)
+    if [ "$T_VOOC_ING" -eq 1 ] || [ "$T_PPS_ING" -ge 1 ]; then
+      # Direct charge pump (UFCS 150W / SuperVOOC / PPS): take max(2S battery pack power, VBUS input power)
       if [ "$T_PBATT_MW" -ge "$T_PUSB_MW" ]; then
         T_POWER_MW=$T_PBATT_MW
       else
@@ -355,14 +374,32 @@ read_telemetry() {
     fi
   fi
 
-  # Protocol display label
+  # Protocol display label (handles Realme GT5 Oplus Private UFCS 150W: protocol_type=6, ppschg_ing=4)
   T_PROTO="未充电"
   if [ "$T_WIRED" -eq 1 ]; then
-    if [ "$T_VOOC_ING" -eq 1 ]; then
-      pwr_w=0
-      [ "$T_UI_PWR" -gt 0 ] && pwr_w=$((T_UI_PWR >= 1000 ? T_UI_PWR / 1000 : T_UI_PWR))
-      [ "$pwr_w" -eq 0 ] && [ "$T_ADAPTER_PWR" -gt 0 ] && pwr_w=$((T_ADAPTER_PWR >= 1000 ? T_ADAPTER_PWR / 1000 : T_ADAPTER_PWR))
-      [ "$pwr_w" -eq 0 ] && [ "$T_CPA_PWR" -gt 0 ] && pwr_w=$((T_CPA_PWR >= 1000 ? T_CPA_PWR / 1000 : T_CPA_PWR))
+    pwr_w=0
+    [ "$T_UI_PWR" -gt 0 ] && pwr_w=$((T_UI_PWR >= 1000 ? T_UI_PWR / 1000 : T_UI_PWR))
+    [ "$pwr_w" -eq 0 ] && [ "$T_PPS_PWR" -gt 0 ] && pwr_w=$T_PPS_PWR
+    [ "$pwr_w" -eq 0 ] && [ "$T_ADAPTER_PWR" -gt 0 ] && pwr_w=$((T_ADAPTER_PWR >= 1000 ? T_ADAPTER_PWR / 1000 : T_ADAPTER_PWR))
+    [ "$pwr_w" -eq 0 ] && [ "$T_CPA_PWR" -gt 0 ] && pwr_w=$((T_CPA_PWR >= 1000 ? T_CPA_PWR / 1000 : T_CPA_PWR))
+
+    if [ "$T_PROTO_TYPE" -eq 6 ] || [ "$T_PPS_ING" -eq 4 ]; then
+      # Oplus Private UFCS (RMX3820 150W SuperVOOC-UFCS)
+      if [ "$pwr_w" -ge 140 ]; then
+        base_lbl="SuperVOOC 150W"
+      elif [ "$pwr_w" -gt 0 ]; then
+        base_lbl="SuperVOOC ${pwr_w}W"
+      else
+        base_lbl="UFCS 闪充"
+      fi
+      if [ "$T_STATUS" = "Full" ] && [ "$T_CHG_MA" -eq 0 ]; then
+        T_PROTO="${base_lbl} · 已充满"
+      elif [ "$T_VOOC_ING" -eq 1 ] || [ "$T_VBUS_MV" -ge 7000 ]; then
+        T_PROTO="${base_lbl} (UFCS)"
+      else
+        T_PROTO="${base_lbl} · 恒压涓流"
+      fi
+    elif [ "$T_VOOC_ING" -eq 1 ]; then
       if [ "$pwr_w" -ge 140 ]; then
         T_PROTO="SuperVOOC 150W"
       elif [ "$pwr_w" -gt 0 ]; then
@@ -370,12 +407,14 @@ read_telemetry() {
       else
         T_PROTO="SuperVOOC 闪充"
       fi
-    elif [ "$T_PPS_ING" -eq 1 ]; then
+      [ "$T_STATUS" = "Full" ] && [ "$T_CHG_MA" -eq 0 ] && T_PROTO="${T_PROTO} · 已充满"
+    elif [ "$T_PPS_ING" -ge 1 ]; then
       if [ "$T_PPS_PWR" -gt 0 ]; then
         T_PROTO="PPS ${T_PPS_PWR}W"
       else
         T_PROTO="PPS 快充"
       fi
+      [ "$T_STATUS" = "Full" ] && [ "$T_CHG_MA" -eq 0 ] && T_PROTO="${T_PROTO} · 已充满"
     else
       case "$T_USB_TYPE" in
         *PD*|*PPS*) T_PROTO="USB-PD" ;;
@@ -386,9 +425,7 @@ read_telemetry() {
         *USB*|*SDP*) T_PROTO="USB 5V" ;;
         *) T_PROTO="有线充电" ;;
       esac
-    fi
-    if [ "$T_STATUS" = "Full" ] && [ "$T_CHG_MA" -eq 0 ]; then
-      T_PROTO="${T_PROTO} · 已充满"
+      [ "$T_STATUS" = "Full" ] && [ "$T_CHG_MA" -eq 0 ] && T_PROTO="${T_PROTO} · 已充满"
     fi
   fi
 }
@@ -452,6 +489,9 @@ write_live_json() {
   "cycle_count": $T_CC,
   "device_power": $T_DEVICE_PWR,
   "adapter_power": $T_ADAPTER_PWR,
+  "ui_power": $T_UI_PWR,
+  "protocol_type": $T_PROTO_TYPE,
+  "ufcs_oplus_id": $T_UFCS_OPLUS,
   "charge_mode": "$CHARGE_MODE",
   "sample_interval": $SAMPLE_INTERVAL,
   "icharger_custom_mode": $ic_custom,
@@ -622,6 +662,7 @@ case "${1:-status}" in
   init)
     load_config
     save_config
+    rm -f "$STATE_DIR/last_screen_state"
     apply_charge_mode
     record_sample 1
     ;;
