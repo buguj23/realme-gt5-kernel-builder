@@ -51,6 +51,13 @@
     cursor: pointer; white-space: nowrap; transition: all .15s;
   }
   .reset-btn:active { transform: scale(0.96); background: var(--card3); }
+  .action-btn {
+    border: 1px solid rgba(108,140,255,0.4);
+    background: linear-gradient(135deg, rgba(108,140,255,0.22), rgba(168,85,247,0.22));
+    color: #fff; border-radius: 11px; padding: 8px 12px; font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; transition: all .15s;
+  }
+  .action-btn:active { transform: scale(0.97); }
 
   /* Hero Chip Telemetry Card */
   .hero {
@@ -74,7 +81,11 @@
   }
   .chip-badge {
     display: inline-flex; align-items: center; gap: 7px;
-    padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
+    padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  }
+  .chip-badge.memc {
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    color: #fff; box-shadow: 0 4px 18px rgba(236,72,153,0.42);
   }
   .chip-badge.pt {
     background: linear-gradient(135deg, #5b7cfa, #a855f7);
@@ -87,9 +98,7 @@
   .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
   .chip-meta { font-size: 11px; color: var(--muted); font-family: ui-monospace, monospace; }
 
-  .pill-row {
-    display: flex; flex-wrap: wrap; gap: 6px;
-  }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
   .pill {
     font-size: 11px; padding: 4px 9px; border-radius: 8px;
     background: rgba(255,255,255,0.05); color: var(--muted);
@@ -141,7 +150,7 @@
   }
   .card-title {
     font-size: 13px; font-weight: 700; color: #d5ddf0;
-    margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center;
+    margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
   }
   .card-sub { font-size: 11px; color: var(--muted); font-weight: 500; }
 
@@ -195,9 +204,7 @@
   .row-info h4 { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--text); }
   .row-info p { margin: 3px 0 0; font-size: 11px; color: var(--muted); line-height: 1.35; }
 
-  .switch {
-    position: relative; width: 46px; height: 26px; flex: 0 0 46px;
-  }
+  .switch { position: relative; width: 46px; height: 26px; flex: 0 0 46px; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .track {
     position: absolute; inset: 0; border-radius: 999px;
@@ -222,15 +229,35 @@
   select:focus { border-color: var(--accent); }
 
   /* Register Readout Grid */
-  .reg-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px;
-  }
+  .reg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
   .reg-box {
     background: var(--card2); border: 1px solid var(--border);
-    border-radius: 11px; padding: 8px; text-align: center;
+    border-radius: 11px; padding: 8px 6px; text-align: center;
   }
   .reg-k { font-size: 10px; color: var(--muted); }
-  .reg-v { font-size: 13px; font-weight: 700; margin-top: 2px; font-family: ui-monospace, monospace; color: var(--teal); }
+  .reg-v { font-size: 12px; font-weight: 700; margin-top: 2px; font-family: ui-monospace, monospace; color: var(--teal); word-break: break-all; }
+
+  /* Gamut Visual Swatches & MEMC Motion Bar */
+  .gamut-demo {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px;
+  }
+  .p3-patch {
+    height: 62px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.16); position: relative; overflow: hidden;
+  }
+  .p3-inner {
+    width: 52%; height: 52%; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.9);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.65);
+  }
+  .memc-stage {
+    background: #0b0f19; border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px; margin-top: 6px;
+  }
+  #memcCanvas {
+    width: 100%; height: 56px; display: block; border-radius: 8px; background: #05070d;
+  }
 
   .hint {
     font-size: 11px; color: var(--muted); line-height: 1.5;
@@ -266,9 +293,11 @@
       <span class="dot"></span>
       <span id="chipBadgeText">Pixelworks X7 · 读取中</span>
     </div>
-    <div id="chipFeat" class="chip-meta">FW 0x41ff0780</div>
+    <div id="chipFeat" class="chip-meta">SILICON --</div>
   </div>
   <div class="pill-row">
+    <span id="pillSfMode" class="pill">SF 色域检测中</span>
+    <span id="pillChromeP3" class="pill">Chrome P3 检测中</span>
     <span id="pillSysHdr" class="pill">系统 HDR 检测中</span>
     <span id="pillSysHbm" class="pill">1032nit HBM 检测中</span>
     <span id="pillBl" class="pill">DBV -- / 4095</span>
@@ -278,11 +307,11 @@
 
 <!-- Quick One-Tap Presets -->
 <div class="preset-scroll">
-  <button class="preset-btn" onclick="applyPreset('balanced','原厂均衡')"><span class="swatch" style="background:#6c8cff"></span>原厂均衡</button>
-  <button class="preset-btn" onclick="applyPreset('video_hdr','视频超清+双通道插帧')"><span class="swatch" style="background:#a855f7"></span>视频超清插帧</button>
-  <button class="preset-btn" onclick="applyPreset('cinema','影院 P3 + HDR')"><span class="swatch" style="background:#f59e0b"></span>影院级 HDR</button>
-  <button class="preset-btn" onclick="applyPreset('esports','电竞超帧+1.5K超分')"><span class="swatch" style="background:#fb7185"></span>电竞超帧超分</button>
-  <button class="preset-btn" onclick="applyPreset('srgb_pro','专业 sRGB')"><span class="swatch" style="background:#2dd4bf"></span>专业 sRGB</button>
+  <button class="preset-btn" onclick="applyPreset('balanced','原厂均衡 Display-P3')"><span class="swatch" style="background:#6c8cff"></span>原厂均衡</button>
+  <button class="preset-btn" onclick="applyPreset('video_hdr','全局视频插帧+超清HDR')"><span class="swatch" style="background:#a855f7"></span>视频插帧HDR</button>
+  <button class="preset-btn" onclick="applyPreset('cinema','影院 P3 + 全局插帧')"><span class="swatch" style="background:#f59e0b"></span>影院级 HDR</button>
+  <button class="preset-btn" onclick="applyPreset('esports','全局电竞超帧+1.5K超分')"><span class="swatch" style="background:#fb7185"></span>电竞超帧超分</button>
+  <button class="preset-btn" onclick="applyPreset('srgb_pro','专业标准 sRGB')"><span class="swatch" style="background:#2dd4bf"></span>专业 sRGB</button>
   <button class="preset-btn" onclick="applyPreset('powersave','极致旁路省电')"><span class="swatch" style="background:#34d399"></span>极致省电</button>
 </div>
 
@@ -299,24 +328,52 @@
 <div id="tab-gamut" class="panel active">
   <div class="card">
     <div class="card-title">
-      <span>原厂校准色域选择 (SoftIris + Iris 7)</span>
-      <span class="card-sub">旁路/独显全模式生效</span>
+      <span>三层联动色域切换 (SF + SDM + Iris 7)</span>
+      <span class="card-sub">实时切换 P3 / 原生 / sRGB</span>
     </div>
     <div class="grid-2" id="gamutGrid"></div>
+    <div class="gamut-demo">
+      <div class="p3-patch" style="background:rgb(255,0,0);background:color(display-p3 1 0 0);">
+        <div class="p3-inner" style="background:rgb(255,0,0);">P3 红 / sRGB</div>
+      </div>
+      <div class="p3-patch" style="background:rgb(0,255,0);background:color(display-p3 0 1 0);">
+        <div class="p3-inner" style="background:rgb(0,255,0);color:#000;text-shadow:none;">P3 绿 / sRGB</div>
+      </div>
+      <div class="p3-patch" style="background:rgb(0,0,255);background:color(display-p3 0 0 1);">
+        <div class="p3-inner" style="background:rgb(0,0,255);">P3 蓝 / sRGB</div>
+      </div>
+    </div>
+    <div class="hint" id="gamutProbeHint">
+      切换「生动鲜艳 / 原生广色域 / 专业 sRGB」时，SurfaceFlinger 与高通 SDM 会立即切换硬件色域管线，上方红/绿/蓝测试块与全系统色彩将立刻变化。
+    </div>
   </div>
 
   <div class="card">
     <div class="card-title">
-      <span>硬件色温调节 (Type 35 / 48)</span>
+      <span>Chrome 134 广色域 Display-P3 解锁</span>
+      <span id="chromeP3Badge" class="card-sub">检测中</span>
+    </div>
+    <div class="row">
+      <div class="row-info">
+        <h4>解除 Chrome 134 仅限 Pixel 4 的 sRGB 锁</h4>
+        <p>内置 Chrome 134 源码将广色域白名单硬编码为 Pixel 4/4 XL，导致 WebKit 色域测试始终显示 sRGB。启用 <code>force-color-profile@2 (display-p3-d65)</code> 后网页将真正输出 Display-P3。</p>
+      </div>
+      <button class="action-btn" id="chromeP3Btn" onclick="toggleChromeP3()">启用并重启 Chrome</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>硬件色温调节 (DPU PCC 矩阵 + Iris 35/48)</span>
       <span id="tempVal" class="slider-val">6500 K</span>
     </div>
     <input id="tempSlider" class="kelvin" type="range" min="2800" max="10000" step="100" value="6500"
            oninput="onTempInput(this.value)" />
     <div class="grid-4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
-      <button class="chip center" onclick="setTemp(5500)"><span class="c-name">5500K</span><span class="c-desc">暖色护眼</span></button>
+      <button class="chip center" onclick="setTemp(4800)"><span class="c-name">4800K</span><span class="c-desc">暖黄护眼</span></button>
       <button class="chip center" onclick="setTemp(6500)"><span class="c-name">6500K</span><span class="c-desc">D65 标准</span></button>
-      <button class="chip center" onclick="setTemp(7200)"><span class="c-name">7200K</span><span class="c-desc">默认清透</span></button>
-      <button class="chip center" onclick="setTemp(8200)"><span class="c-name">8200K</span><span class="c-desc">冷白通透</span></button>
+      <button class="chip center" onclick="setTemp(7500)"><span class="c-name">7500K</span><span class="c-desc">清透冷白</span></button>
+      <button class="chip center" onclick="setTemp(9000)"><span class="c-name">9000K</span><span class="c-desc">极冷通透</span></button>
     </div>
   </div>
 
@@ -369,7 +426,7 @@
   <div class="card">
     <div class="card-title">
       <span>视频 HDR / 画质超清增强 (SDR2HDR & EDR)</span>
-      <span class="card-sub">Pixelworks X7 · Type 267</span>
+      <span class="card-sub">Pixelworks X7 · Type 267 (无覆盖)</span>
     </div>
     <div class="grid-2" id="videoHdrGrid"></div>
   </div>
@@ -427,7 +484,7 @@
   <div class="card">
     <div class="card-title">
       <span>独显芯片 MEMC 动态插帧 / 游戏超帧</span>
-      <span class="card-sub">Pixelworks X7 · Type 258</span>
+      <span class="card-sub">Pixelworks X7 · SINGLE-MEMC</span>
     </div>
     <div class="grid-2" id="memcGrid"></div>
     <div class="row" style="margin-top:8px;">
@@ -440,15 +497,30 @@
         <span class="track"></span>
       </label>
     </div>
+    <div class="memc-stage">
+      <div class="slider-head" style="margin-bottom:6px;">
+        <span>30fps 独显插帧实时体验条（开启全局插帧后立刻丝滑倍帧）</span>
+        <button class="reset-btn" style="padding:3px 9px;font-size:11px;" id="memcTestBtn" onclick="toggleMemcAnim()">▶ 运行测试</button>
+      </div>
+      <canvas id="memcCanvas" width="480" height="56"></canvas>
+      <div id="memcLiveReadout" style="margin-top:6px;font-size:11px;color:var(--teal);font-family:ui-monospace,monospace;">
+        硅片实时状态：点击「运行测试」后芯片将自动切入 SINGLE-MEMC (FRC:1, BSRAM:1)
+      </div>
+    </div>
   </div>
 
   <div class="card" id="gameMemcCard">
     <div class="card-title">
-      <span>游戏超帧专属参数调校</span>
-      <span class="card-sub">匹配原厂游戏运动矢量配置</span>
+      <span>超帧源帧率与原厂游戏档案调校</span>
+      <span class="card-sub">全局超帧 & 原厂游戏超帧通用</span>
     </div>
     <div style="margin-bottom:10px;">
-      <div class="slider-head"><span>游戏配置档案 (Game ID)</span></div>
+      <div class="slider-head"><span>源帧率基准 (匹配视频/游戏原生帧率)</span></div>
+      <div class="grid-4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="memcFpsGrid"></div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div class="slider-head"><span>原厂游戏配置档案 (Game ID · 仅原厂游戏模式使用)</span></div>
       <select id="memcGameSelect" onchange="setField('MEMC_GAME_ID', Number(this.value), true)">
         <option value="3">原神 (#3)</option>
         <option value="0">和平精英 / PUBG (#0)</option>
@@ -469,14 +541,9 @@
       </select>
     </div>
 
-    <div style="margin-bottom:10px;">
-      <div class="slider-head"><span>插帧延迟与运动矢量策略</span></div>
-      <div class="grid-2" id="memcLatGrid"></div>
-    </div>
-
     <div>
-      <div class="slider-head"><span>源帧率基准 (匹配游戏内设置)</span></div>
-      <div class="grid-4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="memcFpsGrid"></div>
+      <div class="slider-head"><span>原厂游戏插帧延迟策略</span></div>
+      <div class="grid-2" id="memcLatGrid"></div>
     </div>
   </div>
 </div>
@@ -486,7 +553,7 @@
   <div class="card">
     <div class="card-title">
       <span>独显芯片 1.5K 硬件超分辨率 (SR)</span>
-      <span class="card-sub">Pixelworks X7 · Type 273</span>
+      <span class="card-sub">Pixelworks X7 · SINGLE-PT-SR</span>
     </div>
     <div class="grid-3" id="srGrid"></div>
     <div style="margin-top:12px;">
@@ -512,22 +579,22 @@
     </div>
     <div class="grid-3" id="chipModeGrid"></div>
     <div class="hint">
-      <b>智能自动（推荐）：</b>开启 MEMC / SR / 硬件视频 HDR 时自动唤醒 X7 进入 PT 模式；全部关闭后立即切回 ABP 模拟旁路（零额外功耗），同时色域与色温由 SoftIris 持续生效。
+      <b>智能自动（推荐）：</b>开启 MEMC / SR / 硬件视频 HDR 时自动唤醒 X7 进入 PT 模式；全部关闭后立即切回 ABP 模拟旁路（零额外功耗），同时 SurfaceFlinger 广色域与 PCC 色温持续生效。
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">
-      <span>芯片实时硬件寄存器回读</span>
+      <span>芯片真实硅片状态 & 寄存器回读</span>
       <button class="reset-btn" style="padding:4px 10px;font-size:11px;" onclick="refreshStatus()">刷新</button>
     </div>
     <div class="reg-grid">
-      <div class="reg-box"><div class="reg-k">工作模式 (56)</div><div class="reg-v" id="regMode">--</div></div>
-      <div class="reg-box"><div class="reg-k">色温 (48)</div><div class="reg-v" id="regTemp">--</div></div>
+      <div class="reg-box"><div class="reg-k">硅片工作态</div><div class="reg-v" id="regSilicon">--</div></div>
+      <div class="reg-box"><div class="reg-k">FRC / BSRAM</div><div class="reg-v" id="regFrc">--</div></div>
+      <div class="reg-box"><div class="reg-k">SF 色域管线</div><div class="reg-v" id="regSf">--</div></div>
       <div class="reg-box"><div class="reg-k">MEMC (258)</div><div class="reg-v" id="regMemc">--</div></div>
       <div class="reg-box"><div class="reg-k">SDR2HDR (267)</div><div class="reg-v" id="regS2h">--</div></div>
       <div class="reg-box"><div class="reg-k">超分 SR (273)</div><div class="reg-v" id="regSr">--</div></div>
-      <div class="reg-box"><div class="reg-k">直通 HDR (47)</div><div class="reg-v" id="regHdr">--</div></div>
     </div>
   </div>
 </div>
@@ -589,7 +656,7 @@
     <div class="row">
       <div class="row-info">
         <h4>启用应用自动场景联动</h4>
-        <p>打开 B站 / YouTube / 爱优腾 / VLC / Netflix 或 原神 / 王者 / 和平精英 / 星穹铁道等自动启用独显增强，退出自动回退旁路省电</p>
+        <p>打开 B站 / YouTube / 爱优腾 / VLC / Netflix 或 原神 / 王者 / 和平精英 / 星穹铁道等自动启用全局插帧与超分，退出自动回退旁路省电</p>
       </div>
       <label class="switch">
         <input id="autoScene" type="checkbox" onchange="setField('AUTO_SCENE', this.checked?1:0, true)" />
@@ -599,8 +666,8 @@
     <div id="autoSubWrap">
       <div class="row">
         <div class="row-info">
-          <h4>视频 App 自动开启双通道插帧 (MEMC)</h4>
-          <p>按原厂名单自动选择单通道 / 双通道 120fps / Netflix 专属插帧</p>
+          <h4>视频 App 自动开启全局硬件插帧 (MEMC)</h4>
+          <p>进入支持视频应用自动启用全局硬件插帧 (SINGLE-MEMC)</p>
         </div>
         <label class="switch">
           <input id="autoVideoMemc" type="checkbox" onchange="setField('AUTO_VIDEO_MEMC', this.checked?1:0, true)" />
@@ -619,8 +686,8 @@
       </div>
       <div class="row">
         <div class="row-info">
-          <h4>游戏自动开启原厂专属超帧 (Game MEMC)</h4>
-          <p>按原厂游戏 ID 自动启用超低延迟插帧 / EMV 运动矢量插帧</p>
+          <h4>游戏自动开启全局低延迟超帧 (Game MEMC)</h4>
+          <p>进入支持游戏自动启用全局超低延迟插帧 (0x31) / EMV 运动矢量插帧</p>
         </div>
         <label class="switch">
           <input id="autoGameMemc" type="checkbox" onchange="setField('AUTO_GAME_MEMC', this.checked?1:0, true)" />
@@ -630,7 +697,7 @@
       <div class="row">
         <div class="row-info">
           <h4>游戏自动开启 1.5K 高画质超分 (HESR)</h4>
-          <p>进入支持游戏自动激活芯片级 1.5K 超分辨率锐化</p>
+          <p>进入支持游戏自动激活芯片级 1.5K 超分辨率锐化 (SINGLE-PT-SR)</p>
         </div>
         <label class="switch">
           <input id="autoGameSr" type="checkbox" onchange="setField('AUTO_GAME_SR', this.checked?1:0, true)" />
@@ -658,7 +725,7 @@
     <div class="row">
       <div class="row-info">
         <h4>开机自动恢复画质与独显配置</h4>
-        <p>系统重启完成后自动恢复色域、色温、护眼调光与独显状态</p>
+        <p>系统重启完成后自动恢复 Display-P3 色域、Chrome P3 标志、色温与独显状态</p>
       </div>
       <label class="switch">
         <input id="bootRestore" type="checkbox" onchange="setField('BOOT_RESTORE', this.checked?1:0, true)" />
@@ -685,6 +752,8 @@ const CTL = "/data/adb/modules/gt5_display_fix/display_ctl.sh";
 let cbSeq = 0;
 let pushTimer = null;
 let toastTimer = null;
+let memcAnimTimer = null;
+let memcPollTimer = null;
 
 function ksuExec(cmd) {
   return new Promise((resolve, reject) => {
@@ -707,17 +776,17 @@ function toast(msg) {
   el.textContent = msg;
   el.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), 2000);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
 }
 
 const GAMUTS = [
-  { id: "p3_vivid",    name: "生动鲜艳",      desc: "Display-P3 Vivid (默认)" },
-  { id: "p3_nature",   name: "自然色域",      desc: "Display-P3 Nature 舒适通透" },
-  { id: "p3_pro",      name: "影院专业 P3",   desc: "Display-P3 Pro D65 精准" },
-  { id: "srgb_pro",    name: "专业标准 sRGB", desc: "sRGB 摄影/修图标准色准" },
-  { id: "srgb_nature", name: "柔和护眼 sRGB", desc: "低饱和柔和舒适阅读" },
-  { id: "native",      name: "原生广色域",    desc: "TM1240 面板全色域直出" },
-  { id: "bt2020",      name: "广色域 BT.2020",desc: "Iris 7 HDR 超广色域映射" }
+  { id: "p3_vivid",    name: "生动鲜艳 P3",    desc: "SF DISPLAY_P3 + 1.12x 鲜艳" },
+  { id: "p3_nature",   name: "自然色域 P3",    desc: "SF DISPLAY_P3 标准通透" },
+  { id: "p3_pro",      name: "影院专业 P3",    desc: "SF DISPLAY_P3 D65 精准" },
+  { id: "native",      name: "原生全色域",     desc: "SF NATIVE 面板原色无裁切" },
+  { id: "srgb_pro",    name: "专业标准 sRGB",  desc: "SF SRGB 严格色准 (修图)" },
+  { id: "srgb_nature", name: "柔和护眼 sRGB",  desc: "SF SRGB 低饱和柔和阅读" },
+  { id: "bt2020",      name: "超广 BT.2020",   desc: "Native + Iris 7 HDR 映射" }
 ];
 
 const SEEDS = [
@@ -729,7 +798,7 @@ const SEEDS = [
 
 const VIDEO_HDRS = [
   { id: 0,  name: "关闭",           desc: "原片直出 · 省电" },
-  { id: 1,  name: "视频超清 HDR",   desc: "AI + LCE 对比度增强 (推荐)" },
+  { id: 1,  name: "视频超清 HDR",   desc: "AI TM + LCE + SDR2HDR_LUT" },
   { id: 2,  name: "视频 HDR 增强",  desc: "宽动态 SDR 转 HDR 映射" },
   { id: 4,  name: "低功耗视频 HDR", desc: "旁路模式可用 · 省电增强" },
   { id: 6,  name: "影院级 6500K",   desc: "D65 影院级视频动态扩展" },
@@ -758,12 +827,14 @@ const DIRECT_HDRS = [
 ];
 
 const MEMCS = [
-  { id: "off",           name: "关闭插帧",       desc: "原生帧率 · 省电" },
-  { id: "video_dual",    name: "视频双通道插帧", desc: "至高 120fps · B站/油管原厂" },
-  { id: "video_single",  name: "视频单通道插帧", desc: "直播 / 竖屏短视频" },
+  { id: "off",           name: "关闭插帧",       desc: "原生帧率 · 旁路省电" },
+  { id: "global_video",  name: "全局视频插帧 ★", desc: "任意视频/网页真插帧 (推荐)" },
+  { id: "global_game",   name: "全局电竞超帧 ★", desc: "超低延迟 0x31 · 全游戏生效" },
+  { id: "video_dual",    name: "原厂双通道视频", desc: "仅硬解 YUV 视频层触发" },
+  { id: "video_single",  name: "原厂单通道视频", desc: "仅硬解短视频/直播层" },
   { id: "video_netflix", name: "Netflix 专享",   desc: "流媒体电影防抖插帧" },
-  { id: "game",          name: "游戏独立超帧",   desc: "独显倍帧至 90/120/144fps" },
-  { id: "game_emv",      name: "EMV 智能超帧",   desc: "游戏引擎运动矢量自适应" },
+  { id: "game",          name: "原厂白名单游戏", desc: "仅 Oplus 白名单游戏层" },
+  { id: "game_emv",      name: "EMV 运动矢量",   desc: "游戏引擎矢量自适应" },
   { id: "tnr",           name: "TNR 硬件降噪",   desc: "视频时域降噪平滑画质" }
 ];
 
@@ -776,9 +847,9 @@ const MEMC_LATS = [
 
 const MEMC_FPS_LIST = [
   { id: 0,  name: "自动", desc: "Auto" },
-  { id: 30, name: "30 → 60+", desc: "30fps 源" },
-  { id: 45, name: "45 → 90+", desc: "原厂默认" },
-  { id: 60, name: "60 → 120+",desc: "60fps 源" }
+  { id: 30, name: "30 → 60+", desc: "视频/30帧" },
+  { id: 45, name: "45 → 90+", desc: "手游超帧" },
+  { id: 60, name: "60 → 120+",desc: "高帧倍频" }
 ];
 
 const SRS = [
@@ -796,14 +867,20 @@ const CHIP_MODES = [
 let state = {
   chip_mode: "auto", gamut: "p3_vivid", color_temp: 6500,
   sdr2hdr_id: 0, direct_hdr: 0, memc_mode: "off",
-  memc_game_id: 3, memc_latency: 50, memc_fps: 45, memc_detect: 0,
+  memc_game_id: 3, memc_latency: 50, memc_fps: 30, memc_detect: 0,
   sr_mode: 0, sr_game_id: 255,
   pwm_onepulse: 0, panel_hbm: 0, lcm_cabc: 1, panel_dither: 1, panel_seed: 0,
-  sys_hdr_enabled: 1, sys_hdr_boost: 100,
+  sys_hdr_enabled: 1, sys_hdr_boost: 100, chrome_p3: 1,
   boot_restore: 1, screen_restore: 1,
   auto_scene: 0, auto_video_memc: 1, auto_video_hdr: 1,
   auto_game_memc: 1, auto_game_sr: 1, auto_game_hdr: 0,
-  hw: { bypass: 1, gamut: 0, color_temp: 6500, memc: 0, sdr2hdr: 0, sr: 0, direct_hdr: 0, feature: "0x41ff0780", backlight: 0, backlight_max: 4095, sys_hdr_ready: 0, sys_hbm_ready: 0, auto_active: "" }
+  hw: {
+    bypass: 1, silicon_mode: "SLEEP-ABYPASS", dpg: 1, bsram: 0, frc: 0, memc_active: 0,
+    sf_color_mode: "DISPLAY_P3", sf_setting: "Enhanced", chrome_p3_now: 0,
+    gamut: 0, color_temp: 6500, memc: 0, sdr2hdr: 0, sr: 0, direct_hdr: 0,
+    feature: "0x41ff0780", backlight: 0, backlight_max: 4095,
+    sys_hdr_ready: 0, sys_hbm_ready: 0, auto_active: ""
+  }
 };
 
 function switchTab(id, btn) {
@@ -834,23 +911,49 @@ function markGrid(containerId, activeVal) {
 
 function render() {
   const hw = state.hw || {};
-  const isPt = (hw.bypass === 0);
+  const sm = hw.silicon_mode || (hw.bypass === 0 ? "SINGLE-PT" : "SLEEP-ABYPASS");
+  const isMemcLive = (sm.includes("MEMC") || hw.memc_active === 1);
+  const isSrLive = sm.includes("-SR");
+  const isPt = (hw.bypass === 0 || sm.startsWith("SINGLE-"));
+
   const badge = document.getElementById("chipBadge");
-  badge.className = "chip-badge " + (isPt ? "pt" : "bypass");
-  document.getElementById("chipBadgeText").textContent = isPt
-    ? "Pixelworks X7 · PT 独显激活"
-    : "Pixelworks X7 · ABP 旁路省电";
-  document.getElementById("chipFeat").textContent = "FW " + (hw.feature || "0x41ff0780");
+  if (isMemcLive) {
+    badge.className = "chip-badge memc";
+    document.getElementById("chipBadgeText").textContent = "X7 · 硬件插帧运行中 (MEMC)";
+  } else if (isSrLive) {
+    badge.className = "chip-badge pt";
+    document.getElementById("chipBadgeText").textContent = "X7 · 1.5K 硬件超分运行中";
+  } else if (isPt) {
+    badge.className = "chip-badge pt";
+    document.getElementById("chipBadgeText").textContent = "Pixelworks X7 · PT 独显激活";
+  } else {
+    badge.className = "chip-badge bypass";
+    document.getElementById("chipBadgeText").textContent = "Pixelworks X7 · ABP 旁路省电";
+  }
+  document.getElementById("chipFeat").textContent = sm;
+
+  const pSf = document.getElementById("pillSfMode");
+  const sfMode = hw.sf_color_mode || "UNKNOWN";
+  pSf.className = "pill " + (sfMode === "DISPLAY_P3" || sfMode === "NATIVE" ? "ok" : "warn");
+  pSf.textContent = `SF: ${sfMode} (${hw.sf_setting || "-"})`;
+
+  const pCp3 = document.getElementById("pillChromeP3");
+  const cp3 = !!hw.chrome_p3_now;
+  pCp3.className = "pill " + (cp3 ? "ok" : "warn");
+  pCp3.textContent = cp3 ? "Chrome Display-P3 已解锁" : "Chrome 默认锁 sRGB";
+
+  document.getElementById("chromeP3Badge").textContent = cp3 ? "已启用 (display-p3-d65)" : "未启用 (Chrome 默认锁 sRGB)";
+  document.getElementById("chromeP3Btn").textContent = cp3 ? "恢复 Chrome 默认" : "启用并重启 Chrome";
 
   const pHdr = document.getElementById("pillSysHdr");
   pHdr.className = "pill " + (hw.sys_hdr_ready ? "ok" : "warn");
-  pHdr.textContent = hw.sys_hdr_ready ? "系统 HDR10+/Ultra HDR 已就绪" : "系统 HDR 待重启生效";
+  pHdr.textContent = hw.sys_hdr_ready ? "系统 HDR10+/Ultra HDR 就绪" : "系统 HDR 待重启";
 
   const pHbm = document.getElementById("pillSysHbm");
   pHbm.className = "pill " + (hw.sys_hbm_ready ? "ok" : "warn");
-  pHbm.textContent = hw.sys_hbm_ready ? "1032nit HBM 已就绪" : "HBM 待重启生效";
+  pHbm.textContent = hw.sys_hbm_ready ? "1032nit HBM 就绪" : "HBM 待重启";
 
-  document.getElementById("pillBl").textContent = `背光 DBV ${hw.backlight || 0}/${hw.backlight_max || 4095}`;
+  document.getElementById("pillBl").textContent = `DBV ${hw.backlight || 0}/${hw.backlight_max || 4095}`;
 
   const pAuto = document.getElementById("pillAuto");
   if (hw.auto_active) {
@@ -885,18 +988,19 @@ function render() {
   document.getElementById("memcGameSelect").value = String(state.memc_game_id);
   markGrid("memcLatGrid", state.memc_latency);
   markGrid("memcFpsGrid", state.memc_fps);
-  document.getElementById("gameMemcCard").style.opacity = (state.memc_mode === "game") ? "1" : "0.58";
+  document.getElementById("memcLiveReadout").textContent =
+    `硅片实时状态：${sm} | FRC:${hw.frc ?? 0} | BSRAM:${hw.bsram ?? 0} | memc_mode:${hw.memc_active ?? 0}`;
 
   // SR & Chip Mode
   markGrid("srGrid", state.sr_mode);
   document.getElementById("srGameSelect").value = String(state.sr_game_id);
   markGrid("chipModeGrid", state.chip_mode);
-  document.getElementById("regMode").textContent = hw.bypass === 0 ? "PT(0)" : (hw.bypass === 1 ? "ABP(1)" : String(hw.bypass));
-  document.getElementById("regTemp").textContent = (hw.color_temp || "--") + "K";
-  document.getElementById("regMemc").textContent = String(hw.memc ?? "--");
-  document.getElementById("regS2h").textContent = String(hw.sdr2hdr ?? "--");
+  document.getElementById("regSilicon").textContent = sm;
+  document.getElementById("regFrc").textContent = `FRC:${hw.frc ?? 0} RAM:${hw.bsram ?? 0}`;
+  document.getElementById("regSf").textContent = sfMode;
+  document.getElementById("regMemc").textContent = `${hw.memc ?? "--"} (act:${hw.memc_active ?? 0})`;
+  document.getElementById("regS2h").textContent = `${hw.sdr2hdr ?? "--"} (47:${hw.direct_hdr ?? 0})`;
   document.getElementById("regSr").textContent = String(hw.sr ?? "--");
-  document.getElementById("regHdr").textContent = String(hw.direct_hdr ?? "--");
 
   // Panel & Auto-Scene
   document.getElementById("pwmOnepulse").checked = !!state.pwm_onepulse;
@@ -922,7 +1026,7 @@ const KEY_TO_STATE = {
   SR_MODE: "sr_mode", SR_GAME_ID: "sr_game_id",
   PWM_ONEPULSE: "pwm_onepulse", PANEL_HBM: "panel_hbm", LCM_CABC: "lcm_cabc",
   PANEL_DITHER: "panel_dither", PANEL_SEED: "panel_seed",
-  SYS_HDR_ENABLED: "sys_hdr_enabled", SYS_HDR_BOOST: "sys_hdr_boost",
+  SYS_HDR_ENABLED: "sys_hdr_enabled", SYS_HDR_BOOST: "sys_hdr_boost", CHROME_P3: "chrome_p3",
   BOOT_RESTORE: "boot_restore", SCREEN_RESTORE: "screen_restore",
   AUTO_SCENE: "auto_scene", AUTO_VIDEO_MEMC: "auto_video_memc", AUTO_VIDEO_HDR: "auto_video_hdr",
   AUTO_GAME_MEMC: "auto_game_memc", AUTO_GAME_SR: "auto_game_sr", AUTO_GAME_HDR: "auto_game_hdr"
@@ -948,7 +1052,7 @@ function pushPending(immediate = false) {
       toast("写入硬件失败: " + e.message);
     }
   };
-  if (immediate) run(); else pushTimer = setTimeout(run, 100);
+  if (immediate) run(); else pushTimer = setTimeout(run, 90);
 }
 
 function setField(key, val, immediate = true) {
@@ -959,19 +1063,55 @@ function setField(key, val, immediate = true) {
   pushPending(immediate);
 }
 
-function onTempInput(v) {
-  setField("COLOR_TEMP", Number(v), false);
-}
-function setTemp(k) {
-  setField("COLOR_TEMP", k, true);
-  toast(`色温已设为 ${k}K`);
-}
-function onHdrBoostInput(v) {
-  setField("SYS_HDR_BOOST", Number(v), false);
-}
+function onTempInput(v) { setField("COLOR_TEMP", Number(v), false); }
+function setTemp(k) { setField("COLOR_TEMP", k, true); toast(`硬件色温已设为 ${k}K`); }
+function onHdrBoostInput(v) { setField("SYS_HDR_BOOST", Number(v), false); }
 function onGameHdrSelect(v) {
   setField("SDR2HDR_ID", Number(v), true);
   toast(Number(v) ? "已切换游戏专属 HDR/EDR" : "已关闭游戏专属 HDR");
+}
+
+async function toggleChromeP3() {
+  const next = state.hw?.chrome_p3_now ? 0 : 1;
+  toast(next ? "正在解锁 Chrome Display-P3 并重启 Chrome…" : "正在恢复 Chrome 默认配置…");
+  try {
+    const r = await ksuExec(`sh ${CTL} chrome_p3_apply ${next}`);
+    const line = r.stdout.trim();
+    if (line.startsWith("{")) {
+      state = JSON.parse(line);
+      render();
+      toast(next ? "Chrome Display-P3 已解锁！打开 WebKit 色域页即可看到 P3" : "已恢复 Chrome 默认配置");
+    }
+  } catch (e) {
+    toast("Chrome 配置失败: " + e.message);
+  }
+}
+
+function toggleMemcAnim() {
+  const btn = document.getElementById("memcTestBtn");
+  if (memcAnimTimer) {
+    clearInterval(memcAnimTimer);
+    clearInterval(memcPollTimer);
+    memcAnimTimer = null;
+    memcPollTimer = null;
+    btn.textContent = "▶ 运行测试";
+    refreshStatus();
+    return;
+  }
+  btn.textContent = "■ 停止测试";
+  const cv = document.getElementById("memcCanvas");
+  const ctx = cv.getContext("2d");
+  let x = 0;
+  memcAnimTimer = setInterval(() => {
+    x = (x + 12) % (cv.width - 64);
+    ctx.fillStyle = "#05070d";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = "#2dd4bf";
+    ctx.fillRect(x, 8, 64, 40);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(x + 28, 8, 8, 40);
+  }, 33);
+  memcPollTimer = setInterval(refreshStatus, 1400);
 }
 
 async function applyPreset(name, label) {
@@ -997,7 +1137,7 @@ async function resetAll() {
     if (line.startsWith("{")) {
       state = JSON.parse(line);
       render();
-      toast("已恢复原厂均衡 & ABP 旁路省电");
+      toast("已恢复 Display-P3 原厂均衡 & ABP 旁路省电");
     }
   } catch (e) {
     toast("复位失败: " + e.message);
@@ -1029,6 +1169,10 @@ async function refreshStatus() {
   buildChipGrid("memcFpsGrid", MEMC_FPS_LIST, "MEMC_FPS", true);
   buildChipGrid("srGrid", SRS, "SR_MODE", true);
   buildChipGrid("chipModeGrid", CHIP_MODES, "CHIP_MODE", true);
+  const cv = document.getElementById("memcCanvas");
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#05070d"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = "#2dd4bf"; ctx.fillRect(16, 8, 64, 40);
   await refreshStatus();
 })();
 </script>
