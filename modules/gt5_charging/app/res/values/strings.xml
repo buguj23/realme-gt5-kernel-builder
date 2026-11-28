@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">充电记录</string>
+    <string name="settings_summary">查看充电功率、时间与温度曲线及 150W 快充状态</string>
+</resources>

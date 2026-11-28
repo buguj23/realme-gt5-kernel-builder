@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_surface">#14171A</color>
+    <color name="card_surface">#21252A</color>
+    <color name="card_surface_variant">#2B3036</color>
+    <color name="text_primary">#ECEFF1</color>
+    <color name="text_secondary">#9BA3AB</color>
+    <color name="divider_subtle">#32383F</color>
+    <color name="accent_primary">@android:color/system_accent1_200</color>
+    <color name="accent_container">@android:color/system_accent1_700</color>
+    <color name="accent_on_container">@android:color/system_accent1_50</color>
+    <color name="temp_color">#FFB74D</color>
+    <color name="soc_color">#66BB6A</color>
+    <color name="bar_green">#28D158</color>
+    <color name="status_ok">#4ADE80</color>
+    <color name="status_warn">#FBBF24</color>
+    <color name="danger_text">#F87171</color>
+</resources>
